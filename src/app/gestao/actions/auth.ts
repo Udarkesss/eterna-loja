@@ -35,6 +35,8 @@ const MESSAGES: Record<string, string> = {
   PASSWORD_TOO_SHORT: "A palavra-passe precisa de pelo menos 10 caracteres.",
   PASSWORD_TOO_COMMON: "Essa palavra-passe é demasiado comum.",
   ALREADY_SET_UP: "A gestão já tem um Superadministrador. Entre com a sua conta.",
+  INVALID_SETUP_CODE: "Código de instalação errado.",
+  SETUP_CODE_MISSING: "Falta definir o código de instalação (ADMIN_SETUP_CODE) na Vercel. Sem ele ninguém pode criar o Superadministrador.",
 };
 
 function fail(error: unknown, extra: AuthState = {}): AuthState {
@@ -119,6 +121,7 @@ export async function setupFirstAdmin(_: AuthState, form: FormData): Promise<Aut
       email: str(form, "email") || undefined,
       password: String(form.get("password") ?? ""),
       repeat: String(form.get("repeat") ?? ""),
+      setupCode: String(form.get("setupCode") ?? ""),
     });
   } catch (e) {
     return fail(e);

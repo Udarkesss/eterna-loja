@@ -6,7 +6,7 @@ import btn from "@/components/ui/Button.module.css";
 import form from "@/components/ui/Form.module.css";
 
 /** EN: Form for the first Superadministrador. PT: Formulário do primeiro Superadministrador. */
-export function FirstAdminForm() {
+export function FirstAdminForm({ needsCode }: { needsCode: boolean }) {
   const [state, action, pending] = useActionState(setupFirstAdmin, {} as AuthState);
   return (
     <form action={action} className={form.form}>
@@ -14,6 +14,13 @@ export function FirstAdminForm() {
         <div role="alert" className={form.error}>
           {state.error}
         </div>
+      )}
+      {needsCode && (
+        <label className={form.field}>
+          Código de instalação
+          <input className={form.input} name="setupCode" type="password" autoComplete="off" required />
+          <span className={form.hint}>O código guardado em ADMIN_SETUP_CODE na Vercel. Impede que outra pessoa crie esta conta.</span>
+        </label>
       )}
       <label className={form.field}>
         Nome completo

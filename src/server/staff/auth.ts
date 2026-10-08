@@ -3,7 +3,8 @@ import { and, count, eq, or } from "drizzle-orm";
 import { normalizeMsisdn } from "@/lib/payments/msisdn";
 import { audit } from "../audit";
 import { checkCode, issueCode } from "../auth/codes";
-import { hashPassword, passwordProblem, verifyPassword } from "../auth/crypto";
+import { timingSafeEqual } from "node:crypto";
+import { hashPassword, passwordProblem, sha256, verifyPassword } from "../auth/crypto";
 import { createSession, destroyAllSessions, destroyCurrentSession, requestOrigin } from "../auth/sessions";
 import { getDb } from "../db";
 import { roles, staffUsers, staffUserStores, stores } from "../db/schema";
@@ -157,8 +158,36 @@ export async function needsFirstAdmin(): Promise<boolean> {
   return value === 0;
 }
 
-export async function createFirstAdmin(input: { name: string; username: string; phone: string; email?: string; password: string; repeat: string }) {
+/**
+ * EN: Installation code for the first sign-up. Online (production) it is REQUIRED: set ADMIN_SETUP_CODE in Vercel,
+ *     otherwise nobody can create the Superadministrador. Locally it is optional.
+ * PT: Código de instalação do primeiro acesso. Online (produção) é OBRIGATÓRIO: definir ADMIN_SETUP_CODE na Vercel,
+ *     senão ninguém consegue criar o Superadministrador. Em local é opcional.
+ */
+export function setupCodeRequired(): boolean {
+  return !!process.env.ADMIN_SETUP_CODE || process.env.NODE_ENV === "production";
+}
+
+function checkSetupCode(given: string) {
+  const expected = process.env.ADMIN_SETUP_CODE;
+  if (!expected) {
+    if (process.env.NODE_ENV === "production") throw new AppError("FORBIDDEN", "SETUP_CODE_MISSING", 403);
+    return;
+  }
+  const a = Buffer.from(sha256(given.trim()));
+  const b = Buffer.from(sha256(expected.trim()));
+  if (!timingSafeEqual(a, b)) throw new AppError("FORBIDDEN", "INVALID_SETUP_CODE", 403);
+}
+
+export async function createFirstAdmin(input: { name: string; username: string; phone: string; email?: string; password: string; repeat: string; setupCode: string }) {
   if (!(await needsFirstAdmin())) throw new AppError("FORBIDDEN", "ALREADY_SET_UP", 403);
+  try {
+    checkSetupCode(input.setupCode);
+  } catch (e) {
+    const { label } = await requestOrigin();
+    await audit({ actor: { type: "system", name: input.username.slice(0, 40) }, action: "Primeiro acesso recusado", detail: "Código de instalação errado ou em falta", origin: label, result: "blocked" });
+    throw e;
+  }
   checkNewPassword(input.password, input.repeat);
   const db = await getDb();
   const [superRole] = await db.select().from(roles).where(eq(roles.key, "super"));

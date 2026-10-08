@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { FirstAdminForm } from "@/components/admin/FirstAdminForm";
 import styles from "@/app/[locale]/(auth)/sign-in/sign-in.module.css";
-import { needsFirstAdmin } from "@/server/staff/auth";
+import { needsFirstAdmin, setupCodeRequired } from "@/server/staff/auth";
 
 export const metadata: Metadata = { title: "Primeiro acesso" };
 
@@ -28,7 +28,7 @@ export default async function FirstAccessPage() {
           Esta conta tem acesso total, incluindo chaves e definições. Depois de a criar, os outros utilizadores são criados em
           “Utilizadores internos” e esta página deixa de existir.
         </p>
-        <FirstAdminForm />
+        <FirstAdminForm needsCode={setupCodeRequired()} />
       </div>
     </main>
   );
