@@ -1,0 +1,27 @@
+.head {
+  padding-block: 48px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: clamp(44px, 5vw, 72px);
+  line-height: 1.02;
+  font-weight: 300;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.body p {
+  max-width: 640px;
+  font-size: 16px;
+  line-height: 26px;
+  font-weight: 300;
+  color: var(--ink-muted);
+}

@@ -1,0 +1,76 @@
+.total {
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+/* EN: Timeline from "Acompanhar entrega". PT: Linha temporal de "Acompanhar entrega". */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 480px;
+}
+
+.timeline li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 48px;
+  font-size: 15px;
+}
+
+.mark {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--line);
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.done {
+  color: var(--ink);
+}
+
+.done .mark {
+  background: var(--privee);
+  border-color: var(--privee);
+  color: var(--on-privee);
+}
+
+.todo {
+  color: var(--ink-muted);
+}
+
+.timeline li[aria-current="step"] {
+  font-weight: 500;
+}
+
+.code {
+  max-width: 480px;
+  padding: 24px;
+  background: var(--blush);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.codeValue {
+  font-family: var(--font-serif);
+  font-size: 48px;
+  letter-spacing: 0.3em;
+}
+
+.hint {
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.address {
+  display: flex;
+  gap: 10px;
+  font-size: 14px;
+}

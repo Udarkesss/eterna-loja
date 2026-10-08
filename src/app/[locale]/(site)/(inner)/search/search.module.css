@@ -1,0 +1,25 @@
+.form {
+  display: flex;
+  max-width: 640px;
+  border-bottom: 1px solid var(--ink);
+}
+
+.input {
+  flex-grow: 1;
+  min-width: 0;
+  height: 56px;
+  border: 0;
+  background: transparent;
+  font-size: 18px;
+  font-weight: 300;
+}
+
+.button {
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--champagne-deep);
+}

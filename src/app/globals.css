@@ -1,0 +1,168 @@
+@import "../styles/tokens.css";
+
+/* ── Reset ─────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  background: var(--ivory);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+dl,
+dd,
+figure,
+fieldset {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+fieldset {
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+img,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+em {
+  font-style: italic;
+}
+
+/* EN: Design focus ring; on dark (Privée) areas it turns champagne. PT: Contorno de foco do design. */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.on-privee :focus-visible {
+  outline-color: var(--champagne);
+}
+
+/* ── Layout ────────────────────────────────────────────────────────── */
+/* EN: 80px side margin on desktop (design), 16px on phones. PT: 80px no computador, 16px no telemóvel. */
+.page-x {
+  padding-inline: var(--page-x);
+}
+
+/* ── Typography helpers from the design / Tipografia do design ─────── */
+.serif {
+  font-family: var(--font-serif);
+}
+
+.eyebrow {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--champagne-deep);
+}
+
+.label {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.muted {
+  color: var(--ink-muted);
+}
+
+/* EN: "Ver tudo"-style link with gold underline. PT: Ligação estilo "Ver tudo" com traço dourado. */
+.link-line {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--champagne-deep);
+  border-bottom: 1px solid var(--champagne-deep);
+  padding-bottom: 4px;
+}
+
+.link-line:hover {
+  color: var(--ink);
+}
+
+.underline {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── Accessibility / Acessibilidade ────────────────────────────────── */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-4);
+  top: -100px;
+  z-index: 100;
+  padding: var(--space-2) var(--space-4);
+  background: var(--privee);
+  color: var(--on-privee);
+}
+
+.skip-link:focus {
+  top: var(--space-4);
+}

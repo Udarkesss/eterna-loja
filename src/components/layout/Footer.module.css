@@ -1,0 +1,202 @@
+/* ── Full footer (Início) / Rodapé completo ───────────────────────── */
+.footer {
+  background: var(--privee);
+  color: var(--on-privee);
+}
+
+.inner {
+  padding-block: 88px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 64px;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1.3fr;
+  gap: 48px;
+}
+
+@media (max-width: 1023px) {
+  .columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 599px) {
+  .inner {
+    padding-block: 56px 32px;
+    gap: 40px;
+  }
+
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 36px;
+  }
+}
+
+.brandCol,
+.newsCol {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.newsCol {
+  gap: 16px;
+}
+
+.brand {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  letter-spacing: 0.34em;
+}
+
+.tagline {
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 300;
+  max-width: 280px;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 300;
+}
+
+.col a:hover,
+.compactNav a:hover {
+  color: var(--champagne);
+}
+
+.heading {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--champagne);
+  margin-bottom: 6px;
+}
+
+.newsCol .heading {
+  margin-bottom: 0;
+}
+
+.small {
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 300;
+}
+
+.newsletter {
+  display: flex;
+  border-bottom: 1px solid var(--champagne);
+}
+
+.newsletter input {
+  flex-grow: 1;
+  min-width: 0;
+  height: 48px;
+  border: 0;
+  background: transparent;
+  color: var(--on-privee);
+  font-size: 14px;
+  font-weight: 300;
+}
+
+.newsletter input::placeholder {
+  color: rgba(250, 247, 242, 0.7);
+}
+
+.newsletter button {
+  height: 48px;
+  border: 0;
+  background: transparent;
+  color: var(--champagne);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.newsletterStatus {
+  min-height: 18px;
+  font-size: 12px;
+  color: var(--champagne);
+}
+
+.address {
+  font-size: 13px;
+  line-height: 22px;
+  font-weight: 300;
+}
+
+.bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-top: 1px solid #3a3431;
+  padding-top: 28px;
+  font-size: 12px;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+}
+
+.payments {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.paymentsLabel {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--champagne);
+  margin-right: 6px;
+}
+
+/* ── Compact footer (Categoria, Produto) / Rodapé compacto ─────────── */
+.compact {
+  margin-top: var(--section-y);
+  background: var(--privee);
+  color: var(--on-privee);
+}
+
+.compactInner {
+  padding-block: 56px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.compactTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.brandSmall {
+  font-family: var(--font-serif);
+  font-size: 30px;
+  letter-spacing: 0.34em;
+}
+
+.compactNav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  font-size: 13px;
+  font-weight: 300;
+}
+
+.compactNav a {
+  min-height: 24px;
+}

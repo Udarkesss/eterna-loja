@@ -1,0 +1,39 @@
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.circle {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--champagne);
+  border-radius: var(--radius-full);
+  color: var(--on-privee);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.circle:hover {
+  background: rgba(200, 169, 126, 0.15);
+}
+
+.pill {
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pill:hover {
+  background: var(--blush-light);
+}

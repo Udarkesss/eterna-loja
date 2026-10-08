@@ -1,0 +1,51 @@
+/*
+ * EN: Eterna design system tokens (v3, provisional). Use these variables — never raw colours or sizes.
+ * PT: Tokens do design system Eterna (v3, provisório). Usar estas variáveis — nunca cores ou tamanhos soltos.
+ */
+:root {
+  /* Colour / Cor */
+  --ivory: #faf7f2;
+  --white: #ffffff;
+  --blush: #e9d8cf;
+  --blush-light: #f3ece6;
+  --line: #e6ddd3;
+  --border: #7d7568;
+  --ink: #2b2320;
+  --ink-muted: #6b5e57;
+  --champagne: #c8a97e; /* EN: ornaments only, never text on light. PT: só ornamentos, nunca texto em fundo claro. */
+  --champagne-deep: #7a5c34; /* EN: gold text. PT: texto dourado. */
+  --privee: #1c1917;
+  --on-privee: #faf7f2;
+  --sage: #8e9a86;
+  --success: #2f6b4f;
+  --success-soft: #e3eee7;
+  --warning: #8a5a00;
+  --warning-soft: #f6ebd3;
+  --danger: #a63a2b;
+  --danger-soft: #f6e3df;
+  --focus: var(--ink);
+
+  /* Type / Tipografia — --font-cormorant and --font-jost come from next/font */
+  --font-serif: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
+  --font-sans: var(--font-jost), "Jost", system-ui, sans-serif;
+
+  /* Space / Espaço */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  /* Shape / Forma */
+  --radius-none: 0px;
+  --radius-sm: 2px;
+  --radius-md: 6px;
+  --radius-full: 999px;
+  --shadow-lift: 0 8px 24px rgba(43, 35, 32, 0.08);
+
+  /* Layout — EN: design canvas is 1440px wide with 80px margins. PT: canvas de 1440px com margens de 80px. */
+  --page-x: clamp(16px, 5.56vw, 80px);
+  --section-y: clamp(64px, 8.3vw, 120px);
+  --header-h: 88px;
+}

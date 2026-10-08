@@ -1,0 +1,86 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--ivory);
+  border-bottom: 1px solid var(--line);
+}
+
+.top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  min-height: 72px;
+}
+
+/* EN: Brand as in the design: Cormorant, wide tracking. PT: Marca como no design. */
+.brand {
+  font-family: var(--font-serif);
+  font-size: clamp(24px, 2.4vw, 34px);
+  font-weight: 400;
+  letter-spacing: 0.34em;
+  padding-left: 0.34em;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.nav {
+  border-top: 1px solid var(--line);
+}
+
+.navList {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+@media (max-width: 767px) {
+  .navList {
+    justify-content: flex-start;
+    gap: 22px;
+  }
+}
+
+/* EN: 12px · 500 · 0.08em uppercase, from the design menu. PT: Medidas do menu do design. */
+.navLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.navLink:hover,
+.navLink[aria-current="page"] {
+  color: var(--champagne-deep);
+}
+
+.fitting {
+  color: var(--champagne-deep);
+}
+
+.mobileOnly {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .top {
+    min-height: 60px;
+  }
+
+  .brand {
+    font-size: 22px;
+    letter-spacing: 0.3em;
+    padding-left: 0.3em;
+  }
+
+  .mobileOnly {
+    display: list-item;
+  }
+}

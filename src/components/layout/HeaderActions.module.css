@@ -1,0 +1,38 @@
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+}
+
+.icon {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+}
+
+.badge {
+  position: absolute;
+  top: 6px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: var(--radius-full);
+  background: var(--privee);
+  color: var(--on-privee);
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+}
+
+/* EN: On phones only favourites + bag stay in the top row (design "Telemóvel · Início"). PT: No telemóvel ficam só favoritos + carrinho. */
+@media (max-width: 767px) {
+  .desktopOnly {
+    display: none;
+  }
+}
