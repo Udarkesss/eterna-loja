@@ -32,7 +32,9 @@ const MIGRATIONS_FOLDER = path.join(process.cwd(), "drizzle");
 export const PGLITE_DIR = path.join(process.cwd(), ".data", "pglite");
 
 export function createDatabase(): DatabaseConnection {
-  const url = process.env.DATABASE_URL;
+  // EN: Neon gives "sslmode=require"; pg already treats it as full verification and warns. Say it explicitly.
+  // PT: O Neon dá "sslmode=require"; o pg já o trata como verificação completa e avisa. Dizê-lo explicitamente.
+  const url = process.env.DATABASE_URL?.replace(/sslmode=(prefer|require|verify-ca)\b/, "sslmode=verify-full");
 
   if (url) {
     // EN: Small pool: online each serverless instance opens its own (use Neon's "-pooler" address).
