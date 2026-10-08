@@ -69,11 +69,13 @@ export const legalPages = ["termos", "privacidade"] as const;
 /** EN: Payment methods (Gestão · 10). All enabled in development, as in the checkout design. */
 export const paymentMethodSeeds: { method: PaymentMethod; environment: "production" | "test" | "unconfigured"; note: string }[] = [
   { method: "card", environment: "unconfigured", note: "[Banco ou gateway a escolher]" },
+  { method: "paypal", environment: "test", note: "Simulado · precisa de conta PayPal Business" },
   { method: "mpesa", environment: "test", note: "API C2B da Vodacom" },
   { method: "emola", environment: "test", note: "Contrato de comerciante Movitel" },
   { method: "mkesh", environment: "unconfigured", note: "Contrato de comerciante Tmcel" },
   { method: "transfer", environment: "production", note: "Validação manual no painel" },
   { method: "cod", environment: "production", note: "Limite por encomenda: [valor]" },
+  { method: "test", environment: "test", note: "Só para demonstração · remover antes de abrir" },
 ];
 
 /** EN: Delivery zones (Gestão · 4). Fees are still "[valor]" in the design → null. PT: Taxas ainda por definir → null. */

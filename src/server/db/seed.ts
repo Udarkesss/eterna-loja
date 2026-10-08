@@ -185,6 +185,23 @@ export async function seedAll(db: Database) {
   await seedRoles(db);
 }
 
+/**
+ * EN: Adds reference rows that newer versions introduced (e.g. a new payment method) to an existing database.
+ *     Never changes rows that already exist. Runs after migrations, locally and on deploy.
+ * PT: Junta a uma base existente as linhas de referência que versões novas trouxeram (ex.: um método de pagamento
+ *     novo). Nunca altera linhas que já existem. Corre depois das migrações, em local e no deploy.
+ */
+export async function ensureReferenceData(db: Database) {
+  const [{ value }] = await db.select({ value: count() }).from(stores);
+  if (value === 0) return; // EN: empty database: seedAll does everything. PT: base vazia: o seedAll trata de tudo.
+  for (const [position, m] of paymentMethodSeeds.entries()) {
+    await db
+      .insert(paymentMethodSettings)
+      .values({ method: m.method, enabled: true, environment: m.environment, note: m.note, position })
+      .onConflictDoNothing();
+  }
+}
+
 /** EN: Used on first start in development. PT: Usado no primeiro arranque em desenvolvimento. */
 export async function seedIfEmpty(db: Database) {
   const [{ value }] = await db.select({ value: count() }).from(stores);

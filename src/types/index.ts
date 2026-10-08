@@ -116,7 +116,7 @@ export interface CartLine {
 
 // ── Payments / Pagamentos ────────────────────────────────────────────
 /** EN: The six methods in the design, in checkout order. PT: Os seis métodos do design, pela ordem do checkout. */
-export const PAYMENT_METHODS = ["card", "mpesa", "emola", "mkesh", "transfer", "cod"] as const;
+export const PAYMENT_METHODS = ["card", "paypal", "mpesa", "emola", "mkesh", "transfer", "cod", "test"] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 /** EN: Mobile money: the customer confirms with a PIN on the phone. PT: Dinheiro móvel: confirma com PIN no telemóvel. */

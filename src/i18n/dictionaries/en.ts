@@ -163,11 +163,13 @@ export const en: Dictionary = {
     methodGroup: "Payment method",
     methods: {
       card: { title: "Visa or Mastercard", sub: "Debit or credit · 3-D Secure", name: "Card" },
+      paypal: { title: "PayPal", sub: "Pay with your PayPal account", name: "PayPal" },
       mpesa: { title: "M-Pesa", sub: "Vodacom · numbers 84 and 85", name: "M-Pesa" },
       emola: { title: "e-Mola", sub: "Movitel · numbers 86 and 87", name: "e-Mola" },
       mkesh: { title: "mKesh", sub: "Tmcel · numbers 82 and 83", name: "mKesh" },
       transfer: { title: "Bank transfer", sub: "Upload the proof", name: "Transfer" },
       cod: { title: "Cash on delivery", sub: "In cash, to the driver", name: "Cash on delivery" },
+      test: { title: "Test payment", sub: "Demo only · completes the purchase without paying", name: "Test" },
     },
     codOnlyDelivery: "Available with home delivery",
     card: {

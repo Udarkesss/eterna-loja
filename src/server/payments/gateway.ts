@@ -8,7 +8,7 @@ import type { PaymentMethod, PaymentStatus } from "@/types";
  *     Transferência e pagamento na entrega não têm gateway: a equipa confirma-os na gestão.
  */
 
-export type GatewayMethod = Exclude<PaymentMethod, "transfer" | "cod">;
+export type GatewayMethod = Exclude<PaymentMethod, "transfer" | "cod" | "test">;
 
 export interface ChargeRequest {
   orderNumber: string;

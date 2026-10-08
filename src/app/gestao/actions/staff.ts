@@ -52,5 +52,8 @@ export const resetStaffPasswordAction = async (id: string) =>
 
 export const endSessionsAction = async (id: string) => run((s) => endSessions(s, id), "Sessões terminadas.");
 export const deleteStaffAction = async (id: string) => run((s) => deleteStaff(s, id), "Utilizador apagado.");
-export const updateStaffAction = async (id: string, input: { name: string; email: string; storeCodes: string[] }) => run((s) => updateStaff(s, id, input), "Alterações guardadas.");
+export const updateStaffAction = async (
+  id: string,
+  input: { name: string; email: string; storeCodes: string[]; phone?: string; vehicleType?: string; vehiclePlate?: string },
+) => run((s) => updateStaff(s, id, input), "Alterações guardadas.");
 export const saveMatrixAction = async (matrix: Record<string, Record<string, string>>) => run((s) => saveMatrix(s, matrix), "Guardado e registado na auditoria.");

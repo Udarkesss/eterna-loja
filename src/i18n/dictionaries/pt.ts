@@ -166,11 +166,13 @@ export const pt = {
     methodGroup: "Método de pagamento",
     methods: {
       card: { title: "Cartão Visa ou Mastercard", sub: "Débito ou crédito · 3-D Secure", name: "Cartão" },
+      paypal: { title: "PayPal", sub: "Pague com a sua conta PayPal", name: "PayPal" },
       mpesa: { title: "M-Pesa", sub: "Vodacom · números 84 e 85", name: "M-Pesa" },
       emola: { title: "e-Mola", sub: "Movitel · números 86 e 87", name: "e-Mola" },
       mkesh: { title: "mKesh", sub: "Tmcel · números 82 e 83", name: "mKesh" },
       transfer: { title: "Transferência bancária", sub: "Carregue o comprovativo", name: "Transferência" },
       cod: { title: "Pagamento na entrega", sub: "Em dinheiro, ao entregador", name: "Pagamento na entrega" },
+      test: { title: "Pagamento de teste", sub: "Só para demonstração · conclui a compra sem pagar", name: "Teste" },
     },
     codOnlyDelivery: "Disponível com entrega ao domicílio",
     card: {

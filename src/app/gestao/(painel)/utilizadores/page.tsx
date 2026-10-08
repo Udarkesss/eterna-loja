@@ -43,6 +43,8 @@ export default async function StaffPage() {
           status: u.status,
           last: u.lastLoginAt ? when(u.lastLoginAt) : "Nunca entrou",
           locked: !!u.lockedUntil && u.lockedUntil > new Date(),
+          vehicleType: u.vehicleType ?? "",
+          vehiclePlate: u.vehiclePlate ?? "",
           can: canManage(me, u),
         }))}
         allowedRoles={CAN_CREATE[me.roleKey] ?? []}

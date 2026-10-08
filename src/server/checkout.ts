@@ -149,7 +149,11 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderStatusD
   );
 
   // EN: Card and mobile money go to their gateway. PT: Cartão e dinheiro móvel vão ao seu gateway.
-  if (payment.method !== "transfer" && payment.method !== "cod") {
+  // EN: Demo method: paid at once (switch it off in Gestão · Pagamentos before opening). PT: Método de demonstração.
+  if (payment.method === "test") {
+    await updateOrder(order.id, { paymentReference: `TEST-${order.number}` }, { type: "payment_requested", detail: "teste" });
+    await settlePayment({ id: order.id }, "paid", "TEST_PAYMENT");
+  } else if (payment.method !== "transfer" && payment.method !== "cod") {
     try {
       const result = await getPaymentGateway(payment.method as GatewayMethod).charge({
         orderNumber: order.number,

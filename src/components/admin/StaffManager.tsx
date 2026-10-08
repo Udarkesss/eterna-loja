@@ -41,6 +41,8 @@ interface User {
   last: string;
   locked: boolean;
   can: boolean;
+  vehicleType: string;
+  vehiclePlate: string;
 }
 
 export function StaffManager({ me, users, allowedRoles, stores }: { me: { id: string; roleKey: string; storeCodes: string[] }; users: User[]; allowedRoles: string[]; stores: { code: string; name: string }[] }) {
@@ -314,14 +316,55 @@ export function StaffManager({ me, users, allowedRoles, stores }: { me: { id: st
   );
 }
 
-function EditRow({ user, stores, pending, onSave }: { user: User; stores: { code: string }[]; pending: boolean; onSave: (i: { name: string; email: string; storeCodes: string[] }) => void }) {
+function EditRow({
+  user,
+  stores,
+  pending,
+  onSave,
+}: {
+  user: User;
+  stores: { code: string }[];
+  pending: boolean;
+  onSave: (i: { name: string; email: string; storeCodes: string[]; phone?: string; vehicleType?: string; vehiclePlate?: string }) => void;
+}) {
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
+  const [phone, setPhone] = useState("");
   const [codes, setCodes] = useState(user.storeCodes);
+  const [vehicleType, setVehicleType] = useState(user.vehicleType || "Mota");
+  const [vehiclePlate, setVehiclePlate] = useState(user.vehiclePlate);
+  const driver = user.roleKey === "entregador";
   return (
     <span className={s.fieldset} style={{ width: "100%", padding: 10, background: "var(--ivory)", border: "1px solid var(--line)" }}>
-      <input className={s.input} value={name} onChange={(e) => setName(e.target.value)} aria-label="Nome" />
-      <input className={s.input} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-mail" aria-label="E-mail" />
+      <label className={s.label}>
+        Nome
+        <input className={s.input} value={name} onChange={(e) => setName(e.target.value)} />
+      </label>
+      <label className={s.label}>
+        WhatsApp
+        <input className={s.input} type="tel" inputMode="numeric" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={`${user.phone} · escreva só para mudar`} />
+        <span className={s.hint}>É para este número que vão os códigos{driver ? " e os avisos de entregas novas" : ""}.</span>
+      </label>
+      <label className={s.label}>
+        E-mail
+        <input className={s.input} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nome@eterna.co.mz" />
+      </label>
+      {driver && (
+        <span className={s.row2}>
+          <label className={s.label}>
+            Veículo
+            <select className={s.select} value={vehicleType} onChange={(e) => setVehicleType(e.target.value)}>
+              <option>Mota</option>
+              <option>Carro</option>
+              <option>Bicicleta</option>
+            </select>
+          </label>
+          <label className={s.label}>
+            Matrícula
+            <input className={s.input} value={vehiclePlate} onChange={(e) => setVehiclePlate(e.target.value.toUpperCase())} placeholder="AAA 000 MC" />
+          </label>
+        </span>
+      )}
       <span className={s.checks}>
         {stores.map((st) => (
           <label key={st.code}>
@@ -330,7 +373,7 @@ function EditRow({ user, stores, pending, onSave }: { user: User; stores: { code
           </label>
         ))}
       </span>
-      <button className={`${s.btn} ${s.small}`} disabled={pending} onClick={() => onSave({ name, email, storeCodes: codes })}>
+      <button className={`${s.btn} ${s.small}`} disabled={pending} onClick={() => onSave({ name, email, storeCodes: codes, phone: phone || undefined, vehicleType, vehiclePlate })}>
         Guardar
       </button>
     </span>

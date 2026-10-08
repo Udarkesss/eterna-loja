@@ -47,6 +47,10 @@ const mobile = (method: "mpesa" | "emola" | "mkesh") =>
  */
 export const paymentSchema = z.discriminatedUnion("method", [
   z.object({ method: z.literal("card") }),
+  z.object({ method: z.literal("paypal") }),
+  // EN: Demo only: completes the purchase at once. Remove before opening to the public.
+  // PT: Só para demonstração: conclui a compra logo. Remover antes de abrir ao público.
+  z.object({ method: z.literal("test") }),
   mobile("mpesa"),
   mobile("emola"),
   mobile("mkesh"),

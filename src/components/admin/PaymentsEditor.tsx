@@ -14,11 +14,13 @@ import s from "./admin.module.css";
 
 const INFO: Record<PaymentMethod, [string, string]> = {
   card: ["Cartão Visa e Mastercard", "Débito e crédito, com 3-D Secure"],
+  paypal: ["PayPal", "Conta PayPal da cliente"],
   mpesa: ["M-Pesa", "Vodacom · números 84 e 85"],
   emola: ["e-Mola", "Movitel · números 86 e 87"],
   mkesh: ["mKesh", "Tmcel · números 82 e 83"],
   transfer: ["Transferência bancária", "Com upload do comprovativo"],
   cod: ["Pagamento na entrega", "Dinheiro, só com entrega ao domicílio"],
+  test: ["Pagamento de teste", "Só para demonstração — desligue antes de abrir ao público"],
 };
 const ENV = { production: ["Em produção", "ok"], test: ["Modo de teste", "warn"], unconfigured: ["Por configurar", ""] } as const;
 const EVENTS = {

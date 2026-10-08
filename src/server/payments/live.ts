@@ -7,6 +7,7 @@ import { createMpesaGateway } from "./mpesa";
  * EN: Real providers (docs/PLANO.md, phase 6):
  *     - mpesa: ✅ Vodacom M-Pesa C2B (./mpesa.ts).
  *     - card:  [bank / gateway to choose], 3-D Secure, hosted card fields (card data never touches our server).
+ *     - paypal: PayPal Checkout (needs a PayPal Business account in a country that can receive payments).
  *     - emola: Movitel merchant contract or aggregator.
  *     - mkesh: Tmcel merchant contract.
  * PT: Fornecedores reais (fase 6): M-Pesa pronto; cartão, e-Mola e mKesh por escrever.

@@ -4,7 +4,7 @@ import s from "@/components/admin/admin.module.css";
 import { OrderActions, OrderNotes, OrderRefunds } from "@/components/admin/OrderActions";
 import { Chip, mzn, PageTop, when } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
-import { whatsappLink } from "@/data/site";
+import { site, whatsappLink } from "@/data/site";
 import { formatMsisdn } from "@/lib/payments/msisdn";
 import { eq } from "drizzle-orm";
 import { eventLabel, FULFILLMENT_LABEL, getOrderDetail, METHOD_LABEL, PAYMENT_LABEL } from "@/server/admin/orders";
@@ -198,7 +198,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 <span>
                   {[o.deliveryAddress, o.deliveryNeighbourhood, o.deliveryCity].filter(Boolean).join(", ")}
                 </span>
-                {o.deliveryCode && <span className={s.muted}>Código de recepção: {o.deliveryCode}</span>}
+                {o.deliveryCode && (
+                  <span>
+                    Código de recepção: <strong style={{ fontWeight: 500, letterSpacing: "0.2em" }}>{o.deliveryCode}</strong>
+                  </span>
+                )}
               </div>
             )}
             {phone && (
@@ -210,6 +214,20 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 <a href={`tel:+258${phone}`} className={s.btnOutline}>
                   Ligar
                 </a>
+                {o.fulfillmentType === "delivery" && o.deliveryCode && !["confirmed", "cancelled"].includes(o.fulfillmentStatus) && (
+                  <a
+                    href={whatsappLink(
+                      `Olá ${o.contact.name.replace(/^\[[^\]]*\]\s*/, "").split(" ")[0]}, o código de recepção da sua encomenda Eterna ${o.number} é ${o.deliveryCode}. Dê-o ao entregador só depois de receber e verificar a encomenda. Acompanhe: ${site.url}/${o.locale}/order/${o.id}`,
+                      `258${phone}`,
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={s.btnOutline}
+                  >
+                    <Icon name="whatsapp" size={16} />
+                    Reenviar código
+                  </a>
+                )}
               </div>
             )}
           </section>

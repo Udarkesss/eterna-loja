@@ -167,16 +167,38 @@ export async function deleteStaff(me: StaffContext, id: string) {
   await audit({ actor: actor(me), action: "Utilizador apagado", detail: u.name });
 }
 
-export async function updateStaff(me: StaffContext, id: string, input: { name: string; email: string; storeCodes: string[] }) {
+export async function updateStaff(
+  me: StaffContext,
+  id: string,
+  input: { name: string; email: string; storeCodes: string[]; phone?: string; vehicleType?: string; vehiclePlate?: string },
+) {
   const u = await loadManageable(me, id);
   const db = await getDb();
+  // EN: New WhatsApp number (empty = keep). It is where the person gets codes and new deliveries.
+  // PT: Novo número de WhatsApp (vazio = manter). É para onde vão os códigos e as entregas novas.
+  let phone: string | undefined;
+  if (input.phone?.trim()) {
+    const n = normalizeMsisdn(input.phone);
+    if (!n) throw new AppError("VALIDATION_ERROR", "Número de WhatsApp inválido.", 400);
+    const [taken] = await db.select({ id: staffUsers.id }).from(staffUsers).where(eq(staffUsers.phone, n));
+    if (taken && taken.id !== id) throw new AppError("CONFLICT", "Esse número já pertence a outra pessoa da equipa.", 409);
+    phone = n;
+  }
   const storeRows = await db.select().from(stores);
   const storeIds = storeRows.filter((s) => input.storeCodes.includes(s.code)).map((s) => s.id);
   if (me.roleKey === "gestor" && storeIds.some((sid) => !me.storeIds.includes(sid))) throw new AppError("FORBIDDEN", "NO_ACCESS", 403);
   await db.transaction(async (tx) => {
-    await tx.update(staffUsers).set({ name: input.name.trim() || u.name, email: input.email.trim().toLowerCase() || null }).where(eq(staffUsers.id, id));
+    await tx
+      .update(staffUsers)
+      .set({
+        name: input.name.trim() || u.name,
+        email: input.email.trim().toLowerCase() || null,
+        ...(phone ? { phone } : {}),
+        ...(u.roleKey === "entregador" ? { vehicleType: input.vehicleType?.trim() || null, vehiclePlate: input.vehiclePlate?.trim().toUpperCase() || null } : {}),
+      })
+      .where(eq(staffUsers.id, id));
     await tx.delete(staffUserStores).where(eq(staffUserStores.staffUserId, id));
     if (storeIds.length) await tx.insert(staffUserStores).values(storeIds.map((storeId) => ({ staffUserId: id, storeId })));
   });
-  await audit({ actor: actor(me), action: "Utilizador editado", detail: `${u.name} · lojas ${input.storeCodes.join(", ") || "—"}` });
+  await audit({ actor: actor(me), action: "Utilizador editado", detail: `${u.name} · lojas ${input.storeCodes.join(", ") || "—"}${phone ? " · WhatsApp alterado" : ""}` });
 }

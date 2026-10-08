@@ -26,11 +26,13 @@ export type LineRow = typeof orderLines.$inferSelect;
 
 export const METHOD_LABEL: Record<PaymentMethod, string> = {
   card: "Cartão",
+  paypal: "PayPal",
   mpesa: "M-Pesa",
   emola: "e-Mola",
   mkesh: "mKesh",
   transfer: "Transferência",
   cod: "Dinheiro",
+  test: "Teste",
 };
 
 export const PAYMENT_LABEL: Record<PaymentStatus, { label: string; tone: "ok" | "warn" | "bad" | "" }> = {

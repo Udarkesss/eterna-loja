@@ -14,11 +14,12 @@ async function main() {
     process.exit(1);
   }
   const { createDatabase } = await import("../src/server/db/client");
-  const { seedIfEmpty } = await import("../src/server/db/seed");
+  const { ensureReferenceData, seedIfEmpty } = await import("../src/server/db/seed");
   const connection = createDatabase();
   try {
     await connection.migrate();
     await seedIfEmpty(connection.db);
+    await ensureReferenceData(connection.db);
     console.log("✓ Database ready / Base de dados pronta");
   } finally {
     await connection.close();

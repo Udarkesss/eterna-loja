@@ -29,7 +29,7 @@ export function createMockGateway(method: GatewayMethod): PaymentGateway {
     async charge({ msisdn }) {
       const reference = `MOCK-${method.toUpperCase()}-${randomUUID().slice(0, 8)}`;
       const outcome: Outcome = msisdn?.endsWith("0000") ? "failed" : msisdn?.endsWith("9999") ? "silent" : "paid";
-      charges.set(reference, { createdAt: Date.now(), delayMs: method === "card" ? 3_000 : 8_000, outcome });
+      charges.set(reference, { createdAt: Date.now(), delayMs: method === "card" || method === "paypal" ? 3_000 : 8_000, outcome });
       return { reference, status: "pending" };
     },
     async checkStatus(reference): Promise<StatusResult> {

@@ -28,11 +28,13 @@ const MOBILE: readonly PaymentMethod[] = ["mpesa", "emola", "mkesh"];
 const isMobile = (m: PaymentMethod | null): m is MobileMethod => !!m && MOBILE.includes(m);
 const METHOD_ICON: Record<PaymentMethod, IconName> = {
   card: "card",
+  paypal: "card",
   mpesa: "device",
   emola: "device",
   mkesh: "device",
   transfer: "bank",
   cod: "cash",
+  test: "check",
 };
 
 type Phase = "form" | "processing" | "pending" | "success" | "failed";
@@ -142,14 +144,20 @@ export function CheckoutView() {
     cardDigits.length === 16 && /^(0[1-9]|1[0-2])\/\d{2}$/.test(card.exp) && /^\d{3}$/.test(card.cvc) && card.name.trim().length > 2;
 
   const methodReady =
-    method === "card" ? cardOk : isMobile(method) ? phoneValid && detected === method : method === "transfer" ? !!file : method === "cod";
+    method === "card"
+      ? cardOk
+      : isMobile(method)
+        ? phoneValid && detected === method
+        : method === "transfer"
+          ? !!file
+          : method === "cod" || method === "paypal" || method === "test";
   const payLabel = !method
     ? c.chooseMethod
     : method === "card"
       ? t(c.payCard, { total: totalLabel })
       : method === "transfer"
         ? c.sendProof
-        : method === "cod"
+        : method === "cod" || method === "test"
           ? c.confirmOrder
           : t(c.payWith, { total: totalLabel, method: c.methods[method].name });
 
@@ -201,7 +209,7 @@ export function CheckoutView() {
   function buildInput(): CreateOrderInput | null {
     if (!method) return null;
     const payment =
-      method === "card"
+      method === "card" || method === "paypal" || method === "test"
         ? { method }
         : isMobile(method)
           ? { method, msisdn: digits }
@@ -249,7 +257,7 @@ export function CheckoutView() {
         clear();
         setPhase("success");
       } else if (created.paymentStatus === "pending") {
-        setPhase(method === "card" ? "processing" : "pending");
+        setPhase(method === "card" || method === "paypal" ? "processing" : "pending");
         follow(created);
       } else {
         setPhase("failed");

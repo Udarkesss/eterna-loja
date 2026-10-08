@@ -2,7 +2,7 @@ import "server-only";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { createDatabase, type Database } from "./client";
-import { seedIfEmpty } from "./seed";
+import { ensureReferenceData, seedIfEmpty } from "./seed";
 
 export type { Database };
 
@@ -38,6 +38,7 @@ async function init(): Promise<Database> {
     globalForDb.__eternaMigrate = connection.migrate;
     globalForDb.__eternaMigrations = migrationCount();
     await seedIfEmpty(connection.db);
+    await ensureReferenceData(connection.db);
   }
   return connection.db;
 }
@@ -54,6 +55,7 @@ export async function getDb(): Promise<Database> {
     if (count !== globalForDb.__eternaMigrations) {
       globalForDb.__eternaMigrations = count;
       await migrate(); // EN: a new migration appeared. PT: apareceu uma migração nova.
+      await ensureReferenceData(db);
     }
   }
   return db;
