@@ -332,7 +332,8 @@
   width: 100%;
   height: 140%;
   object-fit: cover;
-  object-position: center 38%;
+  /* EN: The photo is portrait: 31% keeps the face and bodice in the wide band. PT: Foto vertical: 31% mostra rosto e corpete. */
+  object-position: center 31%;
   will-change: transform;
 }
 
