@@ -1,4 +1,6 @@
 import "server-only";
+import { DEFAULT_PRICING, type DeliveryPricing } from "@/lib/delivery";
+import { getSetting } from "./settings";
 import { asc, eq } from "drizzle-orm";
 import { cache } from "react";
 import type { CheckoutOptionsDTO, DeliveryZoneDTO, Locale, OccasionTileDTO, StoreDTO } from "@/types";
@@ -82,10 +84,11 @@ export async function enabledPaymentMethods() {
 }
 
 export async function getCheckoutOptions(locale: Locale): Promise<CheckoutOptionsDTO> {
-  const [methods, allStores, zones] = await Promise.all([
+  const [methods, allStores, zones, pricing] = await Promise.all([
     enabledPaymentMethods(),
     listStores(locale),
     listDeliveryZones(locale),
+    getSetting<DeliveryPricing>("delivery.pricing", DEFAULT_PRICING),
   ]);
-  return { methods, pickupStores: allStores, zones };
+  return { methods, pickupStores: allStores, zones, pricing };
 }

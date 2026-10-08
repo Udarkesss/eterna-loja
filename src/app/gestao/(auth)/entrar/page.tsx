@@ -17,7 +17,7 @@ export default async function StaffSignInPage({ searchParams }: { searchParams: 
   const firstSetup = await needsFirstAdmin();
   const staff = await currentStaff();
   const { primeiro } = await searchParams;
-  if (staff && staff.status !== "temp_password") redirect(staff.roleKey === "entregador" ? "/gestao/sem-acesso" : "/gestao");
+  if (staff && staff.status !== "temp_password") redirect(staff.roleKey === "entregador" ? "/gestao/entregador" : "/gestao");
 
   return (
     <main className={styles.page}>

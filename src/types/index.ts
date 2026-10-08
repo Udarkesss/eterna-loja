@@ -207,6 +207,8 @@ export interface CheckoutOptionsDTO {
   methods: PaymentMethod[]; // EN: enabled only. PT: só os activos.
   pickupStores: StoreDTO[];
   zones: DeliveryZoneDTO[];
+  /** EN: How the delivery fee is calculated (Gestão · Entregas). PT: Como se calcula o preço da entrega. */
+  pricing: { mode: "fixed" | "zone" | "distance"; fixedFee: number | null; baseFee: number | null; perKm: number | null; maxFee: number | null };
 }
 
 // ── Fittings / Provas ────────────────────────────────────────────────

@@ -49,7 +49,7 @@ function fail(error: unknown, extra: AuthState = {}): AuthState {
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 
 function destination(roleKey: string) {
-  return roleKey === "entregador" ? "/gestao/sem-acesso" : "/gestao";
+  return roleKey === "entregador" ? "/gestao/entregador" : "/gestao";
 }
 
 export async function signInStaff(_: AuthState, form: FormData): Promise<AuthState> {

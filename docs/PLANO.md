@@ -10,7 +10,7 @@ Fonte da verdade / Source of truth: canvas **"Eterna — Loja Online de Luxo"**
 | **2. Conta de cliente** | Entrar ou criar conta (e-mail, WhatsApp com código), recuperar palavra-passe, área de cliente (encomendas, provas, favoritos na conta, dados, formas de entrar). Google/Facebook: botões prontos, falta a conta de programador | ✅ Feito |
 | **3. Acesso à gestão** | /gestao: entrar, primeiro acesso, bloqueio 15 min, palavra-passe temporária, A1 Utilizadores, A2 Papéis, A3 menu por papel, A4 Auditoria (+CSV), A5 Sem acesso | ✅ Feito |
 | **4. Gestão da loja** | Painel, Encomendas (lista, por cliente, detalhe, comprovativos, devoluções), Provas, Produtos (+ editor, fotos, stock por loja), Colecções, Conteúdo do site, Vídeo/parallax/ocasiões, Pagamentos e avisos, Definições, dados de exemplo | ✅ Feito |
-| **5. Entregas** | (já existe: atribuir entregador e avançar estados) · 4 Entregas, mapa e comissões; Entregador · 2 As minhas entregas, 3 Entrega/GPS/código; mapa ao vivo em "Acompanhar entrega" | ⏳ |
+| **5. Entregas** | App do entregador (/gestao/entregador: as minhas entregas, iniciar, GPS, código de 4 dígitos, ganhos), acompanhar entrega da cliente (mapa ao vivo, entregador, confirmar recepção), Gestão → Entregas (atribuir, WhatsApp ao entregador, mapa, preço fixo/zona/distância, comissões, relatório de ganhos + CSV) | ✅ Feito |
 | **6. Integrações reais** | ✅ M-Pesa (C2B + consulta de estado, `src/server/payments/mpesa.ts` — falta testar com as chaves da Eterna) · e-Mola / mKesh, cartão 3-D Secure (campos seguros do gateway), SMS/WhatsApp/e-mail, fornecedor de mapas | 🔶 |
 
 ## Decisões / Decisions

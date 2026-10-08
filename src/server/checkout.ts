@@ -21,6 +21,7 @@ import {
 } from "./orders";
 import { getPaymentGateway, type GatewayMethod } from "./payments";
 import { getSetting } from "./settings";
+import { DEFAULT_PRICING, deliveryFee, type DeliveryPricing } from "@/lib/delivery";
 
 /**
  * EN: Checkout rules, following the design's "Checkout · 6 métodos de pagamento" and
@@ -95,7 +96,10 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderStatusD
     const zones = await listDeliveryZones(locale);
     const hood = fulfillment.neighbourhood.toLowerCase();
     const zone = zones.find((z) => z.neighbourhoods.some((n) => n.toLowerCase() === hood));
-    shippingFee = zone?.fee ?? 0; // EN: fees still "[valor]" in the design. PT: taxas ainda por definir.
+    const pricing = await getSetting<DeliveryPricing>("delivery.pricing", DEFAULT_PRICING);
+    const point = fulfillment.lat != null && fulfillment.lng != null ? { lat: fulfillment.lat, lng: fulfillment.lng } : null;
+    // EN: null = value not set yet ("[valor]"): charged as 0 until Eterna sets it. PT: null = por definir: 0 até a Eterna definir.
+    shippingFee = deliveryFee(pricing, zone?.fee, point) ?? 0;
     fulfillmentFields = {
       deliveryZoneId: zone?.id ?? null,
       deliveryCity: fulfillment.city,

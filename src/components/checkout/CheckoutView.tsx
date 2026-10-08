@@ -19,6 +19,7 @@ import { methodFromMsisdn, normalizeMsisdn, OPERATOR_NAMES } from "@/lib/payment
 import { createOrderSchema, type CreateOrderInput } from "@/lib/validation";
 import type { CheckoutOptionsDTO, MobileMethod, OrderStatusDTO, PaymentMethod } from "@/types";
 import type { MapAddress, MapPoint } from "./DeliveryMap";
+import { DEFAULT_PRICING, deliveryFee } from "@/lib/delivery";
 import styles from "./Checkout.module.css";
 
 const DeliveryMap = dynamic(() => import("./DeliveryMap").then((m) => m.DeliveryMap), { ssr: false });
@@ -98,7 +99,7 @@ export function CheckoutView() {
   const [secondsLeft, setSecondsLeft] = useState(0);
 
   useEffect(() => {
-    api.checkoutOptions(locale).then(setOptions).catch(() => setOptions({ methods: [], pickupStores: [], zones: [] }));
+    api.checkoutOptions(locale).then(setOptions).catch(() => setOptions({ methods: [], pickupStores: [], zones: [], pricing: DEFAULT_PRICING }));
   }, [locale]);
 
   // ── Totals / Totais ──
@@ -111,10 +112,14 @@ export function CheckoutView() {
     delivery === "delivery"
       ? options?.zones.find((z) => z.neighbourhoods.some((n) => n.toLowerCase() === neighbourhood.trim().toLowerCase()))
       : undefined;
-  const fee = delivery === "pickup" ? 0 : (zone?.fee ?? 0);
+  // EN: Same rule as the server (src/lib/delivery.ts). PT: A mesma regra do servidor.
+  const pricing = options?.pricing ?? DEFAULT_PRICING;
+  const feeValue = delivery === "pickup" ? 0 : deliveryFee(pricing, zone?.fee, point);
+  const fee = feeValue ?? 0;
   const total = subtotal + fee;
   const totalLabel = formatMZN(order?.total ?? total, locale);
-  const shipLabel = delivery === "pickup" ? c.free : zone ? (zone.fee != null ? formatMZN(zone.fee, locale) : c.feeToSet) : c.byZone;
+  const known = delivery === "pickup" || pricing.mode !== "zone" || !!zone;
+  const shipLabel = delivery === "pickup" ? c.free : !known ? c.byZone : feeValue != null ? formatMZN(feeValue, locale) : c.feeToSet;
 
   // ── Phone checks (design) / Verificação do número ──
   const digits = phone.replace(/\D/g, "");
@@ -377,7 +382,7 @@ export function CheckoutView() {
                           <RichText
                             text={t(c.zoneLine, {
                               zone: zone.name,
-                              fee: zone.fee != null ? formatMZN(zone.fee, locale) : c.feeToSet,
+                              fee: feeValue != null ? formatMZN(feeValue, locale) : c.feeToSet,
                               eta: zone.eta,
                             })}
                           />

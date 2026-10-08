@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PageBody, PageHead } from "@/components/layout/PageHead";
 import { OrderAutoRefresh } from "@/components/checkout/OrderAutoRefresh";
+import { OrderTracking } from "@/components/delivery/OrderTracking";
 import { Icon } from "@/components/ui/Icon";
 import { getDictionary, t } from "@/i18n";
 import { resolveLocale } from "@/i18n/params";
 import { formatMZN } from "@/lib/format";
 import { getOrderStatus } from "@/server/checkout";
+import { trackingFor } from "@/server/delivery";
 import { findOrder } from "@/server/orders";
 import type { FulfillmentStatus } from "@/types";
 import styles from "./order.module.css";
@@ -20,9 +22,9 @@ const DELIVERY_STEPS: FulfillmentStatus[] = ["pending", "assigned", "in_transit"
 
 /**
  * EN: Order tracking ("Telemóvel · Acompanhar entrega"). The link uses the order's unguessable id.
- *     Driver details and the live map arrive with phase 5 (deliveries).
+ *     Once a driver is assigned: driver card, live map while in transit and "Confirmo que recebi".
  * PT: Acompanhar a encomenda. O endereço usa o id impossível de adivinhar da encomenda.
- *     Os dados do entregador e o mapa ao vivo chegam com a fase 5 (entregas).
+ *     Com entregador atribuído: cartão do entregador, mapa ao vivo em trânsito e "Confirmo que recebi".
  */
 export default async function OrderPage({ params }: Props) {
   const locale = await resolveLocale(params);
@@ -63,7 +65,11 @@ export default async function OrderPage({ params }: Props) {
               <span className={styles.codeValue}>{order.deliveryCode}</span>
               <span className={styles.hint}>{dict.order.receptionHint}</span>
             </section>
-            <p>{dict.order.driverSoon}</p>
+            {order.driverId ? (
+              <OrderTracking orderId={order.id} number={order.number} initial={await trackingFor(order)} />
+            ) : (
+              <p>{dict.order.driverSoon}</p>
+            )}
             <div className={styles.address}>
               <Icon name="pin" size={18} />
               <span>

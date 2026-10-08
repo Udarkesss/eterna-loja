@@ -414,6 +414,12 @@ export const orders = pgTable(
     deliveryLng: doublePrecision("delivery_lng"),
     deliveryCode: text("delivery_code"), // EN: 4 digits for the driver. PT: 4 dígitos para o entregador.
     driverId: uuid("driver_id").references(() => staffUsers.id, { onDelete: "set null" }),
+    // EN: Delivery timeline (phase 5). PT: Cronologia da entrega (fase 5).
+    deliveryStartedAt: timestamp("delivery_started_at", { withTimezone: true }),
+    deliveryEtaAt: timestamp("delivery_eta_at", { withTimezone: true }),
+    deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+    deliveryConfirmedAt: timestamp("delivery_confirmed_at", { withTimezone: true }),
+    deliveredWithCode: boolean("delivered_with_code"),
     internalNotes: text("internal_notes"),
     isDemo: boolean("is_demo").notNull().default(false),
     ...timestamps,

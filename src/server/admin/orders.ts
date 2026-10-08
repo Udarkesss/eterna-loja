@@ -3,7 +3,9 @@ import { and, asc, desc, eq, gte, inArray, lt } from "drizzle-orm";
 import { maskMsisdn } from "@/lib/payments/msisdn";
 import { fromMaputo } from "@/lib/time";
 import type { FulfillmentStatus, PaymentMethod, PaymentStatus } from "@/types";
+import { site } from "@/data/site";
 import { audit } from "../audit";
+import { sendMessage } from "../messaging";
 import { getOrderStatus } from "../checkout";
 import { getDb } from "../db";
 import { customers, orderEvents, orderLines, orders, products, refunds, staffUsers, stores } from "../db/schema";
@@ -178,7 +180,10 @@ export async function setFulfillment(staff: StaffContext, id: string, status: Fu
   if (order.paymentStatus !== "paid" && !(order.paymentMethod === "cod" && order.paymentStatus === "pending")) {
     throw new AppError("VALIDATION_ERROR", "Payment not confirmed", 400);
   }
-  await updateOrder(id, { fulfillmentStatus: status }, { type: status, detail: undefined });
+  // EN: Keep the delivery timeline when the team moves it by hand. PT: Manter a cronologia quando a equipa avança à mão.
+  const stamps =
+    status === "in_transit" ? { deliveryStartedAt: new Date() } : status === "delivered" ? { deliveredAt: new Date(), deliveredWithCode: false } : {};
+  await updateOrder(id, { fulfillmentStatus: status, ...stamps }, { type: status, detail: undefined });
   await audit({ actor: actor(staff), action: `Encomenda: ${FULFILLMENT_LABEL[status].toLowerCase()}`, detail: order.number });
   // TODO (fase 6): SMS à cliente ("Pronta para levantamento").
 }
@@ -274,5 +279,9 @@ export async function assignDriver(staff: StaffContext, id: string, driverId: st
     { driverId: driver?.id ?? null, fulfillmentStatus: driver ? "assigned" : "pending" },
     { type: "assigned", detail: driver?.name ?? "—" },
   );
+  if (driver?.phone) {
+    // EN: Design: "Nova entrega atribuída · Enviámos também para o seu WhatsApp". PT: Aviso ao entregador.
+    await sendMessage("whatsapp", driver.phone, `Eterna: nova entrega atribuída · ${order.number}. Abra: ${site.url}/gestao/entregador/${order.id}`);
+  }
   await audit({ actor: actor(staff), action: "Entregador atribuído", detail: `${order.number} → ${driver?.name ?? "—"}` });
 }

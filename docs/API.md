@@ -35,6 +35,8 @@ Types: `src/types/index.ts` · Typed client / Cliente tipado: `src/lib/api-clien
 | GET | `/orders/:id` | `OrderStatusDTO`. While pending, also asks the provider; after the time limit → `expired` |
 | POST | `/orders/:id/cancel` | "Cancelar e mudar de método": releases the reserved pieces |
 | POST | `/orders/:id/proof` | Bank transfer proof — `multipart/form-data`, field `file`, photo or PDF ≤ 5 MB |
+| GET | `/orders/:id/tracking` | Delivery tracking: driver, vehicle, expected arrival, position (only in transit) |
+| POST | `/orders/:id/confirm-receipt` | "Confirmo que recebi" — after the driver delivered without the code |
 | POST | `/newsletter` | `{ email, locale }` — footer "Receba as novidades" |
 
 ```json

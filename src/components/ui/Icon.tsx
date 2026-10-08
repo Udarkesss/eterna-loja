@@ -172,6 +172,15 @@ const icons = {
   ),
   refresh: <path d="M19.5 8.5A8 8 0 0 0 5 7M4.5 15.5A8 8 0 0 0 19 17M19.5 4v4.5H15M4.5 20v-4.5H9" />,
   logout: <path d="M14 4.5H5.5v15H14M10 12h10.5M17 8.5l3.5 3.5-3.5 3.5" />,
+  // EN: Deliveries. PT: Entregas.
+  navigate: <path d="M3 11l18-8-8 18-2-8z" />,
+  phone: <path d="M5 4.5h4l1.5 4-2.5 1.5a11 11 0 0 0 6 6l1.5-2.5 4 1.5v4a1.5 1.5 0 0 1-1.5 1.5A16.5 16.5 0 0 1 3.5 6 1.5 1.5 0 0 1 5 4.5z" />,
+  camera: (
+    <>
+      <path d="M4 8h3l2-2.5h6L17 8h3v11H4z" />
+      <circle cx="12" cy="13" r="3.5" />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof icons;

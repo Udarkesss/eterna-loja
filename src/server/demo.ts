@@ -1,5 +1,6 @@
 import "server-only";
 import { and, eq, inArray, like, sql } from "drizzle-orm";
+import { STORE_ORIGIN } from "@/lib/delivery";
 import { addDays, fromMaputo, mondayOf, todayMaputo } from "@/lib/time";
 import type { FittingKind, PaymentMethod, PaymentStatus, FulfillmentStatus } from "@/types";
 import { hashPassword, randomToken } from "./auth/crypto";
@@ -8,6 +9,7 @@ import {
   auditLogs,
   customerIdentities,
   customers,
+  driverLocations,
   fittings,
   orderEvents,
   orderLines,
@@ -125,6 +127,13 @@ export async function loadDemoData() {
   const pick = (code: string) => vs.find((x) => x.code === code) ?? vs[0];
   const ago = (min: number) => new Date(Date.now() - min * 60_000);
 
+  // EN: Real Maputo spots for the demo deliveries. PT: Locais reais de Maputo para as entregas de exemplo.
+  const PLACES = {
+    sommerschield: { hood: "Sommerschield", address: "Av. Julius Nyerere, 1234", lat: -25.9563, lng: 32.5987 },
+    polana: { hood: "Polana Cimento", address: "Av. 24 de Julho, 900", lat: -25.9686, lng: 32.5974 },
+    coop: { hood: "Coop", address: "Rua de Tchamba, 45", lat: -25.9561, lng: 32.5803 },
+    altoMae: { hood: "Alto-Maé", address: "Av. Guerra Popular, 1520", lat: -25.9656, lng: 32.5692 },
+  };
   const plan: {
     who: number;
     codes: string[];
@@ -136,15 +145,19 @@ export async function loadDemoData() {
     at: Date;
     driver?: boolean;
     proof?: boolean;
+    place?: { hood: string; address: string; lat: number; lng: number };
+    doneAgo?: number; // EN: minutes since delivered. PT: minutos desde a entrega.
   }[] = [
     { who: 0, codes: ["8G1L7", "8G106"], method: "mpesa", pay: "paid", type: "pickup", store: s02, ful: "pending", at: ago(40) },
-    { who: 1, codes: ["7G272"], method: "emola", pay: "pending", type: "delivery", ful: "pending", at: ago(22) },
+    { who: 1, codes: ["7G272"], method: "emola", pay: "pending", type: "delivery", ful: "pending", at: ago(22), place: PLACES.polana },
     { who: 2, codes: ["M164"], method: "mpesa", pay: "failed", type: "pickup", store: s02, ful: "cancelled", at: ago(95) },
-    { who: 3, codes: ["9J253"], method: "transfer", pay: "pending", type: "delivery", ful: "pending", at: ago(180), proof: true },
+    { who: 3, codes: ["9J253"], method: "transfer", pay: "pending", type: "delivery", ful: "pending", at: ago(180), proof: true, place: PLACES.coop },
     { who: 4, codes: ["4G158"], method: "mpesa", pay: "expired", type: "pickup", store: s02, ful: "cancelled", at: ago(300) },
-    { who: 5, codes: ["8G106"], method: "cod", pay: "pending", type: "delivery", ful: "in_transit", at: ago(150), driver: true },
+    { who: 5, codes: ["8G106"], method: "cod", pay: "pending", type: "delivery", ful: "in_transit", at: ago(150), driver: true, place: PLACES.altoMae },
+    { who: 2, codes: ["8G1L7"], method: "card", pay: "paid", type: "delivery", ful: "assigned", at: ago(70), driver: true, place: PLACES.sommerschield },
+    { who: 4, codes: ["M164"], method: "emola", pay: "paid", type: "delivery", ful: "confirmed", at: ago(300), driver: true, place: PLACES.coop, doneAgo: 180 },
     { who: 0, codes: ["9J253"], method: "card", pay: "paid", type: "pickup", store: s22, ful: "collected", at: ago(60 * 24 * 40) },
-    { who: 3, codes: ["7G272"], method: "mpesa", pay: "paid", type: "delivery", ful: "delivered", at: ago(60 * 24 * 12), driver: true },
+    { who: 3, codes: ["7G272"], method: "mpesa", pay: "paid", type: "delivery", ful: "confirmed", at: ago(60 * 24 * 2), driver: true, place: PLACES.polana, doneAgo: 60 * 24 * 2 - 60 },
     { who: 1, codes: ["M164"], method: "mkesh", pay: "paid", type: "pickup", store: s02, ful: "ready", at: ago(60 * 26) },
   ];
   // EN: A small sample PDF as the demo transfer proof. PT: Um PDF pequeno como comprovativo de exemplo.
@@ -184,8 +197,8 @@ export async function loadDemoData() {
         locale: "pt",
         contact: { name: person.name, phone: person.phone, ...(person.email ? { email: person.email } : {}) },
         subtotal,
-        shippingFee: 0,
-        total: subtotal,
+        shippingFee: o.type === "delivery" ? 300 : 0,
+        total: subtotal + (o.type === "delivery" ? 300 : 0),
         paymentMethod: o.method,
         paymentStatus: o.pay,
         paymentReference: mobile || o.method === "card" ? `DEMO-${randomToken(6)}` : null,
@@ -196,11 +209,18 @@ export async function loadDemoData() {
         fulfillmentType: o.type,
         fulfillmentStatus: o.ful,
         pickupStoreId: o.store?.id ?? null,
-        deliveryCity: o.type === "delivery" ? "Maputo" : null,
-        deliveryNeighbourhood: o.type === "delivery" ? "Sommerschield" : null,
-        deliveryAddress: o.type === "delivery" ? "Av. Julius Nyerere, 1234" : null,
+        deliveryCity: o.place ? "Maputo" : null,
+        deliveryNeighbourhood: o.place?.hood ?? null,
+        deliveryAddress: o.place?.address ?? null,
+        deliveryLat: o.place?.lat ?? null,
+        deliveryLng: o.place?.lng ?? null,
         deliveryCode: o.type === "delivery" ? "4821" : null,
         driverId: o.driver ? staffIds["demo.entregador"] : null,
+        deliveryStartedAt: o.ful === "in_transit" || o.doneAgo ? ago((o.doneAgo ?? 0) + 25) : null,
+        deliveryEtaAt: o.ful === "in_transit" ? new Date(Date.now() + 20 * 60_000) : null,
+        deliveredAt: o.doneAgo ? ago(o.doneAgo) : null,
+        deliveryConfirmedAt: o.ful === "confirmed" && o.doneAgo ? ago(o.doneAgo) : null,
+        deliveredWithCode: o.ful === "confirmed" ? true : null,
         isDemo: true,
         createdAt: o.at,
       })
@@ -224,8 +244,22 @@ export async function loadDemoData() {
     const events = ["created", ...(o.method !== "transfer" && o.method !== "cod" ? ["payment_requested"] : []), ...(o.proof ? ["transfer_proof"] : []), ...(o.pay !== "pending" ? [`payment_${o.pay}`] : [])];
     if (o.ful === "ready" || o.ful === "collected") events.push("ready");
     if (o.ful === "collected") events.push("collected");
-    if (o.driver) events.push("assigned", "in_transit");
-    if (o.ful === "delivered") events.push("delivered");
+    if (o.driver) events.push("assigned");
+    if (o.ful === "in_transit" || o.doneAgo) events.push("in_transit");
+    if (o.doneAgo) events.push("delivered", "confirmed");
+    // EN: A few GPS points on the way from Glória Mall. PT: Alguns pontos GPS a caminho desde o Glória Mall.
+    if (o.ful === "in_transit" && o.place) {
+      const steps = [0.25, 0.5, 0.7];
+      await db.insert(driverLocations).values(
+        steps.map((k, i) => ({
+          driverId: staffIds["demo.entregador"],
+          orderId: order.id,
+          lat: STORE_ORIGIN.lat + (o.place!.lat - STORE_ORIGIN.lat) * k,
+          lng: STORE_ORIGIN.lng + (o.place!.lng - STORE_ORIGIN.lng) * k,
+          at: ago(12 - i * 5),
+        })),
+      );
+    }
     await db.insert(orderEvents).values(events.map((type, i) => ({ orderId: order.id, type, at: new Date(o.at.getTime() + i * 60_000) })));
   }
 
