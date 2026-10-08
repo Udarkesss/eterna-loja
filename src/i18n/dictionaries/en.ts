@@ -145,6 +145,8 @@ export const en: Dictionary = {
     whereDeliver: "Where do we deliver?",
     searchPlaceholder: "Street, neighbourhood or landmark",
     myLocation: "My location",
+    locating: "Locating…",
+    locationDenied: "We couldn't get your location. Allow it in your browser or type the address.",
     deliverHere: "Deliver here",
     dragMap: "Drag the map to adjust the pin",
     mapLabel: "Map with the delivery location",

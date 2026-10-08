@@ -18,7 +18,7 @@ import { formatMZN } from "@/lib/format";
 import { methodFromMsisdn, normalizeMsisdn, OPERATOR_NAMES } from "@/lib/payments/msisdn";
 import { createOrderSchema, type CreateOrderInput } from "@/lib/validation";
 import type { CheckoutOptionsDTO, MobileMethod, OrderStatusDTO, PaymentMethod } from "@/types";
-import type { MapPoint } from "./DeliveryMap";
+import type { MapAddress, MapPoint } from "./DeliveryMap";
 import styles from "./Checkout.module.css";
 
 const DeliveryMap = dynamic(() => import("./DeliveryMap").then((m) => m.DeliveryMap), { ssr: false });
@@ -70,6 +70,22 @@ export function CheckoutView() {
   const [city, setCity] = useState(c.cities[0]);
   const [neighbourhood, setNeighbourhood] = useState("");
   const [address, setAddress] = useState("");
+
+  /**
+   * EN: Fills city, neighbourhood and address from the map pin. The neighbourhood is matched to our delivery-zone list
+   *     ("Polana Cimento A" → "Polana Cimento") so the zone and fee appear at once. The customer can still edit everything.
+   * PT: Preenche cidade, bairro e morada a partir do pino. O bairro é ligado à lista das zonas de entrega para a zona e o
+   *     preço aparecerem logo. A cliente pode sempre corrigir.
+   */
+  function fillFromMap(found: MapAddress) {
+    const known = (options?.zones ?? []).flatMap((z) => z.neighbourhoods);
+    const name = found.neighbourhood.toLowerCase();
+    const match = known.find((n) => name === n.toLowerCase() || name.startsWith(n.toLowerCase()) || n.toLowerCase().startsWith(name));
+    if (found.neighbourhood) setNeighbourhood(match ?? found.neighbourhood);
+    if (found.street) setAddress(found.street);
+    const cityMatch = c.cities.slice(0, -1).find((x) => found.city.toLowerCase().includes(x.toLowerCase()));
+    if (found.city) setCity(cityMatch ?? c.cities[c.cities.length - 1]);
+  }
   const [point, setPoint] = useState<MapPoint | null>(null);
   const [method, setMethod] = useState<PaymentMethod | null>(null);
   const [phone, setPhone] = useState("");
@@ -353,7 +369,7 @@ export function CheckoutView() {
 
                 {delivery === "delivery" && (
                   <>
-                    <DeliveryMap onChange={setPoint} />
+                    <DeliveryMap onChange={setPoint} onAddress={fillFromMap} />
                     <div className={`${styles.zone} ${zone ? styles.zoneOk : styles.zoneUnknown}`}>
                       <Icon name={zone ? "check" : "pin"} size={18} />
                       <span className={styles.grow}>

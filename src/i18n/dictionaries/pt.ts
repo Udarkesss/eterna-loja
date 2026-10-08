@@ -148,6 +148,8 @@ export const pt = {
     whereDeliver: "Onde entregamos?",
     searchPlaceholder: "Rua, bairro ou ponto de referência",
     myLocation: "A minha localização",
+    locating: "A localizar…",
+    locationDenied: "Não conseguimos a sua localização. Autorize-a no browser ou escreva a morada.",
     deliverHere: "Entregar aqui",
     dragMap: "Arraste o mapa para acertar o pino",
     mapLabel: "Mapa com o local de entrega",
