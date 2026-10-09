@@ -13,3 +13,6 @@ Thumbs.db
 
 # local database (PGlite) / base de dados local
 .data/
+
+# EN: Presentations and personal files, kept only on this computer. PT: Apresentações e ficheiros pessoais, só neste computador.
+Apresentacao/
