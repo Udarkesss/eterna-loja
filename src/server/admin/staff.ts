@@ -3,7 +3,7 @@ import { asc, desc, eq, inArray } from "drizzle-orm";
 import { whatsappLink } from "@/data/site";
 import { normalizeMsisdn } from "@/lib/payments/msisdn";
 import { audit } from "../audit";
-import { hashPassword, temporaryPassword } from "../auth/crypto";
+import { hashPassword, temporaryPassword, verifyPassword } from "../auth/crypto";
 import { destroyAllSessions } from "../auth/sessions";
 import { getDb } from "../db";
 import { roles, staffUsers, staffUserStores, stores } from "../db/schema";
@@ -167,6 +167,27 @@ export async function deleteStaff(me: StaffContext, id: string) {
   await audit({ actor: actor(me), action: "Utilizador apagado", detail: u.name });
 }
 
+/** EN: Normalized WhatsApp number not used by anyone else. PT: Número normalizado e livre na equipa. */
+async function freePhone(raw: string, selfId: string): Promise<string> {
+  const n = normalizeMsisdn(raw);
+  if (!n) throw new AppError("VALIDATION_ERROR", "Número de WhatsApp inválido.", 400);
+  const db = await getDb();
+  const [taken] = await db.select({ id: staffUsers.id }).from(staffUsers).where(eq(staffUsers.phone, n));
+  if (taken && taken.id !== selfId) throw new AppError("CONFLICT", "Esse número já pertence a outra pessoa da equipa.", 409);
+  return n;
+}
+
+/** EN: Lower-case e-mail (or null) not used by anyone else. PT: E-mail (ou nada) livre na equipa. */
+async function freeEmail(raw: string | undefined, selfId: string): Promise<string | null> {
+  const e = raw?.trim().toLowerCase() || null;
+  if (!e) return null;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) throw new AppError("VALIDATION_ERROR", "E-mail inválido.", 400);
+  const db = await getDb();
+  const [taken] = await db.select({ id: staffUsers.id, name: staffUsers.name }).from(staffUsers).where(eq(staffUsers.email, e));
+  if (taken && taken.id !== selfId) throw new AppError("CONFLICT", `Esse e-mail já é usado por ${taken.name}. Cada pessoa da equipa precisa de um e-mail diferente (ou deixe vazio).`, 409);
+  return e;
+}
+
 export async function updateStaff(
   me: StaffContext,
   id: string,
@@ -176,14 +197,8 @@ export async function updateStaff(
   const db = await getDb();
   // EN: New WhatsApp number (empty = keep). It is where the person gets codes and new deliveries.
   // PT: Novo número de WhatsApp (vazio = manter). É para onde vão os códigos e as entregas novas.
-  let phone: string | undefined;
-  if (input.phone?.trim()) {
-    const n = normalizeMsisdn(input.phone);
-    if (!n) throw new AppError("VALIDATION_ERROR", "Número de WhatsApp inválido.", 400);
-    const [taken] = await db.select({ id: staffUsers.id }).from(staffUsers).where(eq(staffUsers.phone, n));
-    if (taken && taken.id !== id) throw new AppError("CONFLICT", "Esse número já pertence a outra pessoa da equipa.", 409);
-    phone = n;
-  }
+  const phone = input.phone?.trim() ? await freePhone(input.phone, id) : undefined;
+  const email = await freeEmail(input.email, id);
   const storeRows = await db.select().from(stores);
   const storeIds = storeRows.filter((s) => input.storeCodes.includes(s.code)).map((s) => s.id);
   if (me.roleKey === "gestor" && storeIds.some((sid) => !me.storeIds.includes(sid))) throw new AppError("FORBIDDEN", "NO_ACCESS", 403);
@@ -192,7 +207,7 @@ export async function updateStaff(
       .update(staffUsers)
       .set({
         name: input.name.trim() || u.name,
-        email: input.email.trim().toLowerCase() || null,
+        email,
         ...(phone ? { phone } : {}),
         ...(u.roleKey === "entregador" ? { vehicleType: input.vehicleType?.trim() || null, vehiclePlate: input.vehiclePlate?.trim().toUpperCase() || null } : {}),
       })
@@ -201,4 +216,34 @@ export async function updateStaff(
     if (storeIds.length) await tx.insert(staffUserStores).values(storeIds.map((storeId) => ({ staffUserId: id, storeId })));
   });
   await audit({ actor: actor(me), action: "Utilizador editado", detail: `${u.name} · lojas ${input.storeCodes.join(", ") || "—"}${phone ? " · WhatsApp alterado" : ""}` });
+}
+
+/**
+ * EN: The person's own profile (used by the driver app): WhatsApp, e-mail and vehicle. Changing where codes and
+ *     deliveries arrive needs the current password.
+ * PT: O próprio perfil (app do entregador): WhatsApp, e-mail e veículo. Mudar para onde chegam os códigos e as
+ *     entregas pede a palavra-passe actual.
+ */
+export async function updateOwnProfile(
+  me: StaffContext,
+  input: { phone: string; email: string; vehicleType?: string; vehiclePlate?: string; password: string },
+) {
+  const db = await getDb();
+  const [row] = await db.select().from(staffUsers).where(eq(staffUsers.id, me.id));
+  if (!row) throw new AppError("UNAUTHORIZED", "SIGN_IN_REQUIRED", 401);
+  const phone = await freePhone(input.phone, me.id);
+  const email = await freeEmail(input.email, me.id);
+  const contactChanged = phone !== row.phone || email !== row.email;
+  if (contactChanged && !(await verifyPassword(input.password, row.passwordHash))) {
+    throw new AppError("UNAUTHORIZED", "Palavra-passe errada. Escreva a palavra-passe com que entra na gestão.", 401);
+  }
+  await db
+    .update(staffUsers)
+    .set({
+      phone,
+      email,
+      ...(me.roleKey === "entregador" ? { vehicleType: input.vehicleType?.trim() || null, vehiclePlate: input.vehiclePlate?.trim().toUpperCase() || null } : {}),
+    })
+    .where(eq(staffUsers.id, me.id));
+  await audit({ actor: actor(me), action: "Perfil actualizado", detail: [phone !== row.phone && "WhatsApp alterado", email !== row.email && "e-mail alterado"].filter(Boolean).join(" · ") || "veículo" });
 }

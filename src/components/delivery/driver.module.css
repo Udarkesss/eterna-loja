@@ -364,3 +364,39 @@
   border-radius: 999px;
   background: currentColor;
 }
+
+/* EN: Profile form fields. PT: Campos do formulário de perfil. */
+.input {
+  height: 48px;
+  width: 100%;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  font: inherit;
+  font-size: 15px;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--ink);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--ink);
+}
+
+.prefix {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: normal;
+}
+
+.h2 {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 400;
+}
