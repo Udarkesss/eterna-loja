@@ -219,14 +219,14 @@ export async function updateStaff(
 }
 
 /**
- * EN: The person's own profile (used by the driver app): WhatsApp, e-mail and vehicle. Changing where codes and
- *     deliveries arrive needs the current password.
- * PT: O próprio perfil (app do entregador): WhatsApp, e-mail e veículo. Mudar para onde chegam os códigos e as
- *     entregas pede a palavra-passe actual.
+ * EN: The person's own profile (used by the driver app): WhatsApp and e-mail. The vehicle is changed only by
+ *     management (updateStaff). Changing where codes and deliveries arrive needs the current password.
+ * PT: O próprio perfil (app do entregador): WhatsApp e e-mail. O veículo só a gestão muda (updateStaff).
+ *     Mudar para onde chegam os códigos e as entregas pede a palavra-passe actual.
  */
 export async function updateOwnProfile(
   me: StaffContext,
-  input: { phone: string; email: string; vehicleType?: string; vehiclePlate?: string; password: string },
+  input: { phone: string; email: string; password: string },
 ) {
   const db = await getDb();
   const [row] = await db.select().from(staffUsers).where(eq(staffUsers.id, me.id));
@@ -239,11 +239,7 @@ export async function updateOwnProfile(
   }
   await db
     .update(staffUsers)
-    .set({
-      phone,
-      email,
-      ...(me.roleKey === "entregador" ? { vehicleType: input.vehicleType?.trim() || null, vehiclePlate: input.vehiclePlate?.trim().toUpperCase() || null } : {}),
-    })
+    .set({ phone, email })
     .where(eq(staffUsers.id, me.id));
-  await audit({ actor: actor(me), action: "Perfil actualizado", detail: [phone !== row.phone && "WhatsApp alterado", email !== row.email && "e-mail alterado"].filter(Boolean).join(" · ") || "veículo" });
+  await audit({ actor: actor(me), action: "Perfil actualizado", detail: [phone !== row.phone && "WhatsApp alterado", email !== row.email && "e-mail alterado"].filter(Boolean).join(" · ") || "sem alterações" });
 }

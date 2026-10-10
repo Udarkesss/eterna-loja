@@ -5,15 +5,17 @@ import { changePasswordAction, updateProfileAction } from "@/app/gestao/actions/
 import s from "./driver.module.css";
 
 interface Props {
-  initial: { phone: string; email: string; vehicleType: string; vehiclePlate: string };
-  isDriver: boolean;
+  initial: { phone: string; email: string };
+  vehicle: string | null;
 }
 
 /**
- * EN: Driver profile form. Changing the WhatsApp number or e-mail asks for the current password.
- * PT: Formulário do perfil. Mudar o WhatsApp ou o e-mail pede a palavra-passe actual.
+ * EN: Driver profile form. Changing the WhatsApp number or e-mail asks for the current password. The vehicle is
+ *     only shown: the store management changes it.
+ * PT: Formulário do perfil. Mudar o WhatsApp ou o e-mail pede a palavra-passe actual. O veículo só se mostra:
+ *     quem o muda é a gestão da loja.
  */
-export function DriverProfile({ initial, isDriver }: Props) {
+export function DriverProfile({ initial, vehicle }: Props) {
   const [f, setF] = useState({ ...initial, password: "" });
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pw, setPw] = useState({ current: "", password: "", repeat: "" });
@@ -58,22 +60,10 @@ export function DriverProfile({ initial, isDriver }: Props) {
           E-mail (opcional)
           <input className={s.input} type="email" autoComplete="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
         </label>
-        {isDriver && (
-          <div className={s.row21}>
-            <label className={s.label}>
-              Veículo
-              <select className={s.input} value={f.vehicleType} onChange={(e) => setF({ ...f, vehicleType: e.target.value })}>
-                <option value="">—</option>
-                <option>Mota</option>
-                <option>Carro</option>
-                <option>Bicicleta</option>
-              </select>
-            </label>
-            <label className={s.label}>
-              Matrícula
-              <input className={s.input} value={f.vehiclePlate} onChange={(e) => setF({ ...f, vehiclePlate: e.target.value })} />
-            </label>
-          </div>
+        {vehicle && (
+          <p className={s.muted}>
+            Veículo: {vehicle}. Para o mudar, fale com a gestão da loja.
+          </p>
         )}
         {contactChanged && (
           <label className={s.label}>

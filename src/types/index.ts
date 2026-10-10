@@ -187,6 +187,7 @@ export interface OrderStatusDTO {
   fulfillmentType: FulfillmentType;
   fulfillmentStatus: FulfillmentStatus;
   pickupStore: StoreSummary | null;
+  deliveryCode: string | null; // EN: reception code, deliveries only. PT: código de recepção (só entregas).
 }
 
 /** EN: One line of "As minhas encomendas". PT: Uma linha de "As minhas encomendas". */

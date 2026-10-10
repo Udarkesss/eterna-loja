@@ -53,8 +53,8 @@ export async function positionAction(orderId: string, lat: number, lng: number) 
   }
 }
 
-/** EN: The driver edits their own WhatsApp, e-mail and vehicle. PT: O entregador edita o seu WhatsApp, e-mail e veículo. */
-export async function updateProfileAction(input: { phone: string; email: string; vehicleType: string; vehiclePlate: string; password: string }): Promise<DriverResult> {
+/** EN: The driver edits their own WhatsApp and e-mail. PT: O entregador edita o seu WhatsApp e e-mail. */
+export async function updateProfileAction(input: { phone: string; email: string; password: string }): Promise<DriverResult> {
   try {
     await updateOwnProfile(await driver(), input);
     revalidatePath("/gestao/entregador", "layout");

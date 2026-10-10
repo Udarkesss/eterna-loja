@@ -901,6 +901,15 @@ function SuccessState({ order, totalLabel, hasProof }: { order: OrderStatusDTO; 
           <dt>{isPickup ? s.pickupTitle : s.deliveryTitle}</dt>
           <dd>{isPickup ? t(s.pickupNext, { store: order.pickupStore?.code ?? "02" }) : s.deliveryNext}</dd>
         </div>
+        {order.deliveryCode && (
+          <div>
+            <dt>{dict.order.receptionCode}</dt>
+            <dd className={styles.factSerif} style={{ letterSpacing: "0.3em" }}>
+              {order.deliveryCode}
+            </dd>
+            <dd>{dict.order.receptionHint}</dd>
+          </div>
+        )}
       </dl>
       <div className={styles.row}>
         <ButtonLink href={href("/")}>{s.continue}</ButtonLink>

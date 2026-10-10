@@ -139,6 +139,7 @@ export async function toOrderStatusDTO(order: OrderRow): Promise<OrderStatusDTO>
     fulfillmentType: order.fulfillmentType,
     fulfillmentStatus: order.fulfillmentStatus,
     pickupStore: store ? { code: store.code, name: store.name } : null,
+    deliveryCode: order.fulfillmentType === "delivery" ? order.deliveryCode : null,
   };
 }
 

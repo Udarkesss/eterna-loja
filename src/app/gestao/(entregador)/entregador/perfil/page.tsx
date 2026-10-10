@@ -11,8 +11,8 @@ import { requireStaffPage } from "@/server/staff/access";
 export const metadata = { title: "O meu perfil" };
 
 /**
- * EN: Driver profile: the WhatsApp number where new deliveries arrive, e-mail, vehicle and password.
- * PT: Perfil do entregador: o WhatsApp onde chegam as entregas novas, e-mail, veículo e palavra-passe.
+ * EN: Driver profile: the WhatsApp number where new deliveries arrive, e-mail and password (the vehicle is changed by management).
+ * PT: Perfil do entregador: o WhatsApp onde chegam as entregas novas, e-mail e palavra-passe (o veículo muda-o a gestão).
  */
 export default async function DriverProfilePage() {
   const me = await requireStaffPage(undefined, { allowDriver: true });
@@ -36,10 +36,8 @@ export default async function DriverProfilePage() {
         initial={{
           phone: row.phone ? formatMsisdn(row.phone) : "",
           email: row.email ?? "",
-          vehicleType: row.vehicleType ?? "",
-          vehiclePlate: row.vehiclePlate ?? "",
         }}
-        isDriver={me.roleKey === "entregador"}
+        vehicle={row.vehicleType ? [row.vehicleType, row.vehiclePlate].filter(Boolean).join(" · ") : null}
       />
     </main>
   );
