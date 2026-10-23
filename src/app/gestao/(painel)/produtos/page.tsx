@@ -29,10 +29,15 @@ export default async function ProductsPage({ searchParams }: Props) {
         title="Produtos"
         actions={
           canEdit(staff, "products.edit") && (
-            <Link href="/gestao/produtos/novo" className={s.btn}>
-              <Icon name="plus" size={16} />
-              Novo produto
-            </Link>
+            <>
+              <Link href="/gestao/produtos/importar" className={s.btnOutline}>
+                Importar do Shopify
+              </Link>
+              <Link href="/gestao/produtos/novo" className={s.btn}>
+                <Icon name="plus" size={16} />
+                Novo produto
+              </Link>
+            </>
           )
         }
       />

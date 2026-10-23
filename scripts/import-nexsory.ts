@@ -40,8 +40,8 @@ async function main() {
   console.log("── products (page 1) ──\n", JSON.stringify(firstPage, null, 2).slice(0, 6000));
 
   if (save) {
-    // TODO EN: map the Nexsory response to ImportedProduct (scripts/import/save.ts) once the shape above is known.
-    // TODO PT: mapear a resposta da Nexsory para ImportedProduct (scripts/import/save.ts) quando a forma acima for conhecida.
+    // TODO EN: map the Nexsory response to ImportItem (src/lib/import/shopify.ts) and save with src/server/import once the shape above is known.
+    // TODO PT: mapear a resposta da Nexsory para ImportItem e gravar com src/server/import quando a forma acima for conhecida.
     throw new Error("Mapping not written yet — run without --save and share the output / Mapeamento ainda por escrever");
   }
 }

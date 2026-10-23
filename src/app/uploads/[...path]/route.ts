@@ -5,13 +5,15 @@ const TYPES: Record<string, string> = { jpg: "image/jpeg", png: "image/png", web
 
 /**
  * GET /uploads/<folder>/<file>
- * EN: Public files uploaded in the back-office (product photos, site images and videos). Names are random UUIDs.
- * PT: Ficheiros públicos carregados na gestão (fotos de produto, imagens e vídeos do site). Nomes são UUID aleatórios.
+ * EN: Public files uploaded in the back-office (product photos, site images and videos). Names are random UUIDs, or
+ *     "shopify-<code>-01.webp" for imported photos; no dots or slashes, so no path traversal.
+ * PT: Ficheiros públicos carregados na gestão (fotos de produto, imagens e vídeos do site). Nomes são UUID aleatórios,
+ *     ou "shopify-<código>-01.webp" nas fotos importadas; sem pontos nem barras, por isso sem fugir da pasta.
  * EN: Only used locally; online the files live in Vercel Blob. PT: Só em local; online ficam no Vercel Blob.
  */
 export async function GET(_: Request, { params }: { params: Promise<{ path: string[] }> }) {
   const parts = (await params).path;
-  if (parts.length !== 2 || !["products", "content"].includes(parts[0]) || !/^[0-9a-f-]{36}\.(jpg|png|webp|mp4)$/.test(parts[1])) {
+  if (parts.length !== 2 || !["products", "content"].includes(parts[0]) || !/^[a-z0-9][a-z0-9-]*\.(jpg|png|webp|mp4)$/.test(parts[1])) {
     return new NextResponse("Not found", { status: 404 });
   }
   try {
