@@ -1,6 +1,7 @@
 import { categoryTree, type CategorySeed } from "@/data/catalog";
 import type { ColorFamily, Localized, ProductColor } from "@/types";
 import { parseCsv } from "./csv";
+import { englishDescription } from "./shopify-en";
 
 /**
  * EN: Shopify product export (Produtos → Exportar → CSV) → Eterna products. Pure code: runs in the browser to show
@@ -428,14 +429,15 @@ export function readShopifyExport(csvText: string): ImportReport {
 
     const colors = [...colorsByKey.values()];
     const text = htmlToText(head["Body (HTML)"]);
+    const name = buildName(type, bridal, text, colors);
     if (!price) warnings.push("Sem preço (fica em rascunho)");
 
     items.push({
       sourceId: `shopify:${handle}`,
       code,
-      name: buildName(type, bridal, text, colors),
-      // EN: Shopify has Portuguese only; English is reviewed in the editor. PT: O Shopify só tem português.
-      description: { pt: text, en: text },
+      name,
+      // EN: Shopify has Portuguese only; repeated paragraphs have English (shopify-en.ts). PT: O Shopify só tem português.
+      description: { pt: text, en: englishDescription(text, name, code, colors) },
       price: compareAt > price ? compareAt : price,
       salePrice: compareAt > price ? price : null,
       type,

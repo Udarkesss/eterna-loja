@@ -14,14 +14,16 @@ import { COLOR_FAMILIES } from "@/types";
  * EN: Saves products read from a Shopify export (src/lib/import/shopify.ts). The browser sends a few products at a
  *     time, so photo downloads never hit the server time limit. Safe to repeat:
  *     - new product → created with categories, sizes (stock and store chosen in the import screen) and photos;
- *     - product already imported (same Shopify handle) or with the same reference → only price and missing sizes are
- *       updated; names, texts, status, categories and photos edited by the team are kept.
+ *     - product already imported (same Shopify handle) or with the same reference → price and missing sizes are
+ *       updated, and gaps are filled (a more specific collection, missing categories, English text still equal to the
+ *       Portuguese, photos if it has none); names, texts, status and photos edited by the team are kept.
  *     Photos are only downloaded from the Shopify CDN and the old eterna.co.mz storage (never any other address).
  * PT: Grava os produtos lidos de uma exportação do Shopify. O browser envia poucos produtos de cada vez, para as fotos
  *     nunca passarem o limite de tempo do servidor. Pode repetir-se:
  *     - produto novo → criado com categorias, tamanhos (stock e loja escolhidos no ecrã) e fotos;
- *     - produto já importado ou com a mesma referência → só se actualizam o preço e os tamanhos em falta; nomes, textos,
- *       estado, categorias e fotos editados pela equipa ficam como estão.
+ *     - produto já importado ou com a mesma referência → actualizam-se o preço e os tamanhos em falta e preenchem-se
+ *       lacunas (colecção mais específica, categorias em falta, inglês ainda igual ao português, fotos se não tiver);
+ *       nomes, textos, estado e fotos editados pela equipa ficam como estão.
  *     As fotos só se descarregam do CDN do Shopify e do armazenamento antigo do eterna.co.mz.
  */
 
@@ -98,6 +100,7 @@ export async function importShopifyBatch(staff: StaffContext, input: ImportBatch
   const mayPublish = can(staff, "products.publish");
   const slugs = [...new Set(items.flatMap((i) => [i.type, i.collection, ...i.links]).filter((s): s is string => !!s))];
   const cats = slugs.length ? await db.select({ id: categories.id, slug: categories.slug }).from(categories).where(inArray(categories.slug, slugs)) : [];
+  const generic = cats.find((c) => c.slug === "beyond-time")?.id ?? null;
   const catId = (slug: string | null) => (slug ? (cats.find((c) => c.slug === slug)?.id ?? null) : null);
 
   const out: ImportOutcome[] = [];
@@ -105,18 +108,27 @@ export async function importShopifyBatch(staff: StaffContext, input: ImportBatch
     const slug = item.code.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     try {
       const [existing] = await db
-        .select({ id: products.id, sourceId: products.sourceId })
+        .select({ id: products.id, sourceId: products.sourceId, description: products.description, collectionId: products.collectionId })
         .from(products)
         .where(or(eq(products.sourceId, item.sourceId), eq(products.code, item.code), eq(products.slug, slug)));
 
       if (existing) {
         // EN: Keep the team's work; refresh price and add sizes that are new on Shopify.
         // PT: Manter o trabalho da equipa; actualizar o preço e juntar tamanhos novos no Shopify.
+        const betterCollection = catId(item.collection);
         await db.transaction(async (tx) => {
           await tx
             .update(products)
-            .set({ price: item.price || undefined, salePrice: item.salePrice, sourceId: existing.sourceId ?? item.sourceId })
+            .set({
+              price: item.price || undefined,
+              salePrice: item.salePrice,
+              sourceId: existing.sourceId ?? item.sourceId,
+              ...(existing.description.en === existing.description.pt ? { description: { ...existing.description, en: item.description.en } } : {}),
+              ...(betterCollection && (!existing.collectionId || existing.collectionId === generic) ? { collectionId: betterCollection } : {}),
+            })
             .where(eq(products.id, existing.id));
+          const links = [...new Set([item.type, item.collection, ...item.links].map(catId).filter((x): x is string => !!x))];
+          if (links.length) await tx.insert(productCategories).values(links.map((categoryId) => ({ productId: existing.id, categoryId }))).onConflictDoNothing();
           for (const [position, v] of item.variants.entries()) {
             await tx
               .insert(productVariants)
