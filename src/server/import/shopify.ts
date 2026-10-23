@@ -1,5 +1,5 @@
 import "server-only";
-import { eq, inArray, or } from "drizzle-orm";
+import { and, eq, inArray, like, or } from "drizzle-orm";
 import sharp from "sharp";
 import { z } from "zod";
 import { audit } from "../audit";
@@ -103,14 +103,62 @@ export async function importShopifyBatch(staff: StaffContext, input: ImportBatch
   const generic = cats.find((c) => c.slug === "beyond-time")?.id ?? null;
   const catId = (slug: string | null) => (slug ? (cats.find((c) => c.slug === slug)?.id ?? null) : null);
 
+  // EN: Only pieces active on Shopify, with a price and at least one photo, go to the shop. PT: Só com preço e foto.
+  const wantPublished = (item: ImportBatch["items"][number]) => item.active && options.publishActive && mayPublish && item.price > 0;
+  const setStatus = async (id: string, publish: boolean, hasPhotos: boolean) => {
+    if (publish && hasPhotos) await db.update(products).set({ status: "published" }).where(eq(products.id, id));
+    else if (!hasPhotos) await db.update(products).set({ status: "draft" }).where(eq(products.id, id));
+  };
+
   const out: ImportOutcome[] = [];
   for (const item of items) {
     const slug = item.code.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     try {
       const [existing] = await db
-        .select({ id: products.id, sourceId: products.sourceId, description: products.description, collectionId: products.collectionId })
+        .select({ id: products.id, sourceId: products.sourceId, status: products.status, description: products.description, collectionId: products.collectionId })
         .from(products)
         .where(or(eq(products.sourceId, item.sourceId), eq(products.code, item.code), eq(products.slug, slug)));
+
+      // EN: A product that did not come from Shopify (the design's sample pieces) is replaced by the Shopify version:
+      //     texts, categories, sizes and photos. Orders keep their own copy of the line (variant links become null).
+      // PT: Um produto que não veio do Shopify (as peças de exemplo do design) é substituído pela versão do Shopify:
+      //     textos, categorias, tamanhos e fotos. As encomendas guardam a sua cópia da linha.
+      const designPhotos = existing
+        ? await db.select({ id: productImages.id }).from(productImages).where(and(eq(productImages.productId, existing.id), like(productImages.url, "/images/products/%"))).limit(1)
+        : [];
+      if (existing && (!existing.sourceId || designPhotos.length)) {
+        await db.transaction(async (tx) => {
+          await tx
+            .update(products)
+            .set({
+              name: item.name,
+              description: item.description,
+              composition: null,
+              price: item.price,
+              salePrice: item.salePrice,
+              colors: item.colors,
+              typeId: catId(item.type),
+              collectionId: catId(item.collection),
+              sourceId: item.sourceId,
+            })
+            .where(eq(products.id, existing.id));
+          await tx.delete(productCategories).where(eq(productCategories.productId, existing.id));
+          await tx.delete(productVariants).where(eq(productVariants.productId, existing.id));
+          await tx.delete(productImages).where(eq(productImages.productId, existing.id));
+          const links = [...new Set([item.type, item.collection, ...item.links].map(catId).filter((x): x is string => !!x))];
+          if (links.length) await tx.insert(productCategories).values(links.map((categoryId) => ({ productId: existing.id, categoryId })));
+          for (const [position, v] of item.variants.entries()) {
+            await tx
+              .insert(productVariants)
+              .values({ productId: existing.id, sku: v.sku, color: v.color, size: v.size, stock: options.stock, storeId: store.id, position })
+              .onConflictDoNothing({ target: productVariants.sku });
+          }
+        });
+        const photos = await savePhotos(existing.id, slug, item);
+        await setStatus(existing.id, photos > 0 && wantPublished(item), photos > 0);
+        out.push({ code: item.code, result: "updated", photos });
+        continue;
+      }
 
       if (existing) {
         // EN: Keep the team's work; refresh price and add sizes that are new on Shopify.
@@ -138,11 +186,12 @@ export async function importShopifyBatch(staff: StaffContext, input: ImportBatch
         });
         const [hasPhoto] = await db.select({ id: productImages.id }).from(productImages).where(eq(productImages.productId, existing.id)).limit(1);
         const photos = hasPhoto ? 0 : await savePhotos(existing.id, slug, item);
+        // EN: Publish drafts that are active on Shopify and have photos; never unpublish. PT: Publicar, nunca despublicar.
+        if (existing.status === "draft" && wantPublished(item) && (hasPhoto || photos > 0)) await setStatus(existing.id, true, true);
         out.push({ code: item.code, result: "updated", photos });
         continue;
       }
 
-      const status = item.active && options.publishActive && mayPublish && item.price > 0 ? "published" : "draft";
       const id = await db.transaction(async (tx) => {
         const [row] = await tx
           .insert(products)
@@ -156,7 +205,7 @@ export async function importShopifyBatch(staff: StaffContext, input: ImportBatch
             colors: item.colors,
             typeId: catId(item.type),
             collectionId: catId(item.collection),
-            status,
+            status: "draft",
             sourceId: item.sourceId,
           })
           .returning({ id: products.id });
@@ -171,6 +220,7 @@ export async function importShopifyBatch(staff: StaffContext, input: ImportBatch
         return row.id;
       });
       const photos = await savePhotos(id, slug, item);
+      if (photos > 0 && wantPublished(item)) await setStatus(id, true, true);
       out.push({ code: item.code, result: "created", photos });
     } catch (e) {
       out.push({ code: item.code, result: "failed", photos: 0, message: e instanceof Error ? e.message.slice(0, 160) : "erro" });

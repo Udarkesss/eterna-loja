@@ -178,10 +178,10 @@ export function ShopifyImport({ stores, canPublish }: Props) {
                   disabled={!canPublish}
                   onChange={(e) => setOpts({ ...opts, publishActive: e.target.checked })}
                 />
-                Publicar já os {active} produtos activos no Shopify
+                Publicar na loja os {active} produtos activos no Shopify (só os que têm foto)
               </label>
               <p className={s.hint}>
-                {canPublish ? "Sem esta opção, entram todos como rascunho para a equipa rever." : "O seu papel só importa como rascunho."}
+                {canPublish ? "Sem esta opção, entram como rascunho. As peças de exemplo do design são substituídas pelas do Shopify." : "O seu papel só importa como rascunho."}
               </p>
               <div className={s.row2}>
                 <label className={s.label}>
