@@ -10,11 +10,14 @@ import { ButtonLink } from "@/components/ui/Button";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { RichText } from "@/components/ui/RichText";
 import { whatsappLink } from "@/data/site";
-import { t } from "@/i18n";
+import { useCustomer } from "@/components/account/CustomerProvider";
+import { plural, t } from "@/i18n";
 import { useI18n } from "@/i18n/I18nProvider";
 import { ApiClientError, api } from "@/lib/api-client";
 import { cartTotal, nowLines } from "@/lib/cart";
 import { formatMZN } from "@/lib/format";
+import { MT_PER_POINT } from "@/lib/loyalty";
+import { sizeParts } from "@/lib/sizes";
 import { methodFromMsisdn, normalizeMsisdn, OPERATOR_NAMES } from "@/lib/payments/msisdn";
 import { createOrderSchema, type CreateOrderInput } from "@/lib/validation";
 import type { CheckoutOptionsDTO, MobileMethod, OrderStatusDTO, PaymentMethod } from "@/types";
@@ -68,8 +71,16 @@ export function CheckoutView() {
   const [submitting, setSubmitting] = useState(false);
 
   // ── Form state / Estado do formulário ──
+  const { customer } = useCustomer();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [terms, setTerms] = useState(false);
+  // EN: Signed in: details already filled in (design V3). PT: Com sessão, dados já preenchidos.
+  useEffect(() => {
+    if (!customer) return;
+    setName((n) => n || customer.name);
+    setEmail((e) => e || customer.email || "");
+  }, [customer]);
   // EN: Collection in store by default; home delivery only with the delivery module on. PT: Levantamento por defeito.
   const [delivery, setDelivery] = useState<"pickup" | "delivery">("pickup");
   const [storeCode, setStoreCode] = useState("02");
@@ -104,7 +115,7 @@ export function CheckoutView() {
   const [secondsLeft, setSecondsLeft] = useState(0);
 
   useEffect(() => {
-    api.checkoutOptions(locale).then(setOptions).catch(() => setOptions({ methods: [], pickupStores: [], zones: [], pricing: DEFAULT_PRICING, delivery: false }));
+    api.checkoutOptions(locale).then(setOptions).catch(() => setOptions({ methods: [], pickupStores: [], zones: [], pricing: DEFAULT_PRICING, delivery: false, level: null }));
   }, [locale]);
 
   // ── Totals / Totais ──
@@ -121,7 +132,11 @@ export function CheckoutView() {
   const pricing = options?.pricing ?? DEFAULT_PRICING;
   const feeValue = delivery === "pickup" ? 0 : deliveryFee(pricing, zone?.fee, point);
   const fee = feeValue ?? 0;
-  const total = subtotal + fee;
+  const level = options?.level ?? null;
+  const fullPrice = lines.reduce((sum, l) => (products[l.slug] && products[l.slug].salePrice == null ? sum + (priceOf(l.slug) ?? 0) * l.quantity : sum), 0);
+  const levelAmount = level ? Math.round((fullPrice * level.pct) / 100) : 0;
+  const total = subtotal - levelAmount + fee;
+  const pieces = lines.reduce((n, l) => n + l.quantity, 0);
   const totalLabel = formatMZN(order?.total ?? total, locale);
   const known = delivery === "pickup" || pricing.mode !== "zone" || !!zone;
   const shipLabel = delivery === "pickup" ? c.free : !known ? c.byZone : feeValue != null ? formatMZN(feeValue, locale) : c.feeToSet;
@@ -303,7 +318,7 @@ export function CheckoutView() {
     );
   }
 
-  const stepIndex = phase === "success" ? 3 : 2;
+  const stepIndex = phase === "success" ? 4 : 3;
   const methodName = order ? c.methods[order.paymentMethod].name : method ? c.methods[method].name : "";
 
   return (
@@ -333,6 +348,14 @@ export function CheckoutView() {
                 <legend className={styles.legend}>
                   <span className={styles.num}>1.</span> {c.contact}
                 </legend>
+                {customer && (
+                  <p className={styles.signedIn}>
+                    <Icon name="user" size={18} />
+                    <span>
+                      <RichText text={t(c.signedIn, { name: customer.name, level: level?.name ?? "" })} />
+                    </span>
+                  </p>
+                )}
                 <div className={styles.two}>
                   <label className={styles.field}>
                     {c.name}
@@ -351,7 +374,7 @@ export function CheckoutView() {
               {/* 2. Entrega */}
               <fieldset className={styles.fieldset}>
                 <legend className={styles.legend}>
-                  <span className={styles.num}>2.</span> {c.delivery}
+                  <span className={styles.num}>2.</span> {options.delivery ? c.delivery : c.pickupOnly}
                 </legend>
                 <div className={options.delivery ? styles.two : undefined}>
                   <label className={`${styles.option} ${delivery === "pickup" ? styles.optionOn : ""}`}>
@@ -657,24 +680,19 @@ export function CheckoutView() {
                     {error}
                   </p>
                 )}
-                <button type="submit" className={styles.pay} disabled={!methodReady || submitting}>
+                <label className={styles.acceptBox}>
+                  <input type="checkbox" checked={terms} onChange={() => setTerms(!terms)} />
+                  <span>
+                    <RichText text={t(c.acceptTerms, { finalSale: dict.product.finalSale })} />
+                  </span>
+                </label>
+                <button type="submit" className={styles.pay} disabled={!methodReady || !terms || submitting}>
                   {submitting ? c.sending : payLabel}
                 </button>
-                <span className={styles.terms}>
-                  {c.terms.split(/(\{terms\}|\{policy\})/).map((part, i) =>
-                    part === "{terms}" ? (
-                      <Link key={i} href={href("/info/termos")} className="underline">
-                        {c.termsLink}
-                      </Link>
-                    ) : part === "{policy}" ? (
-                      <Link key={i} href={href("/info/trocas-devolucoes")} className="underline">
-                        {c.policyLink}
-                      </Link>
-                    ) : (
-                      part
-                    ),
-                  )}
-                </span>
+                {!terms && <span className={styles.terms}>{c.acceptFirst}</span>}
+                <Link href={`${href("/como-comprar")}#trocas`} className={`${styles.terms} underline`}>
+                  {c.readTerms}
+                </Link>
               </fieldset>
             </form>
           )}
@@ -773,19 +791,22 @@ export function CheckoutView() {
                     {image && <Image src={image.url} alt={image.alt} fill sizes="72px" className={styles.cover} />}
                   </span>
                   <div className={styles.itemText}>
-                    <span className={styles.itemCode}>{product?.code ?? line.slug}</span>
-                    <span className={styles.optionSub}>{[colorName, variant?.size].filter(Boolean).join(" · ")}</span>
-                    <span className={styles.optionSub}>{t(dict.cart.qty, { n: line.quantity })}</span>
+                    <span className={styles.itemCode}>{[product?.code ?? line.slug.toUpperCase(), product?.type?.name].filter(Boolean).join(" · ")}</span>
+                    <span className={styles.optionSub}>
+                      {[colorName, variant && [sizeParts(variant.size).detail, sizeParts(variant.size).letter].filter(Boolean).join(" · "), line.quantity > 1 && t(dict.cart.qty, { n: line.quantity })]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
                   </div>
                   <span className={styles.itemPrice}>{formatMZN((priceOf(line.slug) ?? 0) * line.quantity, locale)}</span>
                 </li>
               );
             })}
           </ul>
+          <label htmlFor="cupao" className={styles.voucherLabel}>
+            {c.summary.voucher}
+          </label>
           <div className={styles.discount}>
-            <label htmlFor="cupao" className="visually-hidden">
-              {c.summary.discountCode}
-            </label>
             <input
               id="cupao"
               className={styles.discountInput}
@@ -797,13 +818,23 @@ export function CheckoutView() {
               {c.summary.apply}
             </button>
           </div>
+          {customer && <span className={styles.voucherNote}>{c.summary.voucherNote}</span>}
           <dl className={styles.totals}>
             <div>
-              <dt>{c.summary.subtotal}</dt>
+              <dt>{plural(c.summary.subtotalCount, pieces)}</dt>
               <dd>{formatMZN(subtotal, locale)}</dd>
             </div>
+            {levelAmount > 0 && level && (
+              <div className={styles.saving}>
+                <dt>
+                  <Icon name="gem" size={16} />
+                  {t(c.summary.levelDiscount, { pct: level.pct })}
+                </dt>
+                <dd>−{formatMZN(levelAmount, locale)}</dd>
+              </div>
+            )}
             <div>
-              <dt>{c.summary.delivery}</dt>
+              <dt>{delivery === "pickup" ? c.summary.pickup : c.summary.delivery}</dt>
               <dd>{shipLabel}</dd>
             </div>
             <div className={styles.grand}>
@@ -811,6 +842,12 @@ export function CheckoutView() {
               <dd>{totalLabel}</dd>
             </div>
           </dl>
+          {total >= MT_PER_POINT && (
+            <span className={styles.points}>
+              <Icon name="sparkle" size={16} />
+              {plural(c.summary.points, Math.floor((order?.total ?? total) / MT_PER_POINT))}
+            </span>
+          )}
           <ul className={styles.notes}>
             <li>
               <Icon name="lock" size={16} />

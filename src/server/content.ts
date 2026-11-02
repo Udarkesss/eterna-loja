@@ -1,5 +1,7 @@
 import "server-only";
 import { DEFAULT_PRICING, type DeliveryPricing } from "@/lib/delivery";
+import { currentCustomer } from "./accounts";
+import { customerLevel } from "./loyalty";
 import { getSetting } from "./settings";
 import { and, asc, eq } from "drizzle-orm";
 import { cache } from "react";
@@ -107,12 +109,21 @@ export const deliveryEnabled = () => getSetting<boolean>("delivery.enabled", fal
 export const cardPriceVisible = () => getSetting<boolean>("catalog.cardPrice", false);
 
 export async function getCheckoutOptions(locale: Locale): Promise<CheckoutOptionsDTO> {
-  const [methods, allStores, zones, pricing, delivery] = await Promise.all([
+  const customer = await currentCustomer();
+  const [methods, allStores, zones, pricing, delivery, level] = await Promise.all([
     enabledPaymentMethods(),
     listStores(locale),
     listDeliveryZones(locale),
     getSetting<DeliveryPricing>("delivery.pricing", DEFAULT_PRICING),
     deliveryEnabled(),
+    customer ? customerLevel(customer.id) : null,
   ]);
-  return { methods, pickupStores: allStores, zones: delivery ? zones : [], pricing, delivery };
+  return {
+    methods,
+    pickupStores: allStores,
+    zones: delivery ? zones : [],
+    pricing,
+    delivery,
+    level: level ? { key: level.key, name: level.name[locale], pct: level.pct } : null,
+  };
 }

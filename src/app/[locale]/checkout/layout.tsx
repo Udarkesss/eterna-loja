@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Icon } from "@/components/ui/Icon";
@@ -8,8 +9,8 @@ import { resolveLocale } from "@/i18n/params";
 import styles from "./checkout.module.css";
 
 /**
- * EN: The checkout has its own quiet frame in the design: "Voltar à loja" · ETERNA · "Pagamento seguro", no menu.
- * PT: O checkout tem a sua moldura calma no design: "Voltar à loja" · ETERNA · "Pagamento seguro", sem menu.
+ * EN: The checkout has its own quiet frame in design V3: "Voltar ao carrinho" · logo · "Pagamento seguro", no menu.
+ * PT: O checkout tem a sua moldura calma no V3: "Voltar ao carrinho" · logótipo · "Pagamento seguro", sem menu.
  */
 export default async function CheckoutLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
   const locale = await resolveLocale(params);
@@ -23,7 +24,7 @@ export default async function CheckoutLayout({ children, params }: { children: R
           <span className={styles.label}>{dict.checkout.backToStore}</span>
         </Link>
         <Link href={localizePath(locale)} className={styles.brand} aria-label={dict.nav.home}>
-          ETERNA
+          <Image src="/images/brand/eterna-logo.svg" alt="Eterna" width={130} height={30} unoptimized />
         </Link>
         <span className={styles.secure}>
           <Icon name="lock" size={18} />

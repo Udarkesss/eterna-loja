@@ -1087,3 +1087,71 @@
     padding: 24px;
   }
 }
+/* ── Design V3 (sessão, termos obrigatórios, voucher, desconto do nível) ── */
+.signedIn {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  background: var(--alt);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.signedIn strong {
+  font-weight: 500;
+}
+
+.acceptBox {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  background: var(--raised);
+  font-size: 14px;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.acceptBox input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--contrast);
+}
+
+.acceptBox strong {
+  font-weight: 500;
+}
+
+.voucherLabel {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.voucherNote {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.saving dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.saving dd {
+  color: var(--success);
+}
+
+.points {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--accent-ink);
+}

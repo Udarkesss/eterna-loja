@@ -234,6 +234,8 @@ export interface CheckoutOptionsDTO {
   zones: DeliveryZoneDTO[];
   /** EN: How the delivery fee is calculated (Gestão · Entregas). PT: Como se calcula o preço da entrega. */
   pricing: { mode: "fixed" | "zone" | "distance"; fixedFee: number | null; baseFee: number | null; perKm: number | null; maxFee: number | null };
+  /** EN: Signed-in customer's level and discount (pieces not on sale). PT: Nível e desconto da cliente com sessão. */
+  level: { key: string; name: string; pct: number } | null;
 }
 
 // ── Fittings / Provas ────────────────────────────────────────────────

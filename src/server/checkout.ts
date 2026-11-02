@@ -5,6 +5,7 @@ import { normalizeMsisdn } from "@/lib/payments/msisdn";
 import type { CreateOrderInput } from "@/lib/validation";
 import type { OrderStatusDTO, PaymentStatus, ProductDTO } from "@/types";
 import { currentCustomer } from "./accounts";
+import { customerLevel } from "./loyalty";
 import { effectivePrice, listProducts } from "./catalog";
 import { deliveryEnabled, enabledPaymentMethods, listDeliveryZones } from "./content";
 import { getDb } from "./db";
@@ -84,6 +85,12 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderStatusD
     };
   });
   const subtotal = lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
+  // EN: Level discount (design V3): pieces not on sale only; the larger of it and a discount code applies.
+  // PT: Desconto do nível: só peças fora de saldo; aplica-se o maior entre ele e um código de desconto.
+  const customer = await currentCustomer();
+  const level = customer ? await customerLevel(customer.id) : null;
+  const fullPrice = lines.reduce((sum, l) => (catalog.get(l.slug)?.salePrice == null ? sum + l.unitPrice * l.quantity : sum), 0);
+  const levelAmount = level ? Math.round((fullPrice * level.pct) / 100) : 0;
 
   // ── Fulfilment / Entrega ──
   let shippingFee = 0;
@@ -112,7 +119,8 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderStatusD
     };
   }
 
-  const discount = await applyDiscount(input.discountCode, subtotal);
+  const code = await applyDiscount(input.discountCode, subtotal);
+  const discount = code.amount >= levelAmount ? code : { code: null, amount: levelAmount };
   const total = subtotal - discount.amount + shippingFee;
 
   // ── Payment / Pagamento ──
@@ -126,7 +134,6 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderStatusD
       : null;
 
   // EN: Signed-in customers see the order in "As minhas encomendas". PT: Com sessão, aparece na conta.
-  const customer = await currentCustomer();
   const order = await createOrderWithReservation(
     {
       customerId: customer?.id ?? null,
