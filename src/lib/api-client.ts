@@ -13,6 +13,7 @@ import type {
   MyOrderDTO,
   OrderStatusDTO,
   ProductDTO,
+  SearchSuggestionsDTO,
 } from "@/types";
 import type { FittingRequestInput } from "./auth-schemas";
 import type { CreateOrderInput } from "./validation";
@@ -77,6 +78,9 @@ export function createApiClient(baseUrl = "") {
       if (params.isNew !== undefined) query.set("new", String(params.isNew));
       if (params.q) query.set("q", params.q);
       return request<ProductDTO[]>(`/products?${query}`);
+    },
+    searchSuggestions(q: string, locale: Locale) {
+      return request<SearchSuggestionsDTO>(`/search?${new URLSearchParams({ locale, q })}`);
     },
     getProduct(slug: string, locale: Locale) {
       return request<ProductDTO>(`/products/${encodeURIComponent(slug)}?locale=${locale}`);

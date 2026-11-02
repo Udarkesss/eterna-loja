@@ -106,6 +106,14 @@ export interface ProductDTO {
   stock: number;
 }
 
+/** EN: Suggestions while typing in the search (design V3). PT: Sugestões enquanto escreve na pesquisa (V3). */
+export interface SearchSuggestionsDTO {
+  total: number; // EN: pieces found. PT: peças encontradas.
+  places: CategorySummary[]; // EN: collections, occasions, departments. PT: colecções, ocasiões, departamentos.
+  types: (CategorySummary & { count: number })[];
+  products: { slug: string; code: string; type: string | null; price: number; salePrice: number | null; image: string | null }[];
+}
+
 // ── Stores & site / Lojas e site ─────────────────────────────────────
 export interface StoreDTO extends StoreSummary {
   location: string;

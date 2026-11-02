@@ -1,0 +1,266 @@
+/* EN: Search of design V3 ("V3-Pesquisa", "V3-M-Pesquisa"). PT: Pesquisa do design V3. */
+
+.box {
+  position: relative;
+  max-width: 760px;
+  margin: 0 0 28px;
+}
+
+/* EN: Without a search the page keeps some height, so the footer does not sit under the field.
+   PT: Sem pesquisa a página mantém alguma altura, para o rodapé não ficar colado ao campo. */
+.idle {
+  min-height: 50vh;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 60px;
+  border-bottom: 1.5px solid var(--ink);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-serif);
+  font-size: 34px;
+  color: var(--ink);
+  outline: none;
+}
+
+.input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.input::placeholder {
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.hint {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.hintBelow {
+  display: none;
+}
+
+.clear {
+  display: none;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: none;
+  color: var(--ink);
+}
+
+/* ── Suggestions / Sugestões ── */
+.drop {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 64px;
+  z-index: 10;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-lift);
+  padding: 20px 24px;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 32px;
+}
+
+.drop[hidden] {
+  display: none;
+}
+
+.drop[data-stale="true"] {
+  opacity: 0.6;
+}
+
+.none {
+  grid-column: 1 / -1;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.groups,
+.group,
+.pieces {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.groups {
+  gap: 20px;
+}
+
+.groupLabel {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.chip {
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.chip:hover {
+  color: var(--accent-ink);
+}
+
+.pieces {
+  gap: 0;
+  align-items: stretch;
+}
+
+.pieces .groupLabel {
+  margin-bottom: 6px;
+}
+
+.piece {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 13px;
+}
+
+.piece img,
+.noImage {
+  width: 40px;
+  height: 52px;
+  object-fit: cover;
+  background: var(--alt);
+}
+
+.pieceName b {
+  font-weight: 500;
+}
+
+.price {
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--accent-ink);
+}
+
+.all {
+  align-self: flex-start;
+  margin-top: 10px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ── Results title / Título dos resultados ── */
+.title {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 46px;
+}
+
+.title em {
+  font-style: italic;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 560px;
+  margin-bottom: 32px;
+}
+
+.emptyBody {
+  font-size: 16px;
+  line-height: 26px;
+  color: var(--muted);
+}
+
+@media (max-width: 767px) {
+  .box {
+    margin-bottom: 20px;
+  }
+
+  .field {
+    height: 52px;
+    gap: 10px;
+  }
+
+  .input {
+    font-size: 28px;
+  }
+
+  /* EN: On phones the hint goes under the line and the field gets a clear button. PT: No telemóvel a dica passa
+     para baixo da linha e o campo ganha um botão para limpar. */
+  .hint {
+    display: none;
+  }
+
+  .hintBelow {
+    display: block;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .clear {
+    display: inline-flex;
+  }
+
+  .drop {
+    position: static;
+    margin-top: 16px;
+    box-shadow: none;
+    padding: 16px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .group {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .group .groupLabel {
+    flex-basis: 100%;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-full);
+    text-decoration: none;
+  }
+
+  .title {
+    font-size: 28px;
+    line-height: 34px;
+  }
+}

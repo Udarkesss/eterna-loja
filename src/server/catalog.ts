@@ -1,10 +1,10 @@
 import "server-only";
-import { and, asc, desc, eq, ilike, inArray, lte, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, lte, or, sql, type SQL } from "drizzle-orm";
 import { cache } from "react";
 import { sizeParts } from "@/lib/sizes";
-import type { CategoryDTO, CategorySummary, ColorFamily, Locale, ProductDTO } from "@/types";
+import type { CategoryDTO, CategorySummary, ColorFamily, Locale, ProductDTO, SearchSuggestionsDTO } from "@/types";
 import { getDb } from "./db";
-import { categories, productCategories, products, productVariants } from "./db/schema";
+import { categories, productCategories, productImages, products, productVariants } from "./db/schema";
 
 /**
  * EN: Catalog reads. Pages and the API only use the functions here, never the tables directly,
@@ -100,6 +100,67 @@ function visibleCondition(): SQL {
   )!;
 }
 
+// ── Search / Pesquisa ────────────────────────────────────────────────
+
+// EN: Lower case without accents, in SQL and in JS, so "cerimonia" finds "Cerimónia" and "8g1" finds "8G1".
+// PT: Minúsculas sem acentos, em SQL e em JS, para "cerimonia" encontrar "Cerimónia" e "8g1" encontrar "8G1".
+const ACCENTED = "áàâãäéèêëíìîïóòôõöúùûüçÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇ";
+const PLAIN = "aaaaaeeeeiiiiooooouuuuc".repeat(2);
+const fold = (value: SQL) => sql`translate(lower(${value}), ${ACCENTED}, ${PLAIN})`;
+const foldText = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const STOP_WORDS = new Set(["a", "o", "as", "os", "e", "de", "da", "do", "das", "dos", "em", "com", "para", "the", "and", "of", "for", "with"]);
+
+/** EN: Words of a search, without small linking words, at most five. PT: Palavras de uma pesquisa, até cinco. */
+function searchWords(search: string): string[] {
+  const words = foldText(search.slice(0, 60)).split(/[\s,;/]+/).filter(Boolean);
+  const kept = words.filter((w) => !STOP_WORDS.has(w));
+  return (kept.length ? kept : words).slice(0, 5);
+}
+
+/**
+ * EN: Search of design V3 ("Código, nome, cor ou ocasião"): every word must be in the code, the name, a colour, the
+ *     type or a category of the piece (collection, occasion, department, with their sub-categories), in either
+ *     language and ignoring accents. Undefined when there is nothing to look for.
+ * PT: Pesquisa do V3: cada palavra tem de estar no código, no nome, numa cor, no tipo ou numa categoria da peça (com as
+ *     subcategorias), em qualquer idioma e sem contar acentos. Indefinido quando não há nada para procurar.
+ */
+function searchCondition(search: string, rows: CategoryRow[]): SQL | undefined {
+  const words = searchWords(search);
+  if (!words.length) return undefined;
+  const named = (r: CategoryRow) => foldText(`${r.name.pt} ${r.name.en} ${r.singular?.pt ?? ""} ${r.singular?.en ?? ""}`);
+  return and(
+    ...words.map((word) => {
+      const like = `%${word.replace(/[%_\\]/g, "\\$&")}%`;
+      const ids = [...new Set(rows.filter((r) => named(r).includes(word)).flatMap((r) => withDescendants(r.id, rows)))];
+      const idList = sql.join(
+        ids.map((id) => sql`${id}`),
+        sql`, `,
+      );
+      const inName = (lang: "pt" | "en") => sql`${fold(sql`${products.name}->>${sql.raw(`'${lang}'`)}`)} like ${like}`;
+      const inColor = sql`exists (select 1 from jsonb_array_elements(${products.colors}) c where ${fold(sql`c->'name'->>'pt'`)} like ${like} or ${fold(sql`c->'name'->>'en'`)} like ${like})`;
+      return or(
+        sql`${fold(sql`${products.code}`)} like ${like}`,
+        inName("pt"),
+        inName("en"),
+        inColor,
+        ...(ids.length
+          ? [
+              inArray(products.typeId, ids),
+              sql`exists (select 1 from product_categories pc where pc.product_id = ${products.id} and pc.category_id in (${idList}))`,
+            ]
+          : []),
+      )!;
+    }),
+  );
+}
+
+/** EN: The piece with that exact code first, then codes that start with it. PT: O código exacto primeiro. */
+function byRelevance<T extends { code: string }>(list: T[], search: string): T[] {
+  const q = foldText(search.trim());
+  const score = (p: T) => (foldText(p.code) === q ? 0 : foldText(p.code).startsWith(q) ? 1 : 2);
+  return list.map((p, i) => ({ p, i, s: score(p) })).sort((a, b) => a.s - b.s || a.i - b.i).map((x) => x.p);
+}
+
 async function queryProducts(where: SQL | undefined, sort: ProductSort = "recommended", limit?: number, offset?: number) {
   const db = await getDb();
   const orderBy =
@@ -189,15 +250,16 @@ export async function listProducts(filter: ProductFilter, locale: Locale): Promi
     conditions.push(inArray(products.slug, filter.slugs));
   }
   if (filter.isNew !== undefined) conditions.push(eq(products.isNew, filter.isNew));
-  if (filter.search) {
-    const q = `%${filter.search.trim()}%`;
-    // EN: Code or name in any language. PT: Código ou nome em qualquer idioma.
-    conditions.push(or(ilike(products.code, q), ilike(sql`${products.name}->>'pt'`, q), ilike(sql`${products.name}->>'en'`, q))!);
+  if (filter.search !== undefined) {
+    const found = searchCondition(filter.search, rows);
+    if (!found) return [];
+    conditions.push(found);
   }
 
   let list = (await queryProducts(and(...conditions), filter.sort, filter.limit, filter.offset)).map((r) =>
     toProductDTO(r, locale),
   );
+  if (filter.search && (filter.sort ?? "recommended") === "recommended") list = byRelevance(list, filter.search);
 
   // EN: Filters on jsonb/derived values are applied here. PT: Filtros sobre jsonb/valores derivados aplicados aqui.
   if (filter.colors?.length) list = list.filter((p) => p.colors.some((c) => c.family && filter.colors!.includes(c.family)));
@@ -210,13 +272,102 @@ export async function listProducts(filter: ProductFilter, locale: Locale): Promi
   return list;
 }
 
+/**
+ * EN: Suggestions while typing (design V3 "Pesquisa"): collections and occasions, piece types with how many pieces and
+ *     the first three pieces, from the same search as the results page but without loading every piece.
+ * PT: Sugestões enquanto escreve: colecções e ocasiões, tipos de peça com o número de peças e as três primeiras peças,
+ *     com a mesma pesquisa da página de resultados mas sem carregar as peças todas.
+ */
+export async function searchSuggestions(search: string, locale: Locale): Promise<SearchSuggestionsDTO> {
+  const rows = await loadCategories();
+  const where = searchCondition(search, rows);
+  if (!where) return { total: 0, places: [], types: [], products: [] };
+  const db = await getDb();
+  const found = byRelevance(
+    await db
+      .select({
+        id: products.id,
+        slug: products.slug,
+        code: products.code,
+        typeId: products.typeId,
+        collectionId: products.collectionId,
+        price: products.price,
+        salePrice: products.salePrice,
+      })
+      .from(products)
+      .where(and(visibleCondition(), where))
+      .orderBy(desc(products.isNew), desc(products.createdAt)),
+    search,
+  );
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  const ranked = (counts: Map<string, number>) => [...counts].sort((a, b) => b[1] - a[1]);
+  const add = (counts: Map<string, number>, id: string | null) => id && counts.set(id, (counts.get(id) ?? 0) + 1);
+
+  const typeCounts = new Map<string, number>();
+  for (const p of found) add(typeCounts, p.typeId);
+  const types = ranked(typeCounts)
+    .slice(0, 4)
+    .flatMap(([id, count]) => {
+      const r = byId.get(id);
+      return r ? [{ slug: r.slug, name: r.name[locale], count }] : [];
+    });
+
+  // EN: Collections and occasions of the pieces; categories named like the search come first.
+  // PT: Colecções e ocasiões das peças; as categorias com o nome pesquisado vêm primeiro.
+  const links = found.length
+    ? await db
+        .select({ productId: productCategories.productId, categoryId: productCategories.categoryId })
+        .from(productCategories)
+        .where(inArray(productCategories.productId, found.map((p) => p.id)))
+    : [];
+  const placeCounts = new Map<string, number>();
+  for (const p of found) {
+    const ids = new Set([p.collectionId, ...links.filter((l) => l.productId === p.id).map((l) => l.categoryId)]);
+    for (const id of ids) add(placeCounts, id);
+  }
+  const words = searchWords(search);
+  const named = rows.filter((r) => r.kind !== "type" && words.every((w) => foldText(`${r.name.pt} ${r.name.en}`).includes(w)));
+  const counted = ranked(placeCounts).flatMap(([id]) => {
+    const r = byId.get(id);
+    return r && (r.kind === "collection" || r.kind === "occasion") ? [r] : [];
+  });
+  const places = [...new Map([...named, ...counted].map((r) => [r.id, r])).values()]
+    .slice(0, 4)
+    .map((r) => ({ slug: r.slug, name: r.name[locale] }));
+
+  const first = found.slice(0, 3);
+  const images = first.length
+    ? await db
+        .select({ productId: productImages.productId, url: productImages.url })
+        .from(productImages)
+        .where(inArray(productImages.productId, first.map((p) => p.id)))
+        .orderBy(asc(productImages.position))
+    : [];
+
+  return {
+    total: found.length,
+    places,
+    types,
+    products: first.map((p) => {
+      const type = p.typeId ? byId.get(p.typeId) : undefined;
+      return {
+        slug: p.slug,
+        code: p.code,
+        type: type ? (type.singular ?? type.name)[locale] : null,
+        price: p.price,
+        salePrice: p.salePrice,
+        image: images.find((i) => i.productId === p.id)?.url ?? null,
+      };
+    }),
+  };
+}
+
 /** EN: Slugs are lower-case codes; "8G1L7" and "8g1l7" find the same product. PT: O mesmo produto nos dois casos. */
 export async function findProduct(slug: string, locale: Locale): Promise<ProductDTO | null> {
   const [row] = await queryProducts(and(eq(products.slug, slug.toLowerCase()), visibleCondition()), "recommended", 1);
   return row ? toProductDTO(row, locale) : null;
 }
 
-/** EN: "Também pode gostar": same occasion first, then the rest. PT: Mesma ocasião primeiro. */
 /**
  * EN: "Complete o look" (design V3): other pieces of the same line (the type's group), same collection first and other
  *     types before the same type, so the suggestions complete the outfit.

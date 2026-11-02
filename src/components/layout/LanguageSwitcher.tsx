@@ -1,18 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LOCALE_COOKIE, LOCALE_NAMES, LOCALES, type Locale } from "@/i18n/config";
 import { useI18n } from "@/i18n/I18nProvider";
 import styles from "./LanguageSwitcher.module.css";
 
 /**
- * EN: PT | EN switch. Keeps the visitor on the same page and remembers the choice in a cookie.
- * PT: Troca PT | EN. Mantém a visitante na mesma página e guarda a escolha num cookie.
+ * EN: PT | EN switch. Keeps the visitor on the same page, with the same search and filters (?q=, ?size=…), and
+ *     remembers the choice in a cookie.
+ * PT: Troca PT | EN. Mantém a visitante na mesma página, com a mesma pesquisa e filtros, e guarda a escolha num cookie.
  */
 export function LanguageSwitcher() {
   const { locale, dict } = useI18n();
   const pathname = usePathname();
+  const router = useRouter();
 
   function pathFor(target: Locale) {
     const parts = pathname.split("/");
@@ -36,7 +38,12 @@ export function LanguageSwitcher() {
               aria-current={l === locale ? "true" : undefined}
               aria-label={LOCALE_NAMES[l]}
               className={styles.link}
-              onClick={() => remember(l)}
+              onClick={(e) => {
+                remember(l);
+                if (!window.location.search) return;
+                e.preventDefault();
+                router.push(pathFor(l) + window.location.search);
+              }}
             >
               {l.toUpperCase()}
             </Link>
