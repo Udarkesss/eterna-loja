@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { HeroSlides, HeroV3, type HeroSlide, type HeroV3Data } from "@/components/home/HomeInteractive";
 import { Acessorios, Colecao, Contactos, Entrada, Modeladores, Noivas, Novidades, Ocasioes, Sobre } from "@/components/home/HomeV3";
 import { Parallax } from "@/components/home/Parallax";
+import { ScrollEffects } from "@/components/layout/Effects";
 import { SiteFooter } from "@/components/layout/Footer";
 import { resolveLocale } from "@/i18n/params";
 import { findCategory, listProducts } from "@/server/catalog";
@@ -27,7 +28,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     typeof colecao?.collection === "string" ? findCategory(colecao.collection, locale) : Promise.resolve(null),
     cardPriceVisible(),
   ]);
-  const hero = data("hero") as (HeroV3Data & { parallax?: boolean; parallaxIntensity?: number }) | undefined;
+  const hero = data("hero") as (HeroV3Data & { parallax?: boolean; parallaxIntensity?: number; progress?: boolean; reveal?: boolean }) | undefined;
   // EN: "Slides" or "Vídeo", chosen in Gestão; slides switched off are left out. PT: Slides desligados ficam de fora.
   const heroView = (d: HeroV3Data & { media?: string; slides?: HeroSlide[]; slidesAuto?: boolean }) => {
     const slides = (d.slides ?? []).filter((s) => s.on && s.image);
@@ -52,8 +53,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   return (
     <>
       <Parallax enabled={hero?.parallax ?? true} intensity={hero?.parallaxIntensity ?? 0.25} />
-      {sections.map((s) => (
-        <div key={s.key}>{render[s.key]?.(s.data)}</div>
+      <ScrollEffects progress={hero?.progress !== false} reveal={hero?.reveal !== false} />
+      {sections.map((s, i) => (
+        <div key={s.key} data-reveal={i > 0 ? "" : undefined}>
+          {render[s.key]?.(s.data)}
+        </div>
       ))}
       <SiteFooter locale={locale} />
     </>

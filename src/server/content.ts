@@ -1,7 +1,7 @@
 import "server-only";
 import { DEFAULT_PRICING, type DeliveryPricing } from "@/lib/delivery";
 import { getSetting } from "./settings";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { cache } from "react";
 import type { CheckoutOptionsDTO, DeliveryZoneDTO, Locale, OccasionTileDTO, StoreDTO } from "@/types";
 import { getDb } from "./db";
@@ -42,6 +42,17 @@ export const getPageSections = cache(async (page: string, locale: Locale): Promi
     .orderBy(asc(contentSections.position));
   return rows.filter((r) => r.visible).map((r) => ({ key: r.key, data: resolveLocalized(r.data, locale) }));
 });
+
+/**
+ * EN: Scroll effects chosen in Gestão → Conteúdo → Imagem principal (kept with the hero data; all on by default).
+ * PT: Efeitos de scroll escolhidos na gestão (guardados com os dados do topo; todos ligados por defeito).
+ */
+export async function getSiteEffects() {
+  const db = await getDb();
+  const [row] = await db.select({ data: contentSections.data }).from(contentSections).where(and(eq(contentSections.page, "home"), eq(contentSections.key, "hero")));
+  const d = (row?.data ?? {}) as Record<string, unknown>;
+  return { scrollbar: d.scrollbar !== false, progress: d.progress !== false, reveal: d.reveal !== false };
+}
 
 /** EN: One section's data, or null when hidden/missing. PT: Dados de uma secção, ou null se escondida. */
 export async function getSection<T>(page: string, key: string, locale: Locale): Promise<T | null> {

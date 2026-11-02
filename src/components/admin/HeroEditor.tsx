@@ -76,6 +76,9 @@ export function HeroEditor({
     loop: hero.loop !== false,
     parallax: hero.parallax !== false,
     parallaxIntensity: typeof hero.parallaxIntensity === "number" ? hero.parallaxIntensity : 0.25,
+    progress: hero.progress !== false,
+    reveal: hero.reveal !== false,
+    scrollbar: hero.scrollbar !== false,
   });
   const [tiles, setTiles] = useState(initialTiles);
   const [sel, setSel] = useState(0);
@@ -315,7 +318,22 @@ export function HeroEditor({
             <input type="range" min={0} max={100} step={5} value={pct} onChange={(e) => setHero({ parallaxIntensity: Number(e.target.value) / 200 })} />
           </label>
         )}
-        <div className={s.notice}>Quem pediu “reduzir movimento” no telemóvel ou computador vê sempre as imagens paradas, com o efeito ligado ou não.</div>
+        <fieldset className={s.fieldset}>
+          <legend className={s.legend}>Efeitos</legend>
+          <label className={s.check}>
+            <input type="checkbox" checked={h.progress} onChange={() => setHero({ progress: !h.progress })} />
+            Barra de progresso no topo (Início)
+          </label>
+          <label className={s.check}>
+            <input type="checkbox" checked={h.reveal} onChange={() => setHero({ reveal: !h.reveal })} />
+            Secções aparecem suavemente (Início)
+          </label>
+          <label className={s.check}>
+            <input type="checkbox" checked={h.scrollbar} onChange={() => setHero({ scrollbar: !h.scrollbar })} />
+            Scrollbar na cor da marca (computador, toda a loja)
+          </label>
+        </fieldset>
+        <div className={s.notice}>Quem pediu “reduzir movimento” no telemóvel ou computador vê sempre as imagens e as secções paradas, com os efeitos ligados ou não.</div>
       </section>
 
       <div className={s.split2} id="ocasioes">

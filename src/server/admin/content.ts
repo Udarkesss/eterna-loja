@@ -149,6 +149,9 @@ const heroPatchSchema = z
     loop: z.boolean(),
     parallax: z.boolean(),
     parallaxIntensity: z.number().min(0).max(0.5),
+    progress: z.boolean(),
+    reveal: z.boolean(),
+    scrollbar: z.boolean(),
     slidesAuto: z.boolean(),
     slides: z
       .array(
