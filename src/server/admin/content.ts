@@ -1,5 +1,6 @@
 import "server-only";
 import { asc, eq, and } from "drizzle-orm";
+import { z } from "zod";
 import { infoPages, legalPages } from "@/data/site";
 import type { Localized } from "@/types";
 import { audit } from "../audit";
@@ -97,7 +98,9 @@ export async function listTiles() {
 export async function listOccasionTargets() {
   const db = await getDb();
   const rows = await db.select().from(categories).orderBy(asc(categories.position));
-  return rows.filter((r) => r.kind === "occasion" || r.kind === "department" || r.kind === "collection").map((r) => ({ id: r.id, name: r.name.pt, kind: r.kind }));
+  return rows
+    .filter((r) => r.kind === "occasion" || r.kind === "department" || r.kind === "collection")
+    .map((r) => ({ id: r.id, slug: r.slug, name: r.name.pt, kind: r.kind }));
 }
 
 export interface TileSave {
@@ -130,8 +133,46 @@ export async function saveTiles(staff: StaffContext, tiles: TileSave[]) {
   await audit({ actor: actor(staff), action: "Ocasiões do Início publicadas", detail: `${tiles.length} ocasiões` });
 }
 
+const text = (max: number) => z.object({ pt: z.string().trim().max(max), en: z.string().trim().max(max) });
+const path = z.string().trim().max(500);
+
+/** EN: What the hero editor may change. PT: O que o editor do topo pode mudar. */
+const heroPatchSchema = z
+  .object({
+    media: z.enum(["video", "slides"]),
+    videoDesktop: path,
+    videoMobile: path,
+    poster: path,
+    posterMobile: path,
+    image: path,
+    autoplay: z.boolean(),
+    loop: z.boolean(),
+    parallax: z.boolean(),
+    parallaxIntensity: z.number().min(0).max(0.5),
+    slidesAuto: z.boolean(),
+    slides: z
+      .array(
+        z.object({
+          image: path.min(1, "Cada slide precisa de uma imagem."),
+          position: z.string().trim().max(40),
+          eyebrow: text(60),
+          title: text(60),
+          text: text(140),
+          cta: text(32),
+          href: z.string().trim().max(300),
+          on: z.boolean(),
+        }),
+      )
+      .max(8, "No máximo 8 slides."),
+  })
+  .partial();
+
 /** EN: Hero media + parallax live in the "hero" section data. PT: Media e parallax ficam nos dados da secção "hero". */
-export async function saveHero(staff: StaffContext, patch: Record<string, unknown>) {
+export async function saveHero(staff: StaffContext, input: Record<string, unknown>) {
+  const parsed = heroPatchSchema.safeParse(input);
+  if (!parsed.success) throw new AppError("VALIDATION_ERROR", parsed.error.issues[0]?.message ?? "Dados inválidos.", 400);
+  const patch = parsed.data;
+  if (patch.media === "slides" && !patch.slides?.some((s) => s.on)) throw new AppError("VALIDATION_ERROR", "Ligue pelo menos um slide.", 400);
   const db = await getDb();
   const [row] = await db.select().from(contentSections).where(and(eq(contentSections.page, "home"), eq(contentSections.key, "hero")));
   if (!row) throw new AppError("NOT_FOUND", "Hero section missing", 404);

@@ -92,6 +92,104 @@ export function HeroV3({ data }: { data: HeroV3Data }) {
   );
 }
 
+export interface HeroSlide {
+  image: string;
+  position: string;
+  eyebrow: string;
+  title: string;
+  text: string;
+  cta: string;
+  href: string;
+  on: boolean;
+}
+
+const SLIDE_SECONDS = 7;
+
+/**
+ * EN: Hero in "Slides" mode (design V3, chosen in Gestão): photos that fade into each other, each with overline,
+ *     title, line and button. Computer: "01 / 03", dashes and arrows bottom-right; phone: dashes across the bottom.
+ *     With "Avançar sozinho" on, it moves every 7 s and shows a pause button; never with "reduce motion".
+ * PT: Topo em modo "Slides" (V3, escolhido na gestão): fotografias que se fundem, cada uma com sobretítulo, título,
+ *     frase e botão. Computador: "01 / 03", traços e setas em baixo à direita; telemóvel: traços em toda a largura.
+ *     Com "Avançar sozinho" ligado, muda a cada 7 s e mostra pausa; nunca com "reduzir movimento".
+ */
+export function HeroSlides({ slides, auto }: { slides: HeroSlide[]; auto: boolean }) {
+  const { dict, locale } = useI18n();
+  const h = dict.home;
+  const [current, setCurrent] = useState(0);
+  const [playing, setPlaying] = useState(auto);
+  const count = slides.length;
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) setPlaying(false);
+  }, []);
+  useEffect(() => {
+    if (!playing || count < 2) return;
+    const timer = setInterval(() => setCurrent((c) => (c + 1) % count), SLIDE_SECONDS * 1000);
+    return () => clearInterval(timer);
+  }, [playing, count, current]);
+
+  return (
+    <section className={styles.slides} aria-roledescription={h.carousel} aria-label={h.highlights}>
+      {slides.map((s, i) => (
+        <div key={i} className={styles.slide} aria-hidden={i !== current} data-on={i === current} inert={i !== current}>
+          <Image src={s.image} alt="" fill priority={i === 0} sizes="100vw" style={{ objectPosition: s.position }} />
+          <span className={styles.slideScrim} aria-hidden="true" />
+          <div className={styles.slideText}>
+            {s.eyebrow && <span className={styles.eyebrowLight}>{s.eyebrow}</span>}
+            {i === 0 ? (
+              <h1 className={styles.slideTitle}>
+                <RichText text={s.title} />
+              </h1>
+            ) : (
+              <h2 className={styles.slideTitle}>
+                <RichText text={s.title} />
+              </h2>
+            )}
+            {s.text && <p className={styles.slideLine}>{s.text}</p>}
+            {s.cta && s.href && (
+              <Link href={resolveHref(s.href, locale)} className={styles.btnLight}>
+                {s.cta}
+              </Link>
+            )}
+          </div>
+        </div>
+      ))}
+      {count > 1 && (
+        <div className={styles.slideControls}>
+          <span className={styles.slideCount} aria-live="polite">
+            {pad(current + 1)} / {pad(count)}
+          </span>
+          <div className={styles.dashes}>
+            {slides.map((s, i) => (
+              <button
+                key={i}
+                type="button"
+                className={styles.dash}
+                aria-current={i === current ? "true" : undefined}
+                aria-label={`${h.slide} ${i + 1}: ${s.title.replace(/\*/g, "")}`}
+                onClick={() => setCurrent(i)}
+              />
+            ))}
+          </div>
+          {auto && (
+            <button type="button" className={styles.ctrl} aria-label={playing ? h.pauseSlides : h.playSlides} onClick={() => setPlaying(!playing)}>
+              <Icon name={playing ? "pause" : "play"} size={16} />
+            </button>
+          )}
+          <button type="button" className={`${styles.ctrl} ${styles.arrow}`} aria-label={h.prevSlide} onClick={() => setCurrent((current + count - 1) % count)}>
+            <Icon name="chevronLeft" size={18} />
+          </button>
+          <button type="button" className={`${styles.ctrl} ${styles.arrow}`} aria-label={h.nextSlide} onClick={() => setCurrent((current + 1) % count)}>
+            <Icon name="chevronRight" size={18} />
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
 /** EN: Bridal video band (parallax), pill and pause. PT: Faixa em vídeo da Bridal, cápsula e pausa. */
 export function VideoBand({ src, poster, label, pill }: { src: string; poster: string; label: string; pill: string }) {
   const { dict } = useI18n();

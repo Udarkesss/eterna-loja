@@ -53,6 +53,13 @@ export const en: Dictionary = {
     bookFittingShort: "Book a fitting",
     fittingMessage: "Hello, I would like to book a fitting at Eterna Bridal.",
     phone: "Phone",
+    carousel: "carousel",
+    highlights: "Highlights",
+    slide: "Slide",
+    prevSlide: "Previous slide",
+    nextSlide: "Next slide",
+    pauseSlides: "Pause the slides",
+    playSlides: "Resume the slides",
   },
   product: {
     new: "New",

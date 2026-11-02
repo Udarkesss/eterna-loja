@@ -55,6 +55,13 @@ export const pt = {
     bookFittingShort: "Agendar prova",
     fittingMessage: "Olá, gostaria de marcar uma prova na Eterna Bridal.",
     phone: "Telefone",
+    carousel: "carrossel",
+    highlights: "Destaques",
+    slide: "Slide",
+    prevSlide: "Slide anterior",
+    nextSlide: "Slide seguinte",
+    pauseSlides: "Pausar os slides",
+    playSlides: "Retomar os slides",
   },
   product: {
     new: "Novo",

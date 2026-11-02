@@ -1,6 +1,6 @@
 import { and, count, eq, inArray, isNull, notInArray } from "drizzle-orm";
 import { CATEGORY_IMAGES, COLLECTION_DETAILS, categoryTree, type CategorySeed } from "@/data/catalog";
-import { HOME_KEYS, homeSections, occasionTiles as tileSeeds } from "@/data/content";
+import { HOME_KEYS, heroSlides, homeSections, occasionTiles as tileSeeds } from "@/data/content";
 import { infoSeeds } from "@/data/pages";
 import { deliveryZoneSeeds, paymentMethodSeeds, permissionMatrix, roleSeeds, settingSeeds, storeSeeds } from "@/data/site";
 import type { Database } from "./client";
@@ -257,7 +257,27 @@ const DATA_MIGRATIONS: { name: string; run: (db: Database) => Promise<void> }[] 
       }
     },
   },
+  {
+    // EN: Hero "Slides" mode of design V3: adds the three slides, keeps everything the team set; the old single-image
+    //     mode becomes slides. PT: Modo "Slides" do topo (V3): junta os três slides e mantém o resto; o antigo modo
+    //     de imagem única passa a slides.
+    name: "hero-slides",
+    run: async (db) => {
+      const [row] = await db.select().from(contentSections).where(and(eq(contentSections.page, "home"), eq(contentSections.key, "hero")));
+      if (!row) return;
+      const data = { ...row.data };
+      if (!Array.isArray(data.slides)) {
+        data.slides = heroSlides;
+        data.slidesAuto = false;
+      }
+      if (data.media === "image") data.media = "slides";
+      await db.update(contentSections).set({ data }).where(eq(contentSections.id, row.id));
+    },
+  },
 ];
+
+/** EN: How many data versions exist (development re-checks it on each request). PT: Quantas versões de dados existem. */
+export const dataMigrationCount = () => DATA_MIGRATIONS.length;
 
 async function dataVersion(db: Database): Promise<number> {
   const [row] = await db.select({ value: settings.value }).from(settings).where(eq(settings.key, "data.version"));

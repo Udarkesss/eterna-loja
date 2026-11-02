@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { HeroV3, type HeroV3Data } from "@/components/home/HomeInteractive";
+import { HeroSlides, HeroV3, type HeroSlide, type HeroV3Data } from "@/components/home/HomeInteractive";
 import { Acessorios, Colecao, Contactos, Entrada, Modeladores, Noivas, Novidades, Ocasioes, Sobre } from "@/components/home/HomeV3";
 import { Parallax } from "@/components/home/Parallax";
 import { SiteFooter } from "@/components/layout/Footer";
@@ -28,10 +28,15 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     cardPriceVisible(),
   ]);
   const hero = data("hero") as (HeroV3Data & { parallax?: boolean; parallaxIntensity?: number }) | undefined;
+  // EN: "Slides" or "Vídeo", chosen in Gestão; slides switched off are left out. PT: Slides desligados ficam de fora.
+  const heroView = (d: HeroV3Data & { media?: string; slides?: HeroSlide[]; slidesAuto?: boolean }) => {
+    const slides = (d.slides ?? []).filter((s) => s.on && s.image);
+    return d.media === "slides" && slides.length ? <HeroSlides slides={slides} auto={!!d.slidesAuto} /> : <HeroV3 data={d} />;
+  };
 
   /* eslint-disable @typescript-eslint/no-explicit-any -- EN: section data comes from the content editor. PT: dados vindos do editor. */
   const render: Record<string, (d: any) => ReactNode> = {
-    hero: (d) => <HeroV3 data={d} />,
+    hero: heroView,
     entrada: (d) => <Entrada data={d} locale={locale} />,
     colecao: (d) => <Colecao data={d} collection={collection} locale={locale} />,
     ocasioes: (d) => <Ocasioes data={d} tiles={tiles} locale={locale} />,

@@ -23,12 +23,50 @@ interface Tile {
   size: "large" | "tall" | "normal";
 }
 
-const SIZES = { large: "Grande (2×2)", tall: "Alto (1×2)", normal: "Normal (1×1)" } as const;
-const str = (v: unknown, d = "") => (typeof v === "string" ? v : d);
+interface Slide {
+  image: string;
+  position: string;
+  eyebrow: Localized;
+  title: Localized;
+  text: Localized;
+  cta: Localized;
+  href: string;
+  on: boolean;
+}
 
-export function HeroEditor({ hero, tiles: initialTiles, targets }: { hero: Record<string, unknown>; tiles: Tile[]; targets: { id: string; name: string; kind: string }[] }) {
+const SIZES = { large: "Grande (2×2)", tall: "Alto (1×2)", normal: "Normal (1×1)" } as const;
+const POSITIONS = { "center 20%": "Topo", "center 35%": "Acima do centro", "center 50%": "Centro", "center 70%": "Abaixo do centro" } as const;
+const SLIDE_TEXTS = [
+  ["eyebrow", "Sobretítulo", 60],
+  ["title", "Título", 60],
+  ["text", "Frase", 140],
+  ["cta", "Texto do botão", 32],
+] as const;
+const str = (v: unknown, d = "") => (typeof v === "string" ? v : d);
+const newSlide = (): Slide => ({
+  image: "/images/v3/s-festa.webp",
+  position: "center 35%",
+  eyebrow: { pt: "", en: "" },
+  title: { pt: "Novo slide", en: "New slide" },
+  text: { pt: "", en: "" },
+  cta: { pt: "Ver mais", en: "See more" },
+  href: "",
+  on: false,
+});
+
+export function HeroEditor({
+  hero,
+  tiles: initialTiles,
+  targets,
+}: {
+  hero: Record<string, unknown>;
+  tiles: Tile[];
+  targets: { id: string; slug: string; name: string; kind: string }[];
+}) {
   const [h, setH] = useState({
-    media: str(hero.media, "video") as "video" | "image",
+    media: (hero.media === "slides" || hero.media === "image" ? "slides" : "video") as "video" | "slides",
+    slides: (Array.isArray(hero.slides) ? hero.slides : []) as Slide[],
+    slidesAuto: hero.slidesAuto === true,
     videoDesktop: str(hero.videoDesktop),
     videoMobile: str(hero.videoMobile),
     poster: str(hero.poster),
@@ -41,6 +79,7 @@ export function HeroEditor({ hero, tiles: initialTiles, targets }: { hero: Recor
   });
   const [tiles, setTiles] = useState(initialTiles);
   const [sel, setSel] = useState(0);
+  const [slideSel, setSlideSel] = useState(0);
   const [dirty, setDirty] = useState(false);
   const [result, setResult] = useState<ContentResult | null>(null);
   const [pending, start] = useTransition();
@@ -55,6 +94,16 @@ export function HeroEditor({ hero, tiles: initialTiles, targets }: { hero: Recor
     setResult(null);
   };
   const cur = tiles[sel];
+  const slide = h.slides[slideSel];
+  const setSlide = (patch: Partial<Slide>) => setHero({ slides: h.slides.map((x, j) => (j === slideSel ? { ...x, ...patch } : x)) });
+  const moveSlide = (i: number, d: number) => {
+    const a = [...h.slides];
+    const j = i + d;
+    if (j < 0 || j >= a.length) return;
+    [a[i], a[j]] = [a[j], a[i]];
+    setHero({ slides: a });
+    setSlideSel(j);
+  };
   const pct = Math.round(h.parallaxIntensity * 200); // EN: 0.5 = strongest. PT: 0,5 = mais forte.
   const pxLabel = pct <= 30 ? "subtil" : pct <= 65 ? "moderado" : "forte";
 
@@ -96,10 +145,10 @@ export function HeroEditor({ hero, tiles: initialTiles, targets }: { hero: Recor
       <section className={s.card}>
         <div className={s.cardHead}>
           <h2 className={s.h2}>Imagem principal</h2>
-          <div className={s.segment} role="radiogroup" aria-label="Tipo de media">
-            {(["video", "image"] as const).map((m) => (
+          <div className={s.segment} role="radiogroup" aria-label="Modo do topo">
+            {(["slides", "video"] as const).map((m) => (
               <button key={m} type="button" role="radio" aria-checked={h.media === m} onClick={() => setHero({ media: m })}>
-                {m === "video" ? "Vídeo" : "Imagem"}
+                {m === "video" ? "Vídeo" : "Slides"}
               </button>
             ))}
           </div>
@@ -139,8 +188,117 @@ export function HeroEditor({ hero, tiles: initialTiles, targets }: { hero: Recor
           </div>
         ) : (
           <div className={s.split2}>
-            <MediaField name="Imagem para computador" value={h.image} onChange={(v) => setHero({ image: v })} />
-            <span className={s.hint}>Horizontal 16:9, mínimo 2400 px de largura. O selo e o texto alternativo editam-se em Conteúdo do site → Imagem principal.</span>
+            <div className={s.fieldset}>
+              <ol className={s.list}>
+                {h.slides.map((x, i) => (
+                  <li key={i} className={s.listItem} style={{ alignItems: "center", background: i === slideSel ? "var(--blush-light)" : undefined, padding: 8 }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- EN: small preview. PT: pré-visualização. */}
+                    <img src={x.image} alt="" style={{ width: 80, height: 45, objectFit: "cover", objectPosition: x.position }} />
+                    <button type="button" className={s.two} style={{ flexGrow: 1, border: 0, background: "none", textAlign: "left", padding: 0 }} onClick={() => setSlideSel(i)} aria-pressed={i === slideSel}>
+                      <span className={s.strong}>{x.title.pt || "Sem título"}</span>
+                      <span className={s.muted}>{x.href ? `Ligação: ${x.href}` : "Sem ligação"}</span>
+                    </button>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={x.on}
+                      aria-label={x.on ? `Desligar ${x.title.pt}` : `Ligar ${x.title.pt}`}
+                      className={s.switch}
+                      onClick={() => setHero({ slides: h.slides.map((y, j) => (j === i ? { ...y, on: !y.on } : y)) })}
+                    />
+                    <button className={`${s.btnOutline} ${s.small}`} disabled={i === 0} onClick={() => moveSlide(i, -1)} aria-label={`Subir ${x.title.pt}`}>
+                      <Icon name="arrowUp" size={14} />
+                    </button>
+                    <button className={`${s.btnOutline} ${s.small}`} disabled={i === h.slides.length - 1} onClick={() => moveSlide(i, 1)} aria-label={`Descer ${x.title.pt}`}>
+                      <Icon name="arrowDown" size={14} />
+                    </button>
+                    <button
+                      className={`${s.btnDanger} ${s.small}`}
+                      onClick={() => {
+                        if (window.confirm(`Remover o slide ${x.title.pt}?`)) {
+                          setHero({ slides: h.slides.filter((_, j) => j !== i) });
+                          setSlideSel(0);
+                        }
+                      }}
+                      aria-label={`Remover ${x.title.pt}`}
+                    >
+                      Remover
+                    </button>
+                  </li>
+                ))}
+              </ol>
+              <button
+                className={`${s.btnOutline} ${s.small}`}
+                style={{ alignSelf: "flex-start" }}
+                disabled={h.slides.length >= 8}
+                onClick={() => {
+                  setHero({ slides: [...h.slides, newSlide()] });
+                  setSlideSel(h.slides.length);
+                }}
+              >
+                <Icon name="plus" size={14} />
+                Adicionar slide
+              </button>
+              <span className={s.hint}>
+                Imagem 16:9, mínimo 2400 × 1350 px, JPG ou WebP até 2 MB. Só aparecem os slides ligados; um slide novo começa desligado.
+              </span>
+              <label className={s.check}>
+                <input type="checkbox" checked={h.slidesAuto} onChange={() => setHero({ slidesAuto: !h.slidesAuto })} />
+                Avançar sozinho a cada 7 s (com botão de pausa)
+              </label>
+            </div>
+            <div className={s.fieldset}>
+              {!slide ? (
+                <p className={s.muted}>Adicione um slide para o editar.</p>
+              ) : (
+                <>
+                  <span className={s.legend}>Editar · {slide.title.pt || "slide"}</span>
+                  <MediaField name="Imagem (16:9)" value={slide.image} onChange={(v) => setSlide({ image: v })} />
+                  <label className={s.label}>
+                    Enquadramento da imagem
+                    <select className={s.select} value={slide.position} onChange={(e) => setSlide({ position: e.target.value })}>
+                      {!(slide.position in POSITIONS) && <option value={slide.position}>Personalizado ({slide.position})</option>}
+                      {Object.entries(POSITIONS).map(([k, v]) => (
+                        <option key={k} value={k}>
+                          {v}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {SLIDE_TEXTS.map(([key, label, max]) => (
+                    <div key={key} className={s.row2}>
+                      {(["pt", "en"] as const).map((l) => (
+                        <label key={l} className={s.label}>
+                          {label} ({l.toUpperCase()})
+                          <input className={s.input} maxLength={max} value={slide[key][l]} onChange={(e) => setSlide({ [key]: { ...slide[key], [l]: e.target.value } })} />
+                        </label>
+                      ))}
+                    </div>
+                  ))}
+                  <label className={s.label}>
+                    Ligação do botão
+                    <select
+                      className={s.select}
+                      value={targets.some((t) => `category:${t.slug}` === slide.href) ? slide.href : ""}
+                      onChange={(e) => e.target.value && setSlide({ href: e.target.value })}
+                    >
+                      <option value="">Escolher uma colecção, ocasião ou departamento…</option>
+                      {targets.map((t) => (
+                        <option key={t.id} value={`category:${t.slug}`}>
+                          {t.kind === "occasion" ? "Ocasiões · " : t.kind === "collection" ? "Colecção · " : ""}
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className={s.label}>
+                    Ou escreva a ligação
+                    <input className={s.input} value={slide.href} onChange={(e) => setSlide({ href: e.target.value })} placeholder="category:essenza · product:7g184 · /fidelidade" />
+                    <span className={s.hint}>Peça: product: e o código em minúsculas. Página: o endereço começado por /.</span>
+                  </label>
+                </>
+              )}
+            </div>
           </div>
         )}
       </section>

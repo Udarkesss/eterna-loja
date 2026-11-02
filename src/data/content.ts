@@ -32,6 +32,40 @@ export const HOME_KEYS = [
   "contactos",
 ] as const;
 
+/** EN: Hero slides of design V3. PT: Slides do topo do V3. */
+export const heroSlides = [
+  {
+    image: V3("s-festa"),
+    position: "center 22%",
+    eyebrow: L("Colecção II · 2026", "Collection II · 2026"),
+    title: L("Essenza", "Essenza"),
+    text: L("Do escritório à gala: a colecção que está agora na loja.", "From the office to the gala: the collection now in store."),
+    cta: L("Comprar Essenza", "Shop Essenza"),
+    href: "category:essenza",
+    on: true,
+  },
+  {
+    image: V3("s-convidada"),
+    position: "center 22%",
+    eyebrow: L("Ocasiões", "Occasions"),
+    title: L("Convidada", "Wedding guest"),
+    text: L("Bem vestida, sem roubar o momento.", "Beautifully dressed, without stealing the moment."),
+    cta: L("Ver Convidada", "See Wedding guest"),
+    href: "category:convidada",
+    on: true,
+  },
+  {
+    image: V3("s-ocasioes"),
+    position: "center 25%",
+    eyebrow: L("Peça em destaque", "Featured piece"),
+    title: L("7G184", "7G184"),
+    text: L("Vestido cocktail de um ombro só, com laço escultórico.", "One-shoulder cocktail dress with a sculpted bow."),
+    cta: L("Ver a peça", "See the piece"),
+    href: "product:7g184",
+    on: true,
+  },
+];
+
 export const homeSections: SectionSeed[] = [
   {
     key: "announcement",
@@ -63,6 +97,10 @@ export const homeSections: SectionSeed[] = [
       cta: { label: L("Comprar Essenza", "Shop Essenza"), href: "category:essenza" },
       parallax: true,
       parallaxIntensity: 0.25,
+      // EN: "Slides" mode of the hero (design V3, chosen in Gestão → Vídeo, parallax e ocasiões).
+      // PT: Modo "Slides" do topo (V3, escolhido em Gestão → Vídeo, parallax e ocasiões).
+      slides: heroSlides,
+      slidesAuto: false,
     },
   },
   {
