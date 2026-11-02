@@ -22,6 +22,7 @@ import {
   PAYMENT_METHODS,
   PAYMENT_STATUSES,
   PRODUCT_STATUSES,
+  type CategoryDetails,
   type Customer,
   type Locale,
   type Localized,
@@ -94,6 +95,10 @@ export const categories = pgTable(
     name: jsonb("name").$type<Localized>().notNull(), // "Vestidos longos"
     singular: jsonb("singular").$type<Localized>(), // EN: for types: "Vestido longo". PT: para tipos.
     description: jsonb("description").$type<Localized>(),
+    // EN: Type: photo in the circle of the type bar; collection: cover. PT: Tipo: foto do círculo; colecção: capa.
+    imageUrl: text("image_url"),
+    // EN: Collection details (edition, season, lines…), edited in Gestão → Colecções. PT: Detalhes da colecção.
+    details: jsonb("details").$type<CategoryDetails>(),
     position: integer("position").notNull().default(0),
     ...timestamps,
   },

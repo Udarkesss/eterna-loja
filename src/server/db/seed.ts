@@ -1,5 +1,5 @@
 import { and, count, eq, inArray, isNull } from "drizzle-orm";
-import { categoryTree, type CategorySeed } from "@/data/catalog";
+import { CATEGORY_IMAGES, COLLECTION_DETAILS, categoryTree, type CategorySeed } from "@/data/catalog";
 import { homeSections, occasionTiles as tileSeeds } from "@/data/content";
 import { aboutSeed, infoSeeds } from "@/data/pages";
 import { deliveryZoneSeeds, paymentMethodSeeds, permissionMatrix, roleSeeds, settingSeeds, storeSeeds } from "@/data/site";
@@ -55,9 +55,11 @@ async function seedCategories(db: Database): Promise<Ids> {
         description: n.description ?? null,
         position,
       };
+      const extra = { imageUrl: CATEGORY_IMAGES[n.slug] ?? null, details: COLLECTION_DETAILS[n.slug] ?? null };
+      // EN: Images and details only on creation (the team edits them). PT: Imagens e detalhes só ao criar.
       const [row] = await db
         .insert(categories)
-        .values(values)
+        .values({ ...values, ...extra })
         .onConflictDoUpdate({ target: categories.slug, set: values })
         .returning({ id: categories.id });
       ids.set(n.slug, row.id);
@@ -202,6 +204,19 @@ const DATA_MIGRATIONS: { name: string; run: (db: Database) => Promise<void> }[] 
         }
       };
       await walk(categoryTree);
+    },
+  },
+  {
+    // EN: Design V3 images (type circles, collection covers) and the active collection's details, where still empty.
+    // PT: Imagens do V3 (círculos dos tipos, capas) e detalhes da colecção activa, onde ainda estão vazios.
+    name: "imagens-categorias",
+    run: async (db) => {
+      for (const [slug, imageUrl] of Object.entries(CATEGORY_IMAGES)) {
+        await db.update(categories).set({ imageUrl }).where(and(eq(categories.slug, slug), isNull(categories.imageUrl)));
+      }
+      for (const [slug, details] of Object.entries(COLLECTION_DETAILS)) {
+        await db.update(categories).set({ details }).where(and(eq(categories.slug, slug), isNull(categories.details)));
+      }
     },
   },
 ];

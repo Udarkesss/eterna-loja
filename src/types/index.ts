@@ -28,8 +28,22 @@ export interface CategorySummary {
 export interface CategoryDTO extends CategorySummary {
   kind: CategoryKind;
   description: string | null;
+  imageUrl: string | null; // EN: type circle / collection cover. PT: círculo do tipo / capa da colecção.
+  details: { edition: string | null; season: string | null; lines: string[]; active: boolean } | null;
   parent: CategorySummary | null;
   children: CategoryDTO[];
+}
+
+/**
+ * EN: Details of a collection (design V3, "Gestão → Colecções → Editar colecção"): edition label, season, the lines
+ *     shown as tabs (department slugs) and the home message.
+ * PT: Detalhes de uma colecção (V3): edição, época, as linhas mostradas em separadores e a mensagem do Início.
+ */
+export interface CategoryDetails {
+  edition?: Localized; // "Colecção II · 2026"
+  season?: Localized; // "Agosto a dezembro · na Loja 2 e no site"
+  lines?: string[]; // ["roupa-de-festa", "roupa-executiva"]
+  active?: boolean; // EN: the active seasonal collection. PT: a colecção sazonal activa.
 }
 
 /** EN: A colour as stored (all languages). PT: Uma cor como está guardada (todos os idiomas). */

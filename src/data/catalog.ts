@@ -1,4 +1,4 @@
-import type { CategoryKind, Localized } from "@/types";
+import type { CategoryDetails, CategoryKind, Localized } from "@/types";
 
 /**
  * EN: Category tree of design V3 (menu Essenza · Ocasiões · Noivas · Acessórios · Modeladores; type groups of
@@ -152,6 +152,75 @@ export const OLD_COLLECTIONS: Record<string, string> = {
   "gala-new": "gala",
   "madrinha-mae-da-noiva-new": "madrinha-mae-noiva",
   "noivado-lobolo-new": "noivado-lobolo",
+};
+
+/**
+ * EN: Starting images of design V3 (public/images/v3): the circle photo of each type, the cover of each collection and
+ *     the picture of each group. The team changes them in Gestão → Tipos de peça / Colecções.
+ * PT: Imagens iniciais do design V3: a foto do círculo de cada tipo, a capa de cada colecção e a imagem de cada grupo.
+ *     A equipa muda-as em Gestão → Tipos de peça / Colecções.
+ */
+const V3 = (key: string) => `/images/v3/${key}.webp`;
+export const CATEGORY_IMAGES: Record<string, string> = {
+  essenza: V3("s-essenza"),
+  "roupa-de-festa": V3("s-festa"),
+  "roupa-executiva": V3("t-blazers"),
+  ocasioes: V3("s-ocasioes"),
+  noivas: V3("s-noivas"),
+  acessorios: V3("s-acessorios"),
+  "acessorios-festa": V3("s-acessorios-festa"),
+  modeladores: V3("s-modeladores"),
+  convidada: V3("s-convidada"),
+  gala: V3("occ-gala"),
+  "evento-corporativo": V3("occ-corporativo"),
+  "finalistas-debutantes": V3("occ-formatura"),
+  "madrinha-mae-noiva": V3("occ-mae"),
+  "noivado-lobolo": V3("occ-noivado"),
+  "white-collection": V3("t-white"),
+  "eterna-privee": V3("t-privee"),
+  "vestidos-de-noiva": V3("t-white2"),
+  "vestidos-longos": V3("t-vestidos-longos"),
+  "vestidos-cocktail": V3("t-vestidos-cocktail"),
+  "fatos-cerimonia": V3("t-fatos-cerimonia"),
+  "macaoes-festa": V3("t-macaoes-festa"),
+  "fatos-executivos": V3("t-fatos-executivos"),
+  "vestidos-executivos": V3("t-vestidos-executivos"),
+  "macaoes-executivos": V3("t-macaoes-executivos"),
+  "blazers-casacos": V3("t-blazers"),
+  casaquinhos: V3("t-casaquinhos"),
+  calcas: V3("t-calcas"),
+  saias: V3("t-saias"),
+  blusas: V3("t-blusas"),
+  pochettes: V3("t-pochettes"),
+  fascinators: V3("t-fascinators"),
+  echarpes: V3("t-echarpes"),
+  "sapatos-cerimonia": V3("t-sapatos-cerimonia"),
+  bijuteria: V3("t-bijuteria"),
+  carteiras: V3("t-carteiras"),
+  "sapatos-executivos": V3("t-sapatos-executivos"),
+  "bodys-modeladores": V3("t-bodys"),
+  "calcoes-modeladores": V3("t-calcoes"),
+  soutiens: V3("t-soutiens"),
+  "calcinhas-modeladoras": V3("t-calcinhas"),
+  "modeladores-bracos": V3("t-bracos"),
+  "saias-modeladoras": V3("t-saias-mod"),
+  "macaoes-modeladores": V3("t-macaoes-mod"),
+  "veus-noiva": V3("t-veus"),
+  "tiaras-noiva": V3("t-tiaras"),
+  "capas-noiva": V3("t-capas"),
+  "sapatos-noiva": V3("t-sapatos-noiva"),
+  "cintos-noiva": V3("t-cintos"),
+  "pochettes-de-noiva": V3("t-pochettes-noiva"),
+};
+
+/** EN: The active collection of design V3. PT: A colecção activa do design V3. */
+export const COLLECTION_DETAILS: Record<string, CategoryDetails> = {
+  essenza: {
+    edition: { pt: "Colecção II · 2026", en: "Collection II · 2026" },
+    season: { pt: "Agosto a dezembro · na Loja 2 e no site", en: "August to December · at Store 2 and online" },
+    lines: ["roupa-de-festa", "roupa-executiva"],
+    active: true,
+  },
 };
 
 /** EN: Every slug in the tree. PT: Todos os slugs da árvore. */

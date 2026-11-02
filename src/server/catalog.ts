@@ -30,6 +30,15 @@ function toCategoryDTO(row: CategoryRow, rows: CategoryRow[], locale: Locale): C
     kind: row.kind,
     name: row.name[locale],
     description: row.description?.[locale] ?? null,
+    imageUrl: row.imageUrl,
+    details: row.details
+      ? {
+          edition: row.details.edition?.[locale] ?? null,
+          season: row.details.season?.[locale] ?? null,
+          lines: row.details.lines ?? [],
+          active: row.details.active ?? false,
+        }
+      : null,
     parent: parent ? { slug: parent.slug, name: parent.name[locale] } : null,
     children: rows.filter((r) => r.parentId === row.id).map((child) => toCategoryDTO(child, rows, locale)),
   };
