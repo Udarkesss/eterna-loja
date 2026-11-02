@@ -1,0 +1,382 @@
+/* EN: "Como comprar" and "Programa de fidelidade" of design V3. PT: "Como comprar" e "Programa de fidelidade" do V3. */
+
+.page {
+  padding-top: 28px;
+  padding-bottom: 96px;
+}
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.breadcrumb [aria-current] {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 28px 0 48px;
+  max-width: 720px;
+}
+
+.display {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: 60px;
+  line-height: 64px;
+}
+
+.muted {
+  font-size: 16px;
+  line-height: 26px;
+  color: var(--muted);
+}
+
+.muted strong {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.link {
+  color: var(--accent-ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* ── Como comprar ── */
+.layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 80px;
+}
+
+.index {
+  position: sticky;
+  top: 150px;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.indexLink {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding-left: 14px;
+  border-left: 2px solid var(--line);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.indexLink:hover {
+  border-left-color: var(--ink);
+}
+
+.sections {
+  border-top: 1px solid var(--line);
+}
+
+.section {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 24px;
+  padding: 36px 0;
+  border-bottom: 1px solid var(--line);
+  scroll-margin-top: 140px;
+}
+
+.iconCircle {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: var(--alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+}
+
+.sectionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionTitle {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 38px;
+}
+
+/* ── Fidelidade ── */
+.hero {
+  padding-top: 96px;
+  padding-bottom: 72px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: end;
+}
+
+.heroTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.lead {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  line-height: 30px;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.btn,
+.btnOutline {
+  height: 52px;
+  padding: 0 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.btn {
+  background: var(--contrast);
+  color: var(--on-contrast);
+}
+
+.btnOutline {
+  border: 1px solid var(--ink);
+  color: var(--ink);
+}
+
+.levels {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.level {
+  padding: 32px 26px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.levelCurrent {
+  background: var(--alt);
+}
+
+.levelName {
+  font-family: var(--font-serif);
+  font-size: 34px;
+  line-height: 40px;
+}
+
+.small {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--muted);
+}
+
+.pct {
+  font-size: 48px;
+  line-height: 52px;
+  font-weight: 500;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.discount {
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.steps {
+  padding-top: 96px;
+  padding-bottom: 96px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 48px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stepTitle {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  line-height: 30px;
+}
+
+.rules {
+  padding: 40px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 48px;
+}
+
+.rulesTitle {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 36px;
+  line-height: 42px;
+}
+
+.rulesList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rulesList li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 16px;
+  line-height: 26px;
+}
+
+.rulesList svg {
+  flex-shrink: 0;
+  margin-top: 4px;
+  color: var(--success);
+}
+
+@media (max-width: 1023px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .index {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .indexLink {
+    min-height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-full);
+    font-size: 13px;
+  }
+
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+    padding-top: 56px;
+  }
+
+  .levels {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rules {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (max-width: 767px) {
+  .display {
+    font-size: 40px;
+    line-height: 46px;
+  }
+
+  .head {
+    margin: 20px 0 28px;
+  }
+
+  .section {
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 14px;
+    padding: 24px 0;
+  }
+
+  .iconCircle {
+    width: 44px;
+    height: 44px;
+  }
+
+  .sectionTitle {
+    font-size: 24px;
+    line-height: 30px;
+  }
+
+  .hero {
+    padding-bottom: 40px;
+  }
+
+  .buttons a {
+    flex: 1;
+  }
+
+  .levels {
+    gap: 10px;
+  }
+
+  .level {
+    padding: 20px 16px;
+  }
+
+  .levelName {
+    font-size: 26px;
+    line-height: 32px;
+  }
+
+  .pct {
+    font-size: 36px;
+    line-height: 40px;
+  }
+
+  .steps {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    padding-top: 48px;
+    padding-bottom: 48px;
+  }
+
+  .rules {
+    padding: 24px 20px;
+  }
+}
