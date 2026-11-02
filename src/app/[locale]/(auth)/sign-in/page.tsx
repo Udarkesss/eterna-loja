@@ -16,8 +16,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /**
- * EN: "Conta · Entrar ou criar conta" — full-page layout from the design (photo left, form right; photo hidden on phones).
- * PT: Página inteira do design (foto à esquerda, formulário à direita; sem foto no telemóvel).
+ * EN: "Conta · Entrar ou criar conta" (V3, carried from v1 with the official logo) — photo left, form right; no photo
+ *     on phones.
+ * PT: "Conta · Entrar ou criar conta" (V3, trazido da v1 com o logótipo oficial) — foto à esquerda, formulário à
+ *     direita; sem foto no telemóvel.
  */
 export default async function SignInPage({ params, searchParams }: Props) {
   const locale = await resolveLocale(params);
@@ -35,7 +37,7 @@ export default async function SignInPage({ params, searchParams }: Props) {
       </div>
       <div className={styles.side}>
         <Link href={`/${locale}`} className={styles.logo} aria-label={dict.nav.home}>
-          ETERNA
+          <Image src="/images/brand/eterna-logo.svg" alt="Eterna" width={148} height={34} unoptimized />
         </Link>
         <div className={styles.head}>
           <span className="eyebrow">{dict.account.eyebrow}</span>

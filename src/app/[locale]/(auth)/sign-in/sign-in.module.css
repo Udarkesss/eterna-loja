@@ -38,10 +38,13 @@
 }
 
 .logo {
-  font-family: var(--font-serif);
-  font-size: 30px;
-  letter-spacing: 0.32em;
-  color: var(--ink);
+  display: inline-flex;
+  align-self: flex-start;
+}
+
+.logo img {
+  height: 34px;
+  width: auto;
 }
 
 .head {
