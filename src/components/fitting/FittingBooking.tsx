@@ -31,10 +31,10 @@ interface Props {
   schedule: { days: number[]; maxDaysAhead: number; bridalMinutes: number; defaultMinutes: number };
   today: string;
   customer: { name: string; phone: string | null } | null;
-  initialPiece: string | null;
+  initialPieces: string[]; // EN: ?piece=a,b (product page, favourites). PT: ?piece=a,b (peça, favoritos).
 }
 
-export function FittingBooking({ stores, schedule, today, customer: serverCustomer, initialPiece }: Props) {
+export function FittingBooking({ stores, schedule, today, customer: serverCustomer, initialPieces }: Props) {
   const { dict, locale, href } = useI18n();
   const f = dict.fitting;
   const { customer } = useCustomer();
@@ -46,7 +46,7 @@ export function FittingBooking({ stores, schedule, today, customer: serverCustom
   const [date, setDate] = useState<string | null>(null);
   const [times, setTimes] = useState<string[] | null>(null);
   const [time, setTime] = useState<string | null>(null);
-  const [pieces, setPieces] = useState<string[]>(initialPiece ? [initialPiece] : []);
+  const [pieces, setPieces] = useState<string[]>(initialPieces);
   const [products, setProducts] = useState<ProductDTO[]>([]);
   const [name, setName] = useState(signedIn?.name ?? "");
   const [phone, setPhone] = useState(signedIn?.phone ? formatMsisdn(signedIn.phone) : "");
@@ -88,8 +88,8 @@ export function FittingBooking({ stores, schedule, today, customer: serverCustom
     };
   }, [store, date, kind]);
 
-  // EN: Pieces to choose from: favourites + the piece that brought her here. PT: Favoritos + a peça de origem.
-  const candidateSlugs = useMemo(() => [...new Set([...(initialPiece ? [initialPiece] : []), ...favoriteSlugs])], [initialPiece, favoriteSlugs]);
+  // EN: Pieces to choose from: favourites + the pieces that brought her here. PT: Favoritos + as peças de origem.
+  const candidateSlugs = useMemo(() => [...new Set([...initialPieces, ...favoriteSlugs])], [initialPieces, favoriteSlugs]);
   useEffect(() => {
     if (!candidateSlugs.length) return setProducts([]);
     api

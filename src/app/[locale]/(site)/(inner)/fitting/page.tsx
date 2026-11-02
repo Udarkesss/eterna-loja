@@ -35,7 +35,7 @@ export default async function FittingPage({ params, searchParams }: Props) {
         schedule={{ days: schedule.days, maxDaysAhead: Math.min(schedule.maxDaysAhead, 28), bridalMinutes: schedule.bridalMinutes, defaultMinutes: schedule.defaultMinutes }}
         today={todayMaputo()}
         customer={customer ? { name: customer.name, phone: customer.phone } : null}
-        initialPiece={piece ?? null}
+        initialPieces={(piece ?? "").split(",").filter(Boolean).slice(0, 6)}
       />
     </>
   );
