@@ -12,10 +12,9 @@
     "vercel-build": "tsx scripts/db-deploy.ts && next build",
     "db:migrate": "tsx scripts/db-migrate.ts",
     "db:seed": "tsx scripts/db-seed.ts",
-    "db:demo-admin": "tsx scripts/db-demo-admin.ts",
+    "db:demo": "node --conditions=react-server --import tsx scripts/db-demo.ts",
     "db:studio": "drizzle-kit studio",
-    "test:mpesa": "node --env-file=.env.local scripts/test-mpesa.mjs",
-    "import:nexsory": "tsx scripts/import-nexsory.ts"
+    "test:mpesa": "node --env-file=.env.local scripts/test-mpesa.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",

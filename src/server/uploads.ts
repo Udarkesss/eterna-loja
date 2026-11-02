@@ -1,8 +1,8 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { put } from "@vercel/blob";
+import { del, put } from "@vercel/blob";
 import { eq } from "drizzle-orm";
 import { getDb } from "./db";
 import { privateFiles } from "./db/schema";
@@ -86,6 +86,16 @@ export async function savePublicBuffer(data: Buffer, folder: "products", name: s
   await mkdir(path.dirname(file), { recursive: true });
   await writeFile(file, data);
   return `/uploads/${folder}/${name}`;
+}
+
+/**
+ * EN: Deletes a public file this site stored (Vercel Blob address or local /uploads/…). Other addresses are ignored.
+ * PT: Apaga um ficheiro público guardado por este site (Vercel Blob ou /uploads/… local). Outros endereços são ignorados.
+ */
+export async function deletePublicFile(url: string): Promise<void> {
+  const local = url.match(/^\/uploads\/(products|content)\/([a-z0-9][a-z0-9-]*\.(?:jpg|png|webp|mp4))$/);
+  if (local) return unlink(path.join(PUBLIC_DIR, local[1], local[2]));
+  if (blobEnabled() && /^https:\/\/[a-z0-9.-]+\.public\.blob\.vercel-storage\.com\//.test(url)) await del(url);
 }
 
 /** EN: Local disk reader for /uploads/… (development). PT: Leitura do disco local para /uploads/…. */

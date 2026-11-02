@@ -1,30 +1,31 @@
 import "server-only";
-import { and, eq, inArray, like, or } from "drizzle-orm";
+import { and, asc, eq, inArray, notInArray, or } from "drizzle-orm";
 import sharp from "sharp";
 import { z } from "zod";
+import type { OldProduct } from "@/lib/import/shopify";
+import { COLOR_FAMILIES } from "@/types";
 import { audit } from "../audit";
 import { getDb } from "../db";
 import { categories, productCategories, productImages, productVariants, products, stores } from "../db/schema";
 import { AppError } from "../errors";
 import { can, type StaffContext } from "../staff/access";
-import { savePublicBuffer } from "../uploads";
-import { COLOR_FAMILIES } from "@/types";
+import { deletePublicFile, savePublicBuffer } from "../uploads";
 
 /**
- * EN: Saves products read from a Shopify export (src/lib/import/shopify.ts). The browser sends a few products at a
- *     time, so photo downloads never hit the server time limit. Safe to repeat:
- *     - new product → created with categories, sizes (stock and store chosen in the import screen) and photos;
- *     - product already imported (same Shopify handle) or with the same reference → price and missing sizes are
- *       updated, and gaps are filled (a more specific collection, missing categories, English text still equal to the
- *       Portuguese, photos if it has none); names, texts, status and photos edited by the team are kept.
- *     Photos are only downloaded from the Shopify CDN and the old eterna.co.mz storage (never any other address).
- * PT: Grava os produtos lidos de uma exportação do Shopify. O browser envia poucos produtos de cada vez, para as fotos
- *     nunca passarem o limite de tempo do servidor. Pode repetir-se:
- *     - produto novo → criado com categorias, tamanhos (stock e loja escolhidos no ecrã) e fotos;
- *     - produto já importado ou com a mesma referência → actualizam-se o preço e os tamanhos em falta e preenchem-se
- *       lacunas (colecção mais específica, categorias em falta, inglês ainda igual ao português, fotos se não tiver);
- *       nomes, textos, estado e fotos editados pela equipa ficam como estão.
- *     As fotos só se descarregam do CDN do Shopify e do armazenamento antigo do eterna.co.mz.
+ * EN: Saves products read from the Shopify export and the old site (src/lib/import/shopify.ts). The browser sends a few
+ *     products at a time, so photo downloads never hit the server time limit. Safe to repeat, never duplicates:
+ *     a product is matched by its Shopify handle, its reference or its address, and then OVERWRITTEN with the source
+ *     (names, texts, price, colours, categories, sizes, stock, status, photos), as agreed for the migration.
+ *     - Status mirrors the old site: published there with a photo and a price → published here; otherwise a draft.
+ *     - Photos are only downloaded again when the list of photos changed (their original address is kept).
+ *     - Photos come only from the Shopify CDN and the old eterna.co.mz storage (never any other address).
+ * PT: Grava os produtos lidos do CSV do Shopify e do site antigo. O browser envia poucos produtos de cada vez, para as
+ *     fotos nunca passarem o limite de tempo do servidor. Pode repetir-se sem duplicar: o produto é encontrado pelo
+ *     handle do Shopify, pela referência ou pelo endereço, e SUBSTITUÍDO pela origem (nomes, textos, preço, cores,
+ *     categorias, tamanhos, stock, estado, fotos), como combinado para a migração.
+ *     - O estado espelha o site antigo: publicado lá, com foto e preço → publicado aqui; senão, rascunho.
+ *     - As fotos só se descarregam outra vez quando a lista de fotos mudou (guarda-se o endereço de origem).
+ *     - As fotos só vêm do CDN do Shopify e do armazenamento antigo do eterna.co.mz.
  */
 
 const localized = z.object({ pt: z.string().max(5000), en: z.string().max(5000) });
@@ -37,24 +38,30 @@ const itemSchema = z.object({
   salePrice: z.number().int().min(0).nullable(),
   type: z.string().max(60).nullable(),
   collection: z.string().max(60).nullable(),
-  links: z.array(z.string().max(60)).max(20),
+  links: z.array(z.string().max(60)).max(30),
   colors: z
     .array(z.object({ key: z.string().max(60), name: localized, hex: z.string().max(9).nullable(), family: z.enum(COLOR_FAMILIES).nullable() }))
     .max(40),
-  variants: z.array(z.object({ sku: z.string().min(1).max(60), color: z.string().max(60).nullable(), size: z.string().min(1).max(40) })).min(1).max(80),
+  variants: z
+    .array(z.object({ sku: z.string().min(1).max(60), color: z.string().max(60).nullable(), size: z.string().min(1).max(40), available: z.boolean().nullable() }))
+    .min(1)
+    .max(80),
   images: z.array(z.object({ url: z.string().url().max(500), color: z.string().max(60).nullable() })).max(20),
-  active: z.boolean(),
+  publish: z.boolean(),
+  origin: z.enum(["csv", "site", "both"]),
 });
 export const importBatchSchema = z.object({
   items: z.array(itemSchema).min(1).max(5),
-  options: z.object({ publishActive: z.boolean(), stock: z.number().int().min(0).max(999), store: z.string().max(4) }),
+  options: z.object({ stock: z.number().int().min(0).max(999), store: z.string().max(4) }),
 });
 export type ImportBatch = z.infer<typeof importBatchSchema>;
+type Item = ImportBatch["items"][number];
 
 export interface ImportOutcome {
   code: string;
   result: "created" | "updated" | "failed";
-  photos: number;
+  photos: number; // EN: photos downloaded now. PT: fotos descarregadas agora.
+  published: boolean;
   message?: string;
 }
 
@@ -74,22 +81,50 @@ async function fetchPhoto(url: string): Promise<Buffer> {
   return sharp(bytes).rotate().resize({ width: 1200, withoutEnlargement: true }).webp({ quality: 78 }).toBuffer();
 }
 
-async function savePhotos(productId: string, slug: string, item: ImportBatch["items"][number]): Promise<number> {
+/** EN: Short stable hash, so a changed photo gets a new file name (no stale cache). PT: Resumo curto do endereço. */
+function shortHash(text: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193);
+  return (h >>> 0).toString(36);
+}
+
+/**
+ * EN: Keeps the product's photos when the source list is unchanged; otherwise downloads the new list and replaces them
+ *     (the old imported files are deleted). If no new photo could be downloaded, the old ones stay.
+ * PT: Mantém as fotos se a lista de origem não mudou; senão descarrega a nova e substitui (apaga os ficheiros importados
+ *     antigos). Se nenhuma foto nova descarregar, ficam as antigas.
+ */
+async function syncPhotos(productId: string, slug: string, item: Item): Promise<{ downloaded: number; total: number }> {
   const db = await getDb();
+  const current = await db
+    .select({ id: productImages.id, url: productImages.url, sourceUrl: productImages.sourceUrl })
+    .from(productImages)
+    .where(eq(productImages.productId, productId))
+    .orderBy(asc(productImages.position));
+  const same = current.length === item.images.length && current.every((c, i) => c.sourceUrl === item.images[i].url);
+  if (same || !item.images.length) return { downloaded: 0, total: current.length };
+
   const saved = await Promise.all(
     item.images.map(async (img, i) => {
       try {
         const data = await fetchPhoto(img.url);
-        const url = await savePublicBuffer(data, "products", `shopify-${slug}-${String(i + 1).padStart(2, "0")}.webp`, "image/webp");
-        return { productId, url, color: img.color, position: i, alt: { pt: `${item.name.pt} · ${item.code}`, en: `${item.name.en} · ${item.code}` } };
+        const name = `shopify-${slug}-${String(i + 1).padStart(2, "0")}-${shortHash(img.url)}.webp`;
+        const url = await savePublicBuffer(data, "products", name, "image/webp");
+        return { productId, url, sourceUrl: img.url, color: img.color, alt: { pt: `${item.name.pt} · ${item.code}`, en: `${item.name.en} · ${item.code}` } };
       } catch {
         return null;
       }
     }),
   );
   const rows = saved.filter((r): r is NonNullable<typeof r> => !!r).map((r, position) => ({ ...r, position }));
-  if (rows.length) await db.insert(productImages).values(rows);
-  return rows.length;
+  if (!rows.length) return { downloaded: 0, total: current.length };
+  await db.transaction(async (tx) => {
+    await tx.delete(productImages).where(eq(productImages.productId, productId));
+    await tx.insert(productImages).values(rows);
+  });
+  const kept = new Set(rows.map((r) => r.url));
+  for (const old of current) if (!kept.has(old.url) && old.url.includes("/shopify-")) await deletePublicFile(old.url).catch(() => undefined);
+  return { downloaded: rows.length, total: rows.length };
 }
 
 export async function importShopifyBatch(staff: StaffContext, input: ImportBatch): Promise<ImportOutcome[]> {
@@ -100,130 +135,47 @@ export async function importShopifyBatch(staff: StaffContext, input: ImportBatch
   const mayPublish = can(staff, "products.publish");
   const slugs = [...new Set(items.flatMap((i) => [i.type, i.collection, ...i.links]).filter((s): s is string => !!s))];
   const cats = slugs.length ? await db.select({ id: categories.id, slug: categories.slug }).from(categories).where(inArray(categories.slug, slugs)) : [];
-  const generic = cats.find((c) => c.slug === "beyond-time")?.id ?? null;
   const catId = (slug: string | null) => (slug ? (cats.find((c) => c.slug === slug)?.id ?? null) : null);
-
-  // EN: Only pieces active on Shopify, with a price and at least one photo, go to the shop. PT: Só com preço e foto.
-  const wantPublished = (item: ImportBatch["items"][number]) => item.active && options.publishActive && mayPublish && item.price > 0;
-  const setStatus = async (id: string, publish: boolean, hasPhotos: boolean) => {
-    if (publish && hasPhotos) await db.update(products).set({ status: "published" }).where(eq(products.id, id));
-    else if (!hasPhotos) await db.update(products).set({ status: "draft" }).where(eq(products.id, id));
-  };
 
   const out: ImportOutcome[] = [];
   for (const item of items) {
     const slug = item.code.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     try {
       const [existing] = await db
-        .select({ id: products.id, sourceId: products.sourceId, status: products.status, description: products.description, collectionId: products.collectionId })
+        .select({ id: products.id })
         .from(products)
-        .where(or(eq(products.sourceId, item.sourceId), eq(products.code, item.code), eq(products.slug, slug)));
-
-      // EN: A product that did not come from Shopify (the design's sample pieces) is replaced by the Shopify version:
-      //     texts, categories, sizes and photos. Orders keep their own copy of the line (variant links become null).
-      // PT: Um produto que não veio do Shopify (as peças de exemplo do design) é substituído pela versão do Shopify:
-      //     textos, categorias, tamanhos e fotos. As encomendas guardam a sua cópia da linha.
-      const designPhotos = existing
-        ? await db.select({ id: productImages.id }).from(productImages).where(and(eq(productImages.productId, existing.id), like(productImages.url, "/images/products/%"))).limit(1)
-        : [];
-      if (existing && (!existing.sourceId || designPhotos.length)) {
-        await db.transaction(async (tx) => {
-          await tx
-            .update(products)
-            .set({
-              name: item.name,
-              description: item.description,
-              composition: null,
-              price: item.price,
-              salePrice: item.salePrice,
-              colors: item.colors,
-              typeId: catId(item.type),
-              collectionId: catId(item.collection),
-              sourceId: item.sourceId,
-            })
-            .where(eq(products.id, existing.id));
-          await tx.delete(productCategories).where(eq(productCategories.productId, existing.id));
-          await tx.delete(productVariants).where(eq(productVariants.productId, existing.id));
-          await tx.delete(productImages).where(eq(productImages.productId, existing.id));
-          const links = [...new Set([item.type, item.collection, ...item.links].map(catId).filter((x): x is string => !!x))];
-          if (links.length) await tx.insert(productCategories).values(links.map((categoryId) => ({ productId: existing.id, categoryId })));
-          for (const [position, v] of item.variants.entries()) {
-            await tx
-              .insert(productVariants)
-              .values({ productId: existing.id, sku: v.sku, color: v.color, size: v.size, stock: options.stock, storeId: store.id, position })
-              .onConflictDoNothing({ target: productVariants.sku });
-          }
-        });
-        const photos = await savePhotos(existing.id, slug, item);
-        await setStatus(existing.id, photos > 0 && wantPublished(item), photos > 0);
-        out.push({ code: item.code, result: "updated", photos });
-        continue;
-      }
-
-      if (existing) {
-        // EN: Keep the team's work; refresh price and add sizes that are new on Shopify.
-        // PT: Manter o trabalho da equipa; actualizar o preço e juntar tamanhos novos no Shopify.
-        const betterCollection = catId(item.collection);
-        await db.transaction(async (tx) => {
-          await tx
-            .update(products)
-            .set({
-              price: item.price || undefined,
-              salePrice: item.salePrice,
-              sourceId: existing.sourceId ?? item.sourceId,
-              ...(existing.description.en === existing.description.pt ? { description: { ...existing.description, en: item.description.en } } : {}),
-              ...(betterCollection && (!existing.collectionId || existing.collectionId === generic) ? { collectionId: betterCollection } : {}),
-            })
-            .where(eq(products.id, existing.id));
-          const links = [...new Set([item.type, item.collection, ...item.links].map(catId).filter((x): x is string => !!x))];
-          if (links.length) await tx.insert(productCategories).values(links.map((categoryId) => ({ productId: existing.id, categoryId }))).onConflictDoNothing();
-          for (const [position, v] of item.variants.entries()) {
-            await tx
-              .insert(productVariants)
-              .values({ productId: existing.id, sku: v.sku, color: v.color, size: v.size, stock: options.stock, storeId: store.id, position })
-              .onConflictDoNothing({ target: productVariants.sku });
-          }
-        });
-        const [hasPhoto] = await db.select({ id: productImages.id }).from(productImages).where(eq(productImages.productId, existing.id)).limit(1);
-        const photos = hasPhoto ? 0 : await savePhotos(existing.id, slug, item);
-        // EN: Publish drafts that are active on Shopify and have photos; never unpublish. PT: Publicar, nunca despublicar.
-        if (existing.status === "draft" && wantPublished(item) && (hasPhoto || photos > 0)) await setStatus(existing.id, true, true);
-        out.push({ code: item.code, result: "updated", photos });
-        continue;
-      }
-
+        .where(or(eq(products.sourceId, item.sourceId), eq(products.code, item.code), eq(products.slug, slug)))
+        .limit(1);
+      const values = {
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        salePrice: item.salePrice,
+        colors: item.colors,
+        typeId: catId(item.type),
+        collectionId: catId(item.collection),
+        sourceId: item.sourceId,
+      };
       const id = await db.transaction(async (tx) => {
-        const [row] = await tx
-          .insert(products)
-          .values({
-            slug,
-            code: item.code,
-            name: item.name,
-            description: item.description,
-            price: item.price,
-            salePrice: item.salePrice,
-            colors: item.colors,
-            typeId: catId(item.type),
-            collectionId: catId(item.collection),
-            status: "draft",
-            sourceId: item.sourceId,
-          })
-          .returning({ id: products.id });
+        const productId = existing
+          ? (await tx.update(products).set(values).where(eq(products.id, existing.id)).returning({ id: products.id }))[0].id
+          : (await tx.insert(products).values({ ...values, slug, code: item.code, status: "draft" }).returning({ id: products.id }))[0].id;
+        await tx.delete(productCategories).where(eq(productCategories.productId, productId));
         const links = [...new Set([item.type, item.collection, ...item.links].map(catId).filter((x): x is string => !!x))];
-        if (links.length) await tx.insert(productCategories).values(links.map((categoryId) => ({ productId: row.id, categoryId })));
+        if (links.length) await tx.insert(productCategories).values(links.map((categoryId) => ({ productId, categoryId })));
         for (const [position, v] of item.variants.entries()) {
-          await tx
-            .insert(productVariants)
-            .values({ productId: row.id, sku: v.sku, color: v.color, size: v.size, stock: options.stock, storeId: store.id, position })
-            .onConflictDoNothing({ target: productVariants.sku });
+          const variant = { productId, sku: v.sku, color: v.color, size: v.size, stock: v.available === false ? 0 : options.stock, storeId: store.id, position };
+          await tx.insert(productVariants).values(variant).onConflictDoUpdate({ target: productVariants.sku, set: variant });
         }
-        return row.id;
+        await tx.delete(productVariants).where(and(eq(productVariants.productId, productId), notInArray(productVariants.sku, item.variants.map((v) => v.sku))));
+        return productId;
       });
-      const photos = await savePhotos(id, slug, item);
-      if (photos > 0 && wantPublished(item)) await setStatus(id, true, true);
-      out.push({ code: item.code, result: "created", photos });
+      const photos = await syncPhotos(id, slug, item);
+      const published = item.publish && mayPublish && photos.total > 0;
+      await db.update(products).set({ status: published ? "published" : "draft" }).where(eq(products.id, id));
+      out.push({ code: item.code, result: existing ? "updated" : "created", photos: photos.downloaded, published });
     } catch (e) {
-      out.push({ code: item.code, result: "failed", photos: 0, message: e instanceof Error ? e.message.slice(0, 160) : "erro" });
+      out.push({ code: item.code, result: "failed", photos: 0, published: false, message: e instanceof Error ? e.message.slice(0, 160) : "erro" });
     }
   }
   return out;
@@ -232,4 +184,70 @@ export async function importShopifyBatch(staff: StaffContext, input: ImportBatch
 /** EN: One audit line per import run. PT: Uma linha de auditoria por importação. */
 export async function auditImport(staff: StaffContext, summary: string) {
   await audit({ actor: { type: "staff", id: staff.id, name: staff.name, role: staff.roleName }, action: "Importação do Shopify", detail: summary.slice(0, 300) });
+}
+
+// ── Old site / Site antigo ────────────────────────────────────────────
+
+/**
+ * EN: Reads one page of the old site's public storefront data (Shopify: /products.json, /collections.json,
+ *     /collections/<handle>/products.json). The browser asks page by page; the server does the request (the old site does
+ *     not allow it from another address). Only the fixed old-site address is used (OLD_SITE_URL, default eterna.co.mz).
+ * PT: Lê uma página dos dados públicos da loja antiga. O browser pede página a página; o servidor faz o pedido (o site
+ *     antigo não o permite de outro endereço). Só se usa o endereço fixo do site antigo (OLD_SITE_URL).
+ */
+export const oldSiteRequestSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("products"), page: z.number().int().min(1).max(40) }),
+  z.object({ kind: z.literal("collections"), page: z.number().int().min(1).max(10) }),
+  z.object({ kind: z.literal("members"), handle: z.string().regex(/^[a-z0-9][a-z0-9-]{0,99}$/), page: z.number().int().min(1).max(40) }),
+]);
+export type OldSiteRequest = z.infer<typeof oldSiteRequestSchema>;
+
+async function oldSiteJson(path: string): Promise<Record<string, unknown>> {
+  const base = (process.env.OLD_SITE_URL || "https://eterna.co.mz").replace(/\/$/, "");
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const res = await fetch(`${base}${path}`, { signal: AbortSignal.timeout(25_000), headers: { Accept: "application/json" }, cache: "no-store" });
+    if (res.status === 429 || res.status >= 500) {
+      await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+      continue;
+    }
+    if (!res.ok) throw new AppError("INTERNAL_ERROR", `O site antigo respondeu ${res.status}.`, 502);
+    return (await res.json()) as Record<string, unknown>;
+  }
+  throw new AppError("INTERNAL_ERROR", "O site antigo está ocupado. Tente outra vez daqui a um minuto.", 502);
+}
+
+export async function readOldSite(input: OldSiteRequest) {
+  const req = oldSiteRequestSchema.parse(input);
+  if (req.kind === "collections") {
+    const d = await oldSiteJson(`/collections.json?limit=250&page=${req.page}`);
+    return { collections: ((d.collections as { handle: string; title: string }[]) ?? []).map((c) => ({ handle: c.handle, title: c.title })) };
+  }
+  if (req.kind === "members") {
+    const d = await oldSiteJson(`/collections/${req.handle}/products.json?limit=250&page=${req.page}`);
+    return { handles: ((d.products as { handle: string }[]) ?? []).map((p) => p.handle) };
+  }
+  const d = await oldSiteJson(`/products.json?limit=250&page=${req.page}`);
+  const list = (d.products as OldProduct[]) ?? [];
+  // EN: Only the fields the import uses. PT: Só os campos que a importação usa.
+  return {
+    products: list.map((p) => ({
+      handle: p.handle,
+      title: p.title,
+      body_html: p.body_html,
+      product_type: p.product_type,
+      tags: p.tags,
+      options: p.options.map((o) => ({ name: o.name, position: o.position })),
+      variants: p.variants.map((v) => ({
+        id: v.id,
+        option1: v.option1,
+        option2: v.option2,
+        option3: v.option3,
+        sku: v.sku,
+        price: v.price,
+        compare_at_price: v.compare_at_price,
+        available: v.available,
+      })),
+      images: p.images.map((i) => ({ src: i.src, position: i.position, variant_ids: i.variant_ids })),
+    })),
+  };
 }

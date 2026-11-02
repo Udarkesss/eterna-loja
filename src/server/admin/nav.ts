@@ -4,6 +4,7 @@ import type { NavItem } from "@/components/admin/AdminNav";
 import { addDays, todayMaputo } from "@/lib/time";
 import { getDb } from "../db";
 import { fittings } from "../db/schema";
+import { deliveryEnabled } from "../content";
 import { can, storeScope, type StaffContext } from "../staff/access";
 import { listOrdersFor } from "./orders";
 
@@ -52,5 +53,9 @@ export async function navFor(staff: StaffContext): Promise<NavItem[]> {
     badges["/gestao/provas"] = requests.n;
   }
   const usersArea = ["users.staff", "users.managers", "users.admins"].some((a) => can(staff, a));
-  return MENU.filter((m) => (m.area === "users.staff" ? usersArea : can(staff, m.area))).map((m) => ({ ...m, badge: badges[m.href] }));
+  // EN: "Entregas" only with the delivery module on. PT: "Entregas" só com o módulo de entregas ligado.
+  const delivery = await deliveryEnabled();
+  return MENU.filter((m) => (m.href === "/gestao/entregas" ? delivery : true))
+    .filter((m) => (m.area === "users.staff" ? usersArea : can(staff, m.area)))
+    .map((m) => ({ ...m, badge: badges[m.href] }));
 }

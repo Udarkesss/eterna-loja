@@ -23,6 +23,7 @@ Open / Abrir: http://localhost:3000 → redirects to `/pt` or `/en`.
 | Command / Comando   | What it does / O que faz                          |
 | ------------------- | ------------------------------------------------- |
 | `npm run dev`       | Development server / Servidor de desenvolvimento  |
+| `npm.cmd run dev`   | Development server / Servidor de desenvolvimento  |
 | `npm run build`     | Production build / Compilação para produção       |
 | `npm run typecheck` | TypeScript check / Verificação de tipos           |
 | `npm run lint`      | ESLint                                            |
@@ -30,7 +31,6 @@ Open / Abrir: http://localhost:3000 → redirects to `/pt` or `/en`.
 | `npm run db:migrate`  | Apply migrations (every deploy) / Aplicar migrações (em cada deploy) |
 | `npm run db:seed`     | Categories + sample products / Categorias + produtos de exemplo |
 | `npm run db:studio`   | Browse the database / Ver a base de dados         |
-| `npm run import:nexsory` | Import the real catalog / Importar o catálogo real |
 
 ### Database / Base de dados
 
@@ -40,8 +40,8 @@ Open / Abrir: http://localhost:3000 → redirects to `/pt` or `/en`.
   `.data/pglite`, preenchido automaticamente no primeiro `npm run dev`.
 - **Production:** set `DATABASE_URL` (any PostgreSQL: Neon, Supabase, RDS…) and run `npm run db:migrate`.
   **Produção:** definir `DATABASE_URL` (qualquer PostgreSQL) e correr `npm run db:migrate`.
-- PGlite allows one process at a time: stop `npm run dev` before `db:seed` / `import:nexsory`.
-  O PGlite só aceita um processo de cada vez: parar o `npm run dev` antes de `db:seed` / `import:nexsory`.
+- PGlite allows one process at a time: stop `npm run dev` before `db:seed`.
+  O PGlite só aceita um processo de cada vez: parar o `npm run dev` antes de `db:seed`.
 
 ## Structure / Estrutura
 

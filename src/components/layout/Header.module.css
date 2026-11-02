@@ -61,10 +61,6 @@
   color: var(--champagne-deep);
 }
 
-.fitting {
-  color: var(--champagne-deep);
-}
-
 .mobileOnly {
   display: none;
 }

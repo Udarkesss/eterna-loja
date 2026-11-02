@@ -206,6 +206,7 @@ export interface MyOrderDTO {
 /** EN: What the checkout needs from the server. PT: O que o checkout precisa do servidor. */
 export interface CheckoutOptionsDTO {
   methods: PaymentMethod[]; // EN: enabled only. PT: só os activos.
+  delivery: boolean; // EN: home delivery switched on (delivery module). PT: entrega ao domicílio ligada.
   pickupStores: StoreDTO[];
   zones: DeliveryZoneDTO[];
   /** EN: How the delivery fee is calculated (Gestão · Entregas). PT: Como se calcula o preço da entrega. */

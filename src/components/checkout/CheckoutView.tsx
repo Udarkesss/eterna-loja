@@ -68,7 +68,8 @@ export function CheckoutView() {
   // ── Form state / Estado do formulário ──
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [delivery, setDelivery] = useState<"pickup" | "delivery">("delivery");
+  // EN: Collection in store by default; home delivery only with the delivery module on. PT: Levantamento por defeito.
+  const [delivery, setDelivery] = useState<"pickup" | "delivery">("pickup");
   const [storeCode, setStoreCode] = useState("02");
   const [city, setCity] = useState(c.cities[0]);
   const [neighbourhood, setNeighbourhood] = useState("");
@@ -101,7 +102,7 @@ export function CheckoutView() {
   const [secondsLeft, setSecondsLeft] = useState(0);
 
   useEffect(() => {
-    api.checkoutOptions(locale).then(setOptions).catch(() => setOptions({ methods: [], pickupStores: [], zones: [], pricing: DEFAULT_PRICING }));
+    api.checkoutOptions(locale).then(setOptions).catch(() => setOptions({ methods: [], pickupStores: [], zones: [], pricing: DEFAULT_PRICING, delivery: false }));
   }, [locale]);
 
   // ── Totals / Totais ──
@@ -350,7 +351,7 @@ export function CheckoutView() {
                 <legend className={styles.legend}>
                   <span className={styles.num}>2.</span> {c.delivery}
                 </legend>
-                <div className={styles.two}>
+                <div className={options.delivery ? styles.two : undefined}>
                   <label className={`${styles.option} ${delivery === "pickup" ? styles.optionOn : ""}`}>
                     <input type="radio" name="delivery" checked={delivery === "pickup"} onChange={() => setDelivery("pickup")} />
                     <span className={styles.optionText}>
@@ -359,14 +360,16 @@ export function CheckoutView() {
                     </span>
                     <span className={styles.optionPrice}>{c.free}</span>
                   </label>
-                  <label className={`${styles.option} ${delivery === "delivery" ? styles.optionOn : ""}`}>
-                    <input type="radio" name="delivery" checked={delivery === "delivery"} onChange={() => setDelivery("delivery")} />
-                    <span className={styles.optionText}>
-                      <span className={styles.optionTitle}>{c.homeTitle}</span>
-                      <span className={styles.optionSub}>{c.homeSub}</span>
-                    </span>
-                    <span className={styles.optionPrice}>{c.byZone}</span>
-                  </label>
+                  {options.delivery && (
+                    <label className={`${styles.option} ${delivery === "delivery" ? styles.optionOn : ""}`}>
+                      <input type="radio" name="delivery" checked={delivery === "delivery"} onChange={() => setDelivery("delivery")} />
+                      <span className={styles.optionText}>
+                        <span className={styles.optionTitle}>{c.homeTitle}</span>
+                        <span className={styles.optionSub}>{c.homeSub}</span>
+                      </span>
+                      <span className={styles.optionPrice}>{c.byZone}</span>
+                    </label>
+                  )}
                 </div>
 
                 {delivery === "pickup" && options.pickupStores.length > 1 && (

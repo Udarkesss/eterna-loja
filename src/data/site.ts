@@ -16,13 +16,14 @@ export const site = {
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   email: "apoio@eterna.co.mz",
   supportPhone: "+258 82 487 6300",
-  whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || "258824876300",
+  // EN: Main WhatsApp of the old eterna.co.mz. PT: WhatsApp principal do eterna.co.mz antigo.
+  whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || "258840733688",
   social: [
     { key: "instagram", label: "Instagram", handle: "@eterna.dresses", url: "https://www.instagram.com/eterna.dresses/" },
     { key: "instagram", label: "Bridal", handle: "@eterna.bridal", url: "https://www.instagram.com/eterna.bridal/" },
-    { key: "facebook", label: "Facebook", handle: "Eterna", url: "https://www.facebook.com/share/1A3tHGxafB/" },
+    { key: "facebook", label: "Facebook", handle: "Eterna Dresses", url: "https://www.facebook.com/share/1A3tHGxafB/" },
     { key: "tiktok", label: "TikTok", handle: "@eterna.dresses", url: "https://www.tiktok.com/@eterna.dresses" },
-    { key: "whatsapp", label: "WhatsApp", handle: "+258 82 487 6300", url: "https://wa.me/258824876300" },
+    { key: "whatsapp", label: "WhatsApp", handle: "+258 84 073 3688", url: "https://wa.me/258840733688" },
   ] as const,
 };
 
@@ -30,34 +31,44 @@ export function whatsappLink(message?: string, number: string = site.whatsapp): 
   return message ? `https://wa.me/${number}?text=${encodeURIComponent(message)}` : `https://wa.me/${number}`;
 }
 
-/** EN: Glória Mall stores. PT: Lojas do Glória Mall. */
+/**
+ * EN: Glória Mall stores, with the data of the old eterna.co.mz (contacts and FAQ "Qual o vosso horário?").
+ * PT: Lojas do Glória Mall, com os dados do eterna.co.mz antigo (contactos e FAQ "Qual o vosso horário?").
+ */
+export const STORE_HOURS = L(
+  "Segunda a sábado 09h00–19h00 · Domingos e feriados 10h00–15h00",
+  "Monday to Saturday 9:00–19:00 · Sundays and holidays 10:00–15:00",
+);
 export const storeSeeds = [
   {
     code: "02",
-    name: "Eterna & Beyond Time",
-    location: "Glória Mall — Loja 02, Maputo",
-    phone: "+258 82 487 6300",
-    hours: L("[SEG–SÁB 00:00–00:00]", "[MON–SAT 00:00–00:00]"),
+    name: "Eterna · Roupa de Festa, Executiva e Acessórios",
+    location: "Glória Mall — Loja 2, Maputo",
+    phone: "+258 82 487 6330",
+    hours: STORE_HOURS,
   },
   {
     code: "22",
-    name: "Eterna Bridal",
+    name: "Eterna Bridal · Showroom",
     location: "Glória Mall — Loja 22, Maputo",
     phone: "+258 84 073 3688",
-    hours: L("[SEG–SÁB 00:00–00:00]", "[MON–SAT 00:00–00:00]"),
+    hours: L(`Só por marcação · ${STORE_HOURS.pt}`, `By appointment only · ${STORE_HOURS.en}`),
   },
 ];
 
 /**
- * EN: Main menu, exactly as in the design. `href`: "#noivas" = home section, "category:x" = category page.
- * PT: Menu principal, exactamente como no design. `href`: "#noivas" = secção do Início, "category:x" = categoria.
+ * EN: Main menu of design V3 (Essenza · Ocasiões · Noivas · Acessórios · Modeladores · Sobre nós · Contacte-nos).
+ *     `href`: "#noivas" = home section, "category:x" = category page, "/about" = page.
+ * PT: Menu principal do design V3. `href`: "#noivas" = secção do Início, "category:x" = categoria, "/about" = página.
  */
 export const mainNav: { label: Localized; href: string }[] = [
-  { label: L("Noivas", "Bridal"), href: "#noivas" },
+  { label: L("Essenza", "Essenza"), href: "category:essenza" },
   { label: L("Ocasiões", "Occasions"), href: "category:ocasioes" },
-  { label: L("Beyond Time", "Beyond Time"), href: "category:beyond-time" },
+  { label: L("Noivas", "Bridal"), href: "#noivas" },
   { label: L("Acessórios", "Accessories"), href: "category:acessorios" },
   { label: L("Modeladores", "Shapewear"), href: "category:modeladores" },
+  { label: L("Sobre nós", "About us"), href: "/about" },
+  { label: L("Contacte-nos", "Contact us"), href: "/contact" },
 ];
 
 /** EN: Footer "Informações" links (pages to be written). PT: Ligações "Informações" do rodapé (páginas por escrever). */
@@ -135,6 +146,7 @@ export const permissionMatrix: [area: string, access: [string, string, string, s
 
 /** EN: Initial key/value settings. PT: Definições iniciais. */
 export const settingSeeds: Record<string, unknown> = {
+  "delivery.enabled": false, // EN: design V3: the delivery module starts switched off. PT: V3: começa desligado.
   "delivery.pricing": { mode: "zone", fixedFee: null, baseFee: null, perKm: null, maxFee: null },
   "delivery.commissionPct": 70,
   "notifications.events": {

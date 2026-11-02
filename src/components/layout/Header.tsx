@@ -9,10 +9,8 @@ import { NavLinks } from "./NavLinks";
 import styles from "./Header.module.css";
 
 /**
- * EN: ACTIVE navbar (the client's choice): two rows — language · ETERNA · icons, then the menu.
- *     The menu items and icons follow the design exactly. The design's own one-row navbar is DesignHeader.tsx.
- * PT: Barra de navegação ACTIVA (escolha da cliente): duas linhas — idioma · ETERNA · ícones, e depois o menu.
- *     Os itens do menu e os ícones seguem o design à risca. A barra de uma linha do design está em DesignHeader.tsx.
+ * EN: Store header of design V3: two rows — language · ETERNA · icons (search, account, favourites, bag), then the menu.
+ * PT: Cabeçalho da loja do design V3: duas linhas — idioma · ETERNA · ícones (pesquisa, conta, favoritos, saco), e o menu.
  */
 export function Header({ locale }: { locale: Locale }) {
   const dict = getDictionary(locale);
@@ -28,7 +26,7 @@ export function Header({ locale }: { locale: Locale }) {
       </div>
       <nav aria-label={dict.nav.main} className={styles.nav}>
         <ul className={`page-x ${styles.navList}`}>
-          <NavLinks linkClassName={styles.navLink} withFitting fittingClassName={`${styles.navLink} ${styles.fitting}`} />
+          <NavLinks linkClassName={styles.navLink} />
           {/* EN: phones: search + account move here. PT: telemóvel: pesquisa + conta vêm para aqui. */}
           <li className={styles.mobileOnly}>
             <Link href={localizePath(locale, "/search")} aria-label={dict.nav.search} className={styles.navLink}>

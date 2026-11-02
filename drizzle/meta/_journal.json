@@ -36,6 +36,13 @@
       "when": 1791495241404,
       "tag": "0004_paypal_test_methods",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793613070204,
+      "tag": "0005_product_image_source",
+      "breakpoints": true
     }
   ]
 }

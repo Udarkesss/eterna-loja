@@ -83,12 +83,19 @@ export async function enabledPaymentMethods() {
   return rows.filter((r) => r.enabled).map((r) => r.method);
 }
 
+/**
+ * EN: Delivery module (design V3: built but switched off at launch; Gestão → Definições). Off → only collection in store.
+ * PT: Módulo de entregas (V3: construído mas desligado no arranque; Gestão → Definições). Desligado → só levantamento.
+ */
+export const deliveryEnabled = () => getSetting<boolean>("delivery.enabled", false);
+
 export async function getCheckoutOptions(locale: Locale): Promise<CheckoutOptionsDTO> {
-  const [methods, allStores, zones, pricing] = await Promise.all([
+  const [methods, allStores, zones, pricing, delivery] = await Promise.all([
     enabledPaymentMethods(),
     listStores(locale),
     listDeliveryZones(locale),
     getSetting<DeliveryPricing>("delivery.pricing", DEFAULT_PRICING),
+    deliveryEnabled(),
   ]);
-  return { methods, pickupStores: allStores, zones, pricing };
+  return { methods, pickupStores: allStores, zones: delivery ? zones : [], pricing, delivery };
 }

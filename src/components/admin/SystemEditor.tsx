@@ -19,9 +19,10 @@ interface StoreForm {
 
 const DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
-export function SystemEditor(props: { stores: StoreForm[]; schedule: FittingSettings }) {
+export function SystemEditor(props: { stores: StoreForm[]; schedule: FittingSettings; delivery: boolean }) {
   const [stores, setStores] = useState(props.stores);
   const [sc, setSc] = useState(props.schedule);
+  const [delivery, setDelivery] = useState(props.delivery);
   const [result, setResult] = useState<SettingsResult | null>(null);
   const [pending, start] = useTransition();
   const upd = (i: number, patch: Partial<StoreForm>) => {
@@ -38,11 +39,30 @@ export function SystemEditor(props: { stores: StoreForm[]; schedule: FittingSett
       <div className={s.top} style={{ marginTop: -16, justifyContent: "flex-end" }}>
         <div className={s.actions}>
           {result && <span className={s.chip} data-tone={result.ok ? "ok" : "bad"}>{result.ok ? "✓ Guardado" : result.message}</span>}
-          <button className={s.btn} disabled={pending} onClick={() => start(async () => setResult(await saveSystemAction({ stores, schedule: sc })))}>
+          <button className={s.btn} disabled={pending} onClick={() => start(async () => setResult(await saveSystemAction({ stores, schedule: sc, delivery })))}>
             Guardar alterações
           </button>
         </div>
       </div>
+
+      <section className={s.card}>
+        <h2 className={s.h2}>Módulo de entregas</h2>
+        <label className={s.check}>
+          <input
+            type="checkbox"
+            checked={delivery}
+            onChange={(e) => {
+              setDelivery(e.target.checked);
+              setResult(null);
+            }}
+          />
+          Entrega ao domicílio ligada
+        </label>
+        <p className={s.hint}>
+          Desligado: a loja só oferece levantamento no Glória Mall e o menu Entregas fica escondido. Ligado: o checkout mostra a entrega ao
+          domicílio e a equipa atribui entregadores.
+        </p>
+      </section>
 
       <div className={s.split2}>
         {stores.map((st, i) => (

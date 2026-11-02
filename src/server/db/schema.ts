@@ -167,6 +167,8 @@ export const productImages = pgTable(
     color: text("color"),
     alt: jsonb("alt").$type<Localized>(),
     position: integer("position").notNull().default(0), // EN: 0 = main photo. PT: 0 = fotografia principal.
+    // EN: Original address of an imported photo (re-imports skip unchanged photos). PT: Endereço de origem da foto importada.
+    sourceUrl: text("source_url"),
   },
   (t) => [index("product_images_product_idx").on(t.productId)],
 );

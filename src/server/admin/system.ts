@@ -16,19 +16,22 @@ import type { StaffContext } from "../staff/access";
 
 export async function loadSystemSettings() {
   const db = await getDb();
-  const [storeRows, schedule] = await Promise.all([
+  const [storeRows, schedule, delivery] = await Promise.all([
     db.select().from(stores).orderBy(asc(stores.position)),
     getSetting<FittingSettings>("fittings.schedule", FITTING_SETTINGS_DEFAULT),
+    getSetting<boolean>("delivery.enabled", false),
   ]);
   return {
     stores: storeRows.map((s) => ({ id: s.id, code: s.code, name: s.name, location: s.location, phone: s.phone, hours: s.hours ?? { pt: "", en: "" } })),
     schedule,
+    delivery,
   };
 }
 
 export interface SystemSave {
   stores: { id: string; name: string; location: string; phone: string; hours: Localized }[];
   schedule: FittingSettings;
+  delivery: boolean; // EN: delivery module on/off. PT: módulo de entregas ligado/desligado.
 }
 
 export async function saveSystemSettings(staff: StaffContext, input: SystemSave) {
@@ -54,5 +57,13 @@ export async function saveSystemSettings(staff: StaffContext, input: SystemSave)
     },
     staff.id,
   );
+  const wasOn = await getSetting<boolean>("delivery.enabled", false);
+  if (wasOn !== input.delivery) {
+    await setSetting("delivery.enabled", input.delivery, staff.id);
+    await audit({
+      actor: { type: "staff", id: staff.id, name: staff.name, role: staff.roleName },
+      action: input.delivery ? "Módulo de entregas ligado" : "Módulo de entregas desligado",
+    });
+  }
   await audit({ actor: { type: "staff", id: staff.id, name: staff.name, role: staff.roleName }, action: "Definições do sistema alteradas", detail: "Lojas e provas" });
 }

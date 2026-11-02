@@ -1,7 +1,7 @@
-import { count, eq } from "drizzle-orm";
+import { count, eq, inArray } from "drizzle-orm";
 import { categoryTree, type CategorySeed } from "@/data/catalog";
 import { homeSections, occasionTiles as tileSeeds } from "@/data/content";
-import { designProducts } from "@/data/products";
+import { aboutSeed, infoSeeds } from "@/data/pages";
 import { deliveryZoneSeeds, paymentMethodSeeds, permissionMatrix, roleSeeds, settingSeeds, storeSeeds } from "@/data/site";
 import type { Database } from "./client";
 import {
@@ -10,10 +10,6 @@ import {
   deliveryZones,
   occasionTiles,
   paymentMethodSettings,
-  productCategories,
-  productImages,
-  products,
-  productVariants,
   rolePermissions,
   roles,
   settings,
@@ -22,11 +18,11 @@ import {
 
 /**
  * EN: Loads the design's data into the database. Safe to run many times:
- *     reference data (stores, categories, roles, design products) is upserted; content and settings are only
- *     inserted when missing, so edits made in the back-office are never overwritten.
+ *     reference data (stores, categories, roles) is upserted; content and settings are only inserted when missing, so
+ *     edits made in the back-office are never overwritten. Products come from the import (Gestão → Produtos → Importar).
  * PT: Carrega os dados do design na base de dados. Pode correr várias vezes:
  *     dados de referência são criados ou actualizados; conteúdo e definições só são inseridos se faltarem,
- *     para nunca apagar alterações feitas na gestão.
+ *     para nunca apagar alterações feitas na gestão. Os produtos vêm da importação (Gestão → Produtos → Importar).
  */
 
 type Ids = Map<string, string>;
@@ -45,6 +41,7 @@ async function seedStores(db: Database): Promise<Ids> {
   return ids;
 }
 
+/** EN: Creates or updates every category of src/data/catalog.ts (slug, kind, parent, names, order). PT: Cria ou actualiza. */
 async function seedCategories(db: Database): Promise<Ids> {
   const ids: Ids = new Map();
   async function upsert(nodes: CategorySeed[], parentId: string | null) {
@@ -71,52 +68,13 @@ async function seedCategories(db: Database): Promise<Ids> {
   return ids;
 }
 
-async function seedProducts(db: Database, categoryIds: Ids, storeIds: Ids) {
-  for (const p of designProducts) {
-    const values = {
-      slug: p.code.toLowerCase(),
-      code: p.code,
-      name: p.name,
-      description: p.description,
-      composition: p.composition ?? null,
-      price: p.price,
-      salePrice: p.salePrice ?? null,
-      colors: p.colors,
-      typeId: categoryIds.get(p.type) ?? null,
-      collectionId: categoryIds.get(p.collection) ?? null,
-      status: "published" as const,
-      isNew: p.isNew ?? false,
-    };
-    const [row] = await db
-      .insert(products)
-      .values(values)
-      .onConflictDoUpdate({ target: products.code, set: values })
-      .returning({ id: products.id });
-
-    // EN: Product appears in its type, its collection and its occasions. PT: Aparece no tipo, colecção e ocasiões.
-    const links = [p.type, p.collection, ...p.occasions]
-      .map((slug) => categoryIds.get(slug))
-      .filter((id): id is string => !!id);
-    await db.delete(productCategories).where(eq(productCategories.productId, row.id));
-    await db.insert(productCategories).values([...new Set(links)].map((categoryId) => ({ productId: row.id, categoryId })));
-
-    for (const [position, v] of p.variants.entries()) {
-      const variant = {
-        productId: row.id,
-        sku: `${p.code}-${v.color ?? "U"}-${v.size}`.toUpperCase().replace(/[^A-Z0-9-]/g, ""),
-        color: v.color,
-        size: v.size,
-        storeId: storeIds.get(v.store) ?? null,
-        stock: v.stock,
-        position,
-      };
-      await db.insert(productVariants).values(variant).onConflictDoUpdate({ target: productVariants.sku, set: variant });
+/** EN: "Sobre nós" and "Informações" pages (texts of the old site); only when missing. PT: Só se faltarem. */
+async function seedPages(db: Database) {
+  const pages = [{ page: "about", list: [aboutSeed] }, { page: "info", list: infoSeeds }];
+  for (const { page, list } of pages) {
+    for (const [position, s] of list.entries()) {
+      await db.insert(contentSections).values({ page, key: s.key, position, data: s.data, publishedAt: new Date() }).onConflictDoNothing();
     }
-
-    await db.delete(productImages).where(eq(productImages.productId, row.id));
-    await db.insert(productImages).values(
-      p.images.map((img, position) => ({ productId: row.id, url: img.url, alt: img.alt, color: img.color ?? null, position })),
-    );
   }
 }
 
@@ -127,6 +85,7 @@ async function seedContent(db: Database, categoryIds: Ids) {
       .values({ page: "home", key: s.key, position, data: s.data, publishedAt: new Date() })
       .onConflictDoNothing();
   }
+  await seedPages(db);
   const [{ value }] = await db.select({ value: count() }).from(occasionTiles);
   if (value === 0) {
     await db.insert(occasionTiles).values(
@@ -177,23 +136,83 @@ async function seedRoles(db: Database) {
 }
 
 export async function seedAll(db: Database) {
-  const storeIds = await seedStores(db);
+  await seedStores(db);
   const categoryIds = await seedCategories(db);
-  await seedProducts(db, categoryIds, storeIds);
   await seedContent(db, categoryIds);
   await seedSettings(db);
   await seedRoles(db);
+  // EN: A new database already has the latest data. PT: Uma base nova já tem os dados mais recentes.
+  await setDataVersion(db, DATA_MIGRATIONS.length);
+}
+
+// ── Data versions / Versões dos dados ─────────────────────────────────
+
+/**
+ * EN: One-off changes to the data of an existing database (local or production), applied in order once each. The
+ *     number already applied is kept in settings ("data.version"). Use them for changes that must not repeat on every
+ *     deploy (e.g. reshaping the category tree), so later edits in the back-office are kept.
+ * PT: Mudanças únicas aos dados de uma base existente (local ou produção), aplicadas por ordem uma vez cada. O número
+ *     já aplicado fica nas definições ("data.version"). Servem para mudanças que não se podem repetir em cada
+ *     publicação (ex.: reorganizar as categorias), para não apagar o que depois se mudar na gestão.
+ */
+const DATA_MIGRATIONS: { name: string; run: (db: Database) => Promise<void> }[] = [
+  {
+    // EN: Design V3 category tree (Essenza, Roupa de Festa / Executiva, accessory groups, old Shopify slugs).
+    // PT: Árvore de categorias do design V3 (Essenza, Roupa de Festa / Executiva, grupos de acessórios, slugs do Shopify).
+    name: "catalogo-v3",
+    run: async (db) => {
+      const [old] = await db.select({ id: categories.id }).from(categories).where(eq(categories.slug, "pochettes-noiva"));
+      const [taken] = await db.select({ id: categories.id }).from(categories).where(eq(categories.slug, "pochettes-de-noiva"));
+      if (old && !taken) await db.update(categories).set({ slug: "pochettes-de-noiva" }).where(eq(categories.id, old.id));
+      await seedCategories(db);
+      // EN: V1/V2 categories that V3 and the old site do not have. PT: Categorias da V1/V2 que a V3 e o site antigo não têm.
+      await db.delete(categories).where(inArray(categories.slug, ["beyond-time", "vestidos", "vestidos-midi", "pochettes-noiva"]));
+    },
+  },
+  {
+    // EN: Data of the old eterna.co.mz: page texts, store names, phones and hours (only where still the design's
+    //     placeholders, so edits made in the back-office stay).
+    // PT: Dados do eterna.co.mz antigo: textos das páginas, nomes, telefones e horários das lojas (só onde ainda
+    //     estão os marcadores do design, para manter o que se mudou na gestão).
+    name: "conteudo-site-antigo",
+    run: async (db) => {
+      await seedPages(db);
+      for (const st of await db.select().from(stores)) {
+        const seed = storeSeeds.find((x) => x.code === st.code);
+        if (!seed) continue;
+        const placeholder = !st.hours || st.hours.pt.startsWith("[") || st.name === "Eterna & Beyond Time";
+        if (placeholder) await db.update(stores).set({ name: seed.name, location: seed.location, phone: seed.phone, hours: seed.hours }).where(eq(stores.id, st.id));
+      }
+    },
+  },
+];
+
+async function dataVersion(db: Database): Promise<number> {
+  const [row] = await db.select({ value: settings.value }).from(settings).where(eq(settings.key, "data.version"));
+  return typeof row?.value === "number" ? row.value : 0;
+}
+
+async function setDataVersion(db: Database, version: number) {
+  await db
+    .insert(settings)
+    .values({ key: "data.version", value: version })
+    .onConflictDoUpdate({ target: settings.key, set: { value: version, updatedAt: new Date() } });
 }
 
 /**
- * EN: Adds reference rows that newer versions introduced (e.g. a new payment method) to an existing database.
- *     Never changes rows that already exist. Runs after migrations, locally and on deploy.
- * PT: Junta a uma base existente as linhas de referência que versões novas trouxeram (ex.: um método de pagamento
- *     novo). Nunca altera linhas que já existem. Corre depois das migrações, em local e no deploy.
+ * EN: Brings an existing database up to date after the schema migrations, locally and on deploy: pending data versions
+ *     (above) and reference rows that newer versions introduced (e.g. a new payment method).
+ * PT: Actualiza uma base existente depois das migrações do esquema, em local e no deploy: versões de dados pendentes
+ *     (acima) e linhas de referência que versões novas trouxeram (ex.: um método de pagamento novo).
  */
 export async function ensureReferenceData(db: Database) {
   const [{ value }] = await db.select({ value: count() }).from(stores);
   if (value === 0) return; // EN: empty database: seedAll does everything. PT: base vazia: o seedAll trata de tudo.
+  for (let v = await dataVersion(db); v < DATA_MIGRATIONS.length; v++) {
+    await DATA_MIGRATIONS[v].run(db);
+    await setDataVersion(db, v + 1);
+    console.log(`✓ Data / Dados: ${DATA_MIGRATIONS[v].name}`);
+  }
   for (const [position, m] of paymentMethodSeeds.entries()) {
     await db
       .insert(paymentMethodSettings)

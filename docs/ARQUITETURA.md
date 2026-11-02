@@ -86,7 +86,7 @@ Checkout: Delivery → Method (M-Pesa | mKesh) → Number → Pay
 
 ## 7. Next steps / Próximos passos
 
-1. Import the real catalog / Importar o catálogo real (`npm run import:nexsory`, needs the Nexsory storefront id).
+1. Import the real catalog / Importar o catálogo real: Gestão → Produtos → Importar do Shopify (see `docs/MIGRACAO.md`).
 2. Real M-Pesa and mKesh integrations / Integrações reais (`src/server/payments/*`), sandbox first.
 3. Back-office to manage products and orders / Área de gestão de produtos e encomendas.
 4. Order notifications (WhatsApp/SMS/e-mail) / Avisos de encomenda.

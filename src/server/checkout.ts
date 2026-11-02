@@ -6,7 +6,7 @@ import type { CreateOrderInput } from "@/lib/validation";
 import type { OrderStatusDTO, PaymentStatus, ProductDTO } from "@/types";
 import { currentCustomer } from "./accounts";
 import { effectivePrice, listProducts } from "./catalog";
-import { enabledPaymentMethods, listDeliveryZones } from "./content";
+import { deliveryEnabled, enabledPaymentMethods, listDeliveryZones } from "./content";
 import { getDb } from "./db";
 import { discountCodes, stores } from "./db/schema";
 import { AppError } from "./errors";
@@ -93,6 +93,7 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderStatusD
     if (!store) throw new AppError("VALIDATION_ERROR", "Unknown store", 400, { field: "storeCode" });
     fulfillmentFields = { pickupStoreId: store.id };
   } else {
+    if (!(await deliveryEnabled())) throw new AppError("METHOD_UNAVAILABLE", "Home delivery is switched off", 400, { field: "fulfillment" });
     const zones = await listDeliveryZones(locale);
     const hood = fulfillment.neighbourhood.toLowerCase();
     const zone = zones.find((z) => z.neighbourhoods.some((n) => n.toLowerCase() === hood));
