@@ -71,7 +71,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
               WhatsApp {whatsapp}
             </a>
             <a href={`mailto:${site.email}`}>{site.email}</a>
-            <Link href={localizePath(locale, "/contact")}>{f.storesShort}</Link>
+            <Link href={resolveHref("#contactos", locale)}>{f.storesShort}</Link>
           </div>
           <div className={styles.newsCol}>
             <h2 className={styles.heading}>{f.newsletterTitle}</h2>

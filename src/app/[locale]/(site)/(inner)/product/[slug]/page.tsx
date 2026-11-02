@@ -10,7 +10,7 @@ import { RichText } from "@/components/ui/RichText";
 import { getDictionary, t } from "@/i18n";
 import { localizePath } from "@/i18n/config";
 import { resolveLocale } from "@/i18n/params";
-import { categoryHref } from "@/lib/links";
+import { categoryHref, resolveHref } from "@/lib/links";
 import { findCategory, findProduct, relatedProducts } from "@/server/catalog";
 import { cardPriceVisible } from "@/server/content";
 import styles from "./product.module.css";
@@ -101,7 +101,7 @@ export default async function ProductPage({ params }: Props) {
             </span>
             <span>
               {dict.product.finalSale}{" "}
-              <Link href={localizePath(locale, "/contact")} className={detail.trustLink}>
+              <Link href={resolveHref("#contactos", locale)} className={detail.trustLink}>
                 {dict.product.tryInStore}
               </Link>
             </span>

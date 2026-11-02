@@ -46,6 +46,15 @@ export const pt = {
     seeOnInstagram: "Ver no Instagram",
     howToGetThere: "Como chegar",
     swipeCount: "{current} / {total}",
+    previous: "Anteriores",
+    next: "Seguintes",
+    moreOccasions: "Mais ocasiões",
+    lessOccasions: "Menos ocasiões",
+    changesEvery: "Troca a cada {s}s",
+    bookFitting: "Marcar prova",
+    bookFittingShort: "Agendar prova",
+    fittingMessage: "Olá, gostaria de marcar uma prova na Eterna Bridal.",
+    phone: "Telefone",
   },
   product: {
     new: "Novo",
@@ -415,8 +424,6 @@ export const pt = {
     payments: "Pagamentos",
   },
   pages: {
-    about: "Sobre nós",
-    contact: "Contactos",
     toWrite: "[Texto por escrever pela equipa Eterna.]",
   },
   account: {

@@ -59,8 +59,8 @@ export const storeSeeds = [
 
 /**
  * EN: Main menu of design V3 (Essenza · Ocasiões · Noivas · Acessórios · Modeladores · Sobre nós · Contacte-nos).
- *     `href`: "#noivas" = home section, "category:x" = category page, "/about" = page.
- * PT: Menu principal do design V3. `href`: "#noivas" = secção do Início, "category:x" = categoria, "/about" = página.
+ *     `href`: "#noivas" = home section, "category:x" = category page.
+ * PT: Menu principal do design V3. `href`: "#noivas" = secção do Início, "category:x" = categoria.
  */
 export const mainNav: { label: Localized; href: string }[] = [
   { label: L("Essenza", "Essenza"), href: "category:essenza" },
@@ -68,8 +68,8 @@ export const mainNav: { label: Localized; href: string }[] = [
   { label: L("Noivas", "Bridal"), href: "#noivas" },
   { label: L("Acessórios", "Accessories"), href: "category:acessorios" },
   { label: L("Modeladores", "Shapewear"), href: "category:modeladores" },
-  { label: L("Sobre nós", "About us"), href: "/about" },
-  { label: L("Contacte-nos", "Contact us"), href: "/contact" },
+  { label: L("Sobre nós", "About us"), href: "#sobre" },
+  { label: L("Contacte-nos", "Contact us"), href: "#contactos" },
 ];
 
 /** EN: Footer "Informações" links (pages to be written). PT: Ligações "Informações" do rodapé (páginas por escrever). */

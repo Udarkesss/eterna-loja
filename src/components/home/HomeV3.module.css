@@ -1,0 +1,1508 @@
+/* EN: Home page of design V3 ("V3-Inicio", "V3-Inicio-2", "V3-M-Inicio*"). PT: Página inicial do design V3. */
+
+/* ── Shared / Partilhado ── */
+.muted {
+  font-size: 16px;
+  line-height: 26px;
+  color: var(--muted);
+}
+
+.small {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--muted);
+}
+
+.label {
+  display: block;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  line-height: 30px;
+}
+
+.title36 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 36px;
+  line-height: 42px;
+}
+
+.title44 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 44px;
+  line-height: 50px;
+}
+
+.display56,
+.display60,
+.display64,
+.display92 {
+  font-family: var(--font-serif);
+  font-weight: 300;
+}
+
+.display56 {
+  font-size: 56px;
+  line-height: 60px;
+}
+
+.display60 {
+  font-size: 60px;
+  line-height: 64px;
+}
+
+.display64 {
+  font-size: 64px;
+  line-height: 68px;
+}
+
+.display92 {
+  font-size: 92px;
+  line-height: 94px;
+  letter-spacing: -0.01em;
+}
+
+.display92 em,
+.display64 em,
+.display56 em,
+.display60 em {
+  color: var(--accent-ink);
+}
+
+.eyebrowLight {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--on-contrast);
+}
+
+.ulink {
+  align-self: flex-start;
+  display: inline-block;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 4px;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.btnDark,
+.btnLight,
+.btnGold,
+.btnDarkSmall,
+.btnSmall,
+.btnText,
+.btnLine {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.btnDark,
+.btnLight,
+.btnGold {
+  height: 52px;
+  padding: 0 28px;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+}
+
+.btnDark {
+  align-self: flex-start;
+  background: var(--contrast);
+  color: var(--on-contrast);
+}
+
+.btnLight {
+  align-self: flex-start;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.btnGold {
+  border: 1px solid var(--accent);
+  color: var(--on-contrast);
+}
+
+.btnDarkSmall,
+.btnSmall,
+.btnText {
+  height: 40px;
+  padding: 0 18px;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+}
+
+.btnDarkSmall {
+  background: var(--contrast);
+  color: var(--on-contrast);
+}
+
+.btnSmall {
+  border: 1px solid var(--ink);
+  color: var(--ink);
+}
+
+.btnText {
+  padding: 0 6px;
+  color: var(--accent-ink);
+}
+
+.btnLine {
+  height: 44px;
+  padding: 0 22px;
+  border: 1px solid rgba(250, 247, 242, 0.85);
+  border-radius: 0;
+  color: var(--on-contrast);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  transition: background 0.3s, color 0.3s;
+}
+
+.btnLine:hover {
+  background: var(--on-contrast);
+  color: var(--ink);
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(28, 25, 23, 0) 0%, rgba(28, 25, 23, 0) 35%, rgba(28, 25, 23, 0.62) 100%);
+}
+
+.parallaxLayer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -12%;
+  height: 124%;
+  will-change: transform;
+}
+
+.parallaxLayer video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.parallaxLayer img {
+  object-fit: cover;
+}
+
+.section {
+  padding-top: 96px;
+  padding-bottom: 96px;
+}
+
+.sectionHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 32px;
+  margin-bottom: 40px;
+}
+
+.sectionTitles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 720px;
+}
+
+.three {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+}
+
+.ruleTop {
+  border-top: 1px solid var(--ink);
+  padding-top: 22px;
+}
+
+.roman {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 40px;
+  line-height: 44px;
+  color: var(--accent-ink);
+}
+
+.iconCircle,
+.iconCircleSmall {
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: var(--alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+}
+
+.iconCircle {
+  width: 52px;
+  height: 52px;
+}
+
+.iconCircleSmall {
+  width: 44px;
+  height: 44px;
+}
+
+/* ── Hero / Topo ── */
+.hero {
+  position: relative;
+  height: min(56.25vw, 810px);
+  min-height: 420px;
+  overflow: hidden;
+  background: var(--contrast);
+}
+
+.heroBlur {
+  object-fit: cover;
+  filter: blur(28px) brightness(0.7);
+  transform: scale(1.1);
+  display: none;
+}
+
+.heroVideo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.heroScrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(0deg, rgba(23, 19, 17, 0.62) 0%, rgba(23, 19, 17, 0.28) 38%, rgba(23, 19, 17, 0) 62%),
+    linear-gradient(90deg, rgba(23, 19, 17, 0.35) 0%, rgba(23, 19, 17, 0) 55%);
+}
+
+.heroText {
+  position: absolute;
+  left: var(--page-x);
+  bottom: 80px;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  color: var(--on-contrast);
+}
+
+.heroTitle {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: 68px;
+  line-height: 72px;
+}
+
+.heroText .btnLight {
+  margin-top: 10px;
+}
+
+.heroPill,
+.bandPill {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.heroPill {
+  left: var(--page-x);
+  bottom: 92px;
+}
+
+.pause,
+.bandPause {
+  position: absolute;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: rgba(250, 247, 242, 0.92);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pause {
+  right: var(--page-x);
+  bottom: 80px;
+  width: 48px;
+  height: 48px;
+}
+
+/* ── Entrada ── */
+.entrada {
+  padding-top: 120px;
+  padding-bottom: 120px;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 24px;
+  align-items: end;
+}
+
+.entradaTitle {
+  grid-column: span 8;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.entradaText {
+  grid-column: span 4;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding-bottom: 12px;
+}
+
+.entradaText strong {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* ── Colecção ── */
+.colecao {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cover {
+  position: relative;
+  display: block;
+  height: min(52.8vw, 760px);
+  min-height: 420px;
+  overflow: hidden;
+  background: var(--alt);
+}
+
+.coverText {
+  position: absolute;
+  left: var(--page-x);
+  right: var(--page-x);
+  bottom: 56px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  color: var(--on-contrast);
+}
+
+.coverMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.coverSeason {
+  font-size: 13px;
+  line-height: 20px;
+  opacity: 0.9;
+}
+
+.cue {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  scroll-margin-top: 130px;
+}
+
+.duoPanel {
+  position: relative;
+  height: min(52.8vw, 760px);
+  min-height: 420px;
+  overflow: hidden;
+  background: var(--alt);
+}
+
+.duoPanel img {
+  object-fit: cover;
+}
+
+.duoText {
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--on-contrast);
+}
+
+.duoTitle {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: 36px;
+  line-height: 1.12;
+}
+
+.duoLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+/* ── Ocasiões ── */
+.occGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: 290px;
+  gap: 16px;
+}
+
+.occTile {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  background: var(--alt);
+}
+
+.occTile img {
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.occTile:hover img {
+  transform: scale(1.03);
+}
+
+.occLarge {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.occTall {
+  grid-row: span 2;
+}
+
+.occText {
+  position: absolute;
+  left: 26px;
+  right: 16px;
+  bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--on-contrast);
+}
+
+.occName {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+.occPhrase {
+  font-size: 13px;
+  line-height: 20px;
+  opacity: 0.92;
+}
+
+.occMore {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  margin-top: 0;
+  transition: grid-template-rows 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.6s ease, margin-top 0.7s ease;
+}
+
+.occMore > * {
+  overflow: hidden;
+}
+
+.occMoreOpen {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  margin-top: 16px;
+}
+
+.vButton {
+  margin: 28px auto 0;
+  border: 0;
+  background: none;
+  padding: 8px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+}
+
+.vButton span {
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.vButton svg {
+  transition: transform 0.5s ease;
+}
+
+/* ── Acabadas de chegar ── */
+.novidades {
+  padding-top: 48px;
+  padding-bottom: 88px;
+}
+
+.carouselHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.novidadesTitles {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.carouselButtons {
+  display: flex;
+  gap: 10px;
+}
+
+.round {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.track {
+  display: flex;
+  gap: 24px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  margin-right: calc(-1 * var(--page-x));
+  padding-right: var(--page-x);
+}
+
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+.slideCard {
+  width: 232px;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+}
+
+/* ── Noivas ── */
+.band {
+  position: relative;
+  height: min(36vw, 520px);
+  min-height: 300px;
+  overflow: hidden;
+  background: #2a2523;
+}
+
+.band video {
+  object-position: center 35%;
+}
+
+.bandPill {
+  left: var(--page-x);
+  bottom: 40px;
+}
+
+.bandPause {
+  right: var(--page-x);
+  bottom: 36px;
+  width: 44px;
+  height: 44px;
+}
+
+.bridal {
+  background: var(--surface);
+  color: var(--ink);
+  padding-top: 104px;
+  padding-bottom: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 56px;
+}
+
+.bridalHead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+  max-width: 760px;
+}
+
+.bridalLogo {
+  height: 60px;
+  width: auto;
+}
+
+.bridalCards {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 40px;
+}
+
+.bridalCard {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  color: var(--ink);
+}
+
+.bridalImage {
+  position: relative;
+  display: block;
+  height: 500px;
+  overflow: hidden;
+  background: var(--alt);
+}
+
+.bridalImage img {
+  object-fit: cover;
+}
+
+.bridalTitle {
+  font-family: var(--font-serif);
+  font-size: 34px;
+  line-height: 1.12;
+}
+
+.experience {
+  padding-top: 120px;
+  padding-bottom: 120px;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 24px;
+  row-gap: 64px;
+}
+
+.experienceTitle {
+  grid-column: span 5;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.experienceBody {
+  grid-column: 7 / span 5;
+  align-self: end;
+}
+
+.steps {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 48px 24px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.step {
+  border-top: 1px solid var(--ink);
+  padding-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.stepTitle {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+.darkBand {
+  padding: 112px var(--page-x);
+  background: var(--contrast);
+  color: var(--on-contrast);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  text-align: center;
+}
+
+.darkEyebrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.rule {
+  width: 48px;
+  height: 1px;
+  background: var(--accent);
+}
+
+.darkTitle {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: 80px;
+  line-height: 1.05;
+}
+
+.darkTitle em {
+  color: var(--accent);
+}
+
+.darkBody {
+  max-width: 560px;
+  font-size: 16px;
+  line-height: 26px;
+  opacity: 0.9;
+}
+
+.darkButtons {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.darkNote {
+  font-size: 12px;
+  line-height: 18px;
+  opacity: 0.7;
+}
+
+/* ── Acessórios / Modeladores ── */
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 560px;
+}
+
+.splitAlt {
+  background: var(--alt);
+  min-height: 460px;
+}
+
+.splitImage {
+  position: relative;
+  overflow: hidden;
+  background: var(--alt);
+  min-height: 340px;
+}
+
+.fadeImage {
+  object-fit: cover;
+  transition: opacity 0.7s ease;
+}
+
+.contain {
+  object-fit: contain;
+  padding: 14%;
+  background: #ffffff;
+}
+
+.splitText {
+  padding: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+}
+
+.splitText .muted {
+  max-width: 440px;
+}
+
+.splitText [role="tabpanel"] .ulink {
+  margin-top: 18px;
+}
+
+.accTabs {
+  display: flex;
+  gap: 28px;
+  border-bottom: 1px solid var(--line);
+}
+
+.accTab {
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  padding: 8px 0;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.accTab[aria-selected="true"] {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+.accTimer {
+  margin-left: auto;
+  align-self: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ── Sobre nós ── */
+.sobre {
+  display: flex;
+  flex-direction: column;
+  gap: 88px;
+}
+
+.founder {
+  display: grid;
+  grid-template-columns: minmax(0, 500px) minmax(0, 1fr);
+  gap: 88px;
+  align-items: start;
+}
+
+.founderFigure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.founderImage {
+  position: relative;
+  height: 640px;
+  overflow: hidden;
+  background: var(--alt);
+}
+
+.founderImage img {
+  object-fit: cover;
+}
+
+.founderText {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.founderText .muted {
+  max-width: 600px;
+}
+
+.quote {
+  margin: 8px 0 0;
+  padding-left: 28px;
+  border-left: 1px solid var(--accent-ink);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.quote p {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 27px;
+  line-height: 38px;
+}
+
+.signature {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.signatureImage {
+  width: 240px;
+  height: auto;
+}
+
+.value {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.team {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.teamImage {
+  position: relative;
+  height: 560px;
+  overflow: hidden;
+  background: var(--alt);
+}
+
+.teamCaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.teamCaption .small {
+  max-width: 560px;
+  text-align: right;
+}
+
+.socialButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.socialGrid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.socialImage {
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--alt);
+}
+
+.socialImage img {
+  object-fit: cover;
+}
+
+/* ── Contacte-nos ── */
+.storeGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.storeCard {
+  background: var(--raised);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+}
+
+.storeImage {
+  position: relative;
+  height: 300px;
+  overflow: hidden;
+}
+
+.storeImage img {
+  object-fit: cover;
+}
+
+.storeBody {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.storeRows {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.storeRows li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.storeRows svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.storeButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.channels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid var(--line);
+}
+
+.channel {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+/* ── Tablet ── */
+@media (max-width: 1279px) {
+  .display92 {
+    font-size: 72px;
+    line-height: 76px;
+  }
+
+  .entrada {
+    padding-top: 96px;
+    padding-bottom: 96px;
+  }
+
+  .entradaTitle,
+  .entradaText {
+    grid-column: 1 / -1;
+  }
+
+  .entradaText {
+    margin-top: 28px;
+    max-width: 560px;
+  }
+
+  .occGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .founder {
+    grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+    gap: 48px;
+  }
+
+  .socialGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .splitText {
+    padding: 56px 40px;
+  }
+
+  .bridalCards {
+    gap: 24px;
+  }
+
+  .bridalImage {
+    height: 420px;
+  }
+}
+
+/* ── Phone / Telemóvel ── */
+@media (max-width: 767px) {
+  .title44 {
+    font-size: 32px;
+    line-height: 38px;
+  }
+
+  .title36 {
+    font-size: 28px;
+    line-height: 34px;
+  }
+
+  .display92 {
+    font-size: 44px;
+    line-height: 48px;
+  }
+
+  .display56,
+  .display60,
+  .display64 {
+    font-size: 36px;
+    line-height: 40px;
+  }
+
+  .section {
+    padding-top: 56px;
+    padding-bottom: 56px;
+  }
+
+  .sectionHead {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .three {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .hero {
+    height: 620px;
+    min-height: 0;
+  }
+
+  .heroBlur {
+    display: block;
+  }
+
+  .heroVideo {
+    top: 96px;
+    bottom: auto;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: contain;
+  }
+
+  .heroText {
+    left: 16px;
+    right: 16px;
+    bottom: 28px;
+    gap: 12px;
+  }
+
+  .heroTitle {
+    font-size: 38px;
+    line-height: 42px;
+  }
+
+  .heroText .btnLight {
+    align-self: stretch;
+    margin-top: 4px;
+  }
+
+  .heroPill {
+    left: 16px;
+    bottom: 24px;
+  }
+
+  .pause {
+    right: 16px;
+    top: 16px;
+    bottom: auto;
+  }
+
+  .entrada {
+    padding-top: 56px;
+    padding-bottom: 48px;
+  }
+
+  .entradaTitle {
+    gap: 20px;
+  }
+
+  .entradaText {
+    margin-top: 20px;
+    gap: 20px;
+  }
+
+  .btnDark {
+    align-self: stretch;
+  }
+
+  .cover {
+    height: 560px;
+  }
+
+  .coverText {
+    bottom: 24px;
+  }
+
+  .duo {
+    grid-template-columns: 1fr;
+  }
+
+  .duoPanel {
+    height: 480px;
+  }
+
+  .duoText {
+    left: 16px;
+    right: 16px;
+    bottom: 24px;
+    gap: 8px;
+  }
+
+  .duoTitle {
+    font-size: 26px;
+  }
+
+  .occGrid {
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 230px;
+    gap: 10px;
+  }
+
+  .occLarge,
+  .occTall {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .occText {
+    left: 16px;
+    bottom: 16px;
+  }
+
+  .occName {
+    font-size: 22px;
+  }
+
+  .novidades {
+    padding-top: 36px;
+    padding-bottom: 48px;
+  }
+
+  .carouselButtons {
+    display: none;
+  }
+
+  .track {
+    gap: 12px;
+  }
+
+  .slideCard {
+    width: 150px;
+  }
+
+  .band {
+    height: 300px;
+  }
+
+  .bandPill {
+    left: 16px;
+    bottom: 20px;
+  }
+
+  .bandPause {
+    right: 16px;
+    top: 16px;
+    bottom: auto;
+  }
+
+  .bridal {
+    padding-top: 48px;
+    padding-bottom: 56px;
+    gap: 28px;
+  }
+
+  .bridalLogo {
+    height: 44px;
+  }
+
+  .bridalCards {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-right: -16px;
+    padding-right: 16px;
+  }
+
+  .bridalCard {
+    width: 260px;
+    flex-shrink: 0;
+    gap: 12px;
+  }
+
+  .bridalImage {
+    height: 340px;
+  }
+
+  .bridalTitle {
+    font-size: 24px;
+  }
+
+  .experience {
+    padding-top: 56px;
+    padding-bottom: 56px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .experienceTitle {
+    gap: 10px;
+  }
+
+  .steps {
+    grid-template-columns: 1fr 1fr;
+    gap: 28px 16px;
+  }
+
+  .step {
+    gap: 8px;
+  }
+
+  .roman {
+    font-size: 30px;
+    line-height: 34px;
+  }
+
+  .stepTitle {
+    font-size: 21px;
+  }
+
+  .darkBand {
+    padding: 64px 16px;
+    gap: 20px;
+  }
+
+  .rule {
+    width: 24px;
+  }
+
+  .darkTitle {
+    font-size: 46px;
+  }
+
+  .darkButtons {
+    flex-direction: column;
+    align-self: stretch;
+  }
+
+  .darkButtons .btnLight {
+    align-self: stretch;
+  }
+
+  .split,
+  .splitAlt {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .splitImage {
+    height: 340px;
+    min-height: 0;
+  }
+
+  .splitAlt .splitImage {
+    order: -1;
+    height: 300px;
+  }
+
+  .splitText {
+    padding: 32px 16px 40px;
+    gap: 14px;
+  }
+
+  .sobre {
+    gap: 32px;
+  }
+
+  .founder {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .founderImage {
+    height: 440px;
+  }
+
+  .quote {
+    padding-left: 16px;
+  }
+
+  .quote p {
+    font-size: 19px;
+    line-height: 28px;
+  }
+
+  .signatureImage {
+    width: 180px;
+  }
+
+  .teamImage {
+    height: 300px;
+  }
+
+  .teamCaption {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .teamCaption .small {
+    text-align: left;
+  }
+
+  .socialGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+
+  .storeGrid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .storeImage {
+    height: 220px;
+  }
+
+  .storeBody {
+    padding: 20px;
+  }
+
+  .channels {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-top: 24px;
+    padding-top: 8px;
+    border-top: 0;
+  }
+}

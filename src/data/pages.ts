@@ -2,70 +2,17 @@ import type { Localized } from "@/types";
 import type { SectionSeed } from "./content";
 
 /**
- * EN: Texts of the content pages ("Sobre nós" and the footer "Informações" pages), copied from the old eterna.co.mz
- *     (pages sobre-nos, tamanhos, trocas-devolucoes, reservas, faq) with an English version. They are editable in
- *     Gestão → Conteúdo do site; these are only the starting texts. Reservations follow design V3 (60 days for Bridal).
- * PT: Textos das páginas de conteúdo ("Sobre nós" e "Informações" do rodapé), copiados do eterna.co.mz antigo, com
- *     versão inglesa. Editam-se em Gestão → Conteúdo do site; isto são só os textos iniciais. As reservas seguem a V3.
+ * EN: Texts of the footer "Informações" pages, copied from the old eterna.co.mz (tamanhos, trocas-devolucoes, reservas,
+ *     faq) with an English version ("Sobre nós" is a section of the home page, src/data/content.ts). They are editable
+ *     in Gestão → Conteúdo do site; these are only the starting texts. Reservations follow design V3 (60 days for Bridal).
+ * PT: Textos das páginas "Informações" do rodapé, copiados do eterna.co.mz antigo, com versão inglesa ("Sobre nós" é
+ *     uma secção do Início). Editam-se em Gestão → Conteúdo do site; isto são só os textos iniciais. Reservas: V3.
  */
 
-const L = (pt: string, en: string): Localized => ({ pt, en });
 const P = (...paragraphs: [string, string][]): Localized => ({
   pt: paragraphs.map((p) => p[0]).join("\n\n"),
   en: paragraphs.map((p) => p[1]).join("\n\n"),
 });
-
-const MISSION = L(
-  "Proporcionar a cada mulher o look perfeito para os momentos mais especiais da sua vida, com atendimento personalizado e peças de excelência.",
-  "To give every woman the perfect look for the most special moments of her life, with personal service and outstanding pieces.",
-);
-const VISION = L(
-  "Ser a referência nacional em moda feminina de alta qualidade, reconhecida pela curadoria exclusiva, atendimento de excelência e experiência de loja irrepreensível.",
-  "To be the national reference in high-quality womenswear, known for exclusive curation, excellent service and a flawless in-store experience.",
-);
-const VALUES = L(
-  "Elegância atemporal, qualidade excepcional, atendimento personalizado e compromisso com a satisfação de cada cliente.",
-  "Timeless elegance, exceptional quality, personal service and a commitment to every client's satisfaction.",
-);
-
-/** EN: Page "about", key "body". PT: Página "about", secção "body". */
-export const aboutSeed: SectionSeed = {
-  key: "body",
-  data: {
-    mission: MISSION,
-    vision: VISION,
-    values: VALUES,
-    body: P(
-      [
-        "Fundada em 2011, a ETERNA é uma marca moçambicana de moda feminina que une elegância, exclusividade e requinte. Somos especializados em Vestidos de Festa e Trajes de Cerimónia, Roupa Executiva sofisticada e elegante e em Vestidos de Noiva que transformam sonhos em realidade.",
-        "Founded in 2011, ETERNA is a Mozambican womenswear brand that brings together elegance, exclusivity and refinement. We specialise in party dresses and ceremony wear, sophisticated business wear and wedding dresses that turn dreams into reality.",
-      ],
-      [
-        "Cada peça é cuidadosamente selecionada, incluindo opções em tamanhos plus size, para oferecer estilo, exclusividade e atenção a cada detalhe. Acreditamos que a verdadeira elegância se encontra nos detalhes e no cuidado que dedicamos a cada momento.",
-        "Every piece is carefully selected, including plus-size options, to offer style, exclusivity and attention to every detail. We believe true elegance lies in the details and in the care we give to every moment.",
-      ],
-      [`Missão — ${MISSION.pt}`, `Mission — ${MISSION.en}`],
-      [`Visão — ${VISION.pt}`, `Vision — ${VISION.en}`],
-      [`Valores — ${VALUES.pt}`, `Values — ${VALUES.en}`],
-      [
-        "ETERNA Bridal · Glória Mall, Loja 22 — Um espaço inteiramente dedicado às noivas. Com atendimento exclusivo e apenas por marcação, reservamos a loja para uma única noiva de cada vez, garantindo dedicação total e uma atmosfera mágica, com uma curadoria criteriosa de vestidos de prestígio internacional.",
-        "ETERNA Bridal · Glória Mall, Store 22 — A space entirely devoted to brides. With exclusive, appointment-only service, we keep the store for one bride at a time, for complete dedication and a magical atmosphere, with a careful selection of internationally renowned dresses.",
-      ],
-      [
-        "ETERNA · Glória Mall, Loja 2 — A essência da ETERNA: vestidos de gala, moda executiva e peças intemporais que traduzem sofisticação e distinção, de marcas de renome internacional, num ambiente acolhedor e requintado.",
-        "ETERNA · Glória Mall, Store 2 — The essence of ETERNA: gala dresses, business wear and timeless pieces that speak of sophistication and distinction, from internationally renowned brands, in a warm and refined setting.",
-      ],
-      [
-        "A fundadora — «Quando sonhei a ETERNA, queria criar um espaço onde cada mulher se sentisse valorizada e confiante, independentemente da ocasião. Sempre acreditei que a moda vai além do vestir — é expressão de identidade, é memória, é emoção.» Obrigada por fazer parte desta história feita de mulheres reais, elegantes e extraordinárias.",
-        "The founder — “When I dreamt of ETERNA, I wanted to create a place where every woman would feel valued and confident, whatever the occasion. I have always believed that fashion goes beyond dressing — it is identity, memory and emotion.” Thank you for being part of this story of real, elegant and extraordinary women.",
-      ],
-      [
-        "A nossa equipa — Feita por mulheres, para mulheres: sensibilidade estética, profissionalismo e dedicação, para que cada visita seja um momento memorável.",
-        "Our team — Made by women, for women: an eye for beauty, professionalism and dedication, so that every visit is a memorable moment.",
-      ],
-    ),
-  },
-};
 
 /** EN: Page "info", one section per footer page (key = slug in src/data/site.ts). PT: Uma secção por página. */
 export const infoSeeds: SectionSeed[] = [

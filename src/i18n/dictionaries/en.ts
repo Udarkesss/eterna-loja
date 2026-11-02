@@ -44,6 +44,15 @@ export const en: Dictionary = {
     seeOnInstagram: "See on Instagram",
     howToGetThere: "Directions",
     swipeCount: "{current} / {total}",
+    previous: "Previous",
+    next: "Next",
+    moreOccasions: "More occasions",
+    lessOccasions: "Fewer occasions",
+    changesEvery: "Changes every {s}s",
+    bookFitting: "Book a fitting",
+    bookFittingShort: "Book a fitting",
+    fittingMessage: "Hello, I would like to book a fitting at Eterna Bridal.",
+    phone: "Phone",
   },
   product: {
     new: "New",
@@ -409,8 +418,6 @@ export const en: Dictionary = {
     payments: "Payments",
   },
   pages: {
-    about: "About us",
-    contact: "Contacts",
     toWrite: "[Text to be written by the Eterna team.]",
   },
   account: {

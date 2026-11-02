@@ -1,7 +1,7 @@
-import { and, count, eq, inArray, isNull } from "drizzle-orm";
+import { and, count, eq, inArray, isNull, notInArray } from "drizzle-orm";
 import { CATEGORY_IMAGES, COLLECTION_DETAILS, categoryTree, type CategorySeed } from "@/data/catalog";
-import { homeSections, occasionTiles as tileSeeds } from "@/data/content";
-import { aboutSeed, infoSeeds } from "@/data/pages";
+import { HOME_KEYS, homeSections, occasionTiles as tileSeeds } from "@/data/content";
+import { infoSeeds } from "@/data/pages";
 import { deliveryZoneSeeds, paymentMethodSeeds, permissionMatrix, roleSeeds, settingSeeds, storeSeeds } from "@/data/site";
 import type { Database } from "./client";
 import {
@@ -70,9 +70,9 @@ async function seedCategories(db: Database): Promise<Ids> {
   return ids;
 }
 
-/** EN: "Sobre nós" and "Informações" pages (texts of the old site); only when missing. PT: Só se faltarem. */
+/** EN: "Informações" pages (texts of the old site); only when missing. PT: Páginas "Informações"; só se faltarem. */
 async function seedPages(db: Database) {
-  const pages = [{ page: "about", list: [aboutSeed] }, { page: "info", list: infoSeeds }];
+  const pages = [{ page: "info", list: infoSeeds }];
   for (const { page, list } of pages) {
     for (const [position, s] of list.entries()) {
       await db.insert(contentSections).values({ page, key: s.key, position, data: s.data, publishedAt: new Date() }).onConflictDoNothing();
@@ -216,6 +216,44 @@ const DATA_MIGRATIONS: { name: string; run: (db: Database) => Promise<void> }[] 
       }
       for (const [slug, details] of Object.entries(COLLECTION_DETAILS)) {
         await db.update(categories).set({ details }).where(and(eq(categories.slug, slug), isNull(categories.details)));
+      }
+    },
+  },
+  {
+    // EN: Home page of design V3: new sections in the V3 order, old V1/V2 sections removed. The hero keeps what the
+    //     team set (only the deleted old video and the missing V3 fields change); occasion tiles get the V3 images if
+    //     they still have the old ones.
+    // PT: Início do design V3: secções novas pela ordem da V3 e as antigas retiradas. O topo mantém o que a equipa
+    //     definiu (só muda o vídeo antigo apagado e os campos V3 em falta); as ocasiões recebem as imagens da V3 se
+    //     ainda tiverem as antigas.
+    name: "inicio-v3",
+    run: async (db) => {
+      await db.delete(contentSections).where(and(eq(contentSections.page, "home"), notInArray(contentSections.key, [...HOME_KEYS])));
+      const existing = await db.select().from(contentSections).where(eq(contentSections.page, "home"));
+      for (const [position, seed] of homeSections.entries()) {
+        const row = existing.find((r) => r.key === seed.key);
+        if (!row) {
+          await db.insert(contentSections).values({ page: "home", key: seed.key, position, data: seed.data, publishedAt: new Date() });
+          continue;
+        }
+        let data = row.data;
+        if (seed.key === "hero") {
+          const old = data.videoDesktop === "/videos/hero-desktop.mp4";
+          data = { ...seed.data, ...data, ...(old ? { videoDesktop: seed.data.videoDesktop, videoMobile: seed.data.videoMobile, poster: seed.data.poster, posterMobile: seed.data.posterMobile, videoBadge: seed.data.videoBadge } : {}) };
+        }
+        if (seed.key === "announcement") {
+          const first = (data.messages as { pt?: string }[] | undefined)?.[1]?.pt ?? "";
+          if (first.startsWith("Visite-nos no Glória Mall")) data = seed.data;
+        }
+        await db.update(contentSections).set({ data, position }).where(eq(contentSections.id, row.id));
+      }
+      const tiles = await db.select({ imageUrl: occasionTiles.imageUrl }).from(occasionTiles);
+      if (!tiles.length || tiles.every((t) => t.imageUrl.startsWith("/images/occasions/") || t.imageUrl.startsWith("/images/content/"))) {
+        const ids = new Map((await db.select({ id: categories.id, slug: categories.slug }).from(categories)).map((c) => [c.slug, c.id]));
+        await db.delete(occasionTiles);
+        await db.insert(occasionTiles).values(
+          tileSeeds.map((t, position) => ({ name: t.name, phrase: t.phrase, imageUrl: t.imageUrl, categoryId: ids.get(t.category) ?? null, size: t.size, position })),
+        );
       }
     },
   },
