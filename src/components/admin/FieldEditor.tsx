@@ -36,10 +36,70 @@ const LABELS: Record<string, string> = {
   hoursLine: "Linha do horário",
   showPaymentLogos: "Mostrar logótipos de pagamento",
   icon: "Ícone",
+  // EN: Home sections of design V3. PT: Secções do Início do V3.
+  message: "Mensagem",
+  showTitle: "Mostrar frase e botão (senão, só a etiqueta)",
+  videoBadge: "Etiqueta sobre o vídeo",
+  imageBadge: "Etiqueta sobre a imagem",
+  videoLabel: "Descrição do vídeo (acessibilidade)",
+  imageAlt: "Descrição da imagem (acessibilidade)",
+  subtitle: "Subtítulo",
+  count: "Quantas peças",
+  cue: "Convite para descer",
+  collection: "Colecção (endereço, ex.: essenza)",
+  lines: "Linhas",
+  line: "Linha",
+  links: "Ligações",
+  link: "Ligação",
+  position: "Enquadramento da imagem",
+  visible: "Visível",
+  band: "Faixa escura",
+  pill: "Etiqueta",
+  note: "Nota",
+  card: "Cartão",
+  experience: "A experiência Eterna",
+  step: "Passo",
+  tabs: "Separadores",
+  tab: "Separador",
+  seconds: "Segundos entre Festa e Executivos",
+  quote: "Citação",
+  values: "Valores",
+  value: "Valor",
+  figures: "Números",
+  figure: "Número",
+  founderLabel: "Nome da fundadora",
+  founderCaption: "Legenda da fundadora",
+  teamTitle: "Título da equipa",
+  teamCaption: "Legenda da equipa",
+  socialEyebrow: "Sobretítulo das redes sociais",
+  socialTitle: "Título das redes sociais",
+  socialImages: "Imagens das redes sociais",
+  stores: "Lojas",
+  store: "Loja",
+  code: "Código",
+  name: "Nome",
+  action: "Texto do botão",
+  description: "Descrição",
+  mapsUrl: "Ligação do mapa (Google Maps)",
 };
 
-// EN: Hero media is edited on its own page. PT: A media do hero edita-se na página própria.
-const HIDDEN = new Set(["media", "videoDesktop", "videoMobile", "poster", "posterMobile", "parallax", "parallaxIntensity", "autoplay", "loop"]);
+// EN: Hero media, slides and effects are edited on their own page. PT: Media, slides e efeitos do topo têm página própria.
+const HIDDEN = new Set([
+  "media",
+  "videoDesktop",
+  "videoMobile",
+  "poster",
+  "posterMobile",
+  "parallax",
+  "parallaxIntensity",
+  "autoplay",
+  "loop",
+  "slides",
+  "slidesAuto",
+  "progress",
+  "reveal",
+  "scrollbar",
+]);
 
 type Json = unknown;
 const isLocalized = (v: Json): v is { pt: string; en: string } =>
@@ -139,7 +199,7 @@ export function FieldEditor({ name, value, onChange }: { name: string; value: Js
           value={value === null ? "" : String(value)}
           onChange={(e) => onChange(typeof value === "number" ? Number(e.target.value) : e.target.value || (date ? null : ""))}
         />
-        {name === "href" && <span className={s.hint}>category:beyond-time · product:8g1l7 · #prova (Agendar prova) · https://…</span>}
+        {name === "href" && <span className={s.hint}>category:essenza · product:7g184 · #prova (Agendar prova) · https://…</span>}
       </label>
     );
   }

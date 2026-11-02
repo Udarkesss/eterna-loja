@@ -1,6 +1,7 @@
 import "server-only";
 import { asc, eq, and } from "drizzle-orm";
 import { z } from "zod";
+import { HOME_KEYS } from "@/data/content";
 import { infoPages, legalPages } from "@/data/site";
 import type { Localized } from "@/types";
 import { audit } from "../audit";
@@ -16,20 +17,20 @@ import type { StaffContext } from "../staff/access";
  *     visibilidade e campos de uma vez.
  */
 
+/** EN: Home sections of design V3 (src/data/content.ts, HOME_KEYS), named as in "Gestão · Conteúdo". PT: Secções do V3. */
 export const SECTION_LABELS: Record<string, string> = {
-  announcement: "Faixa de anúncio",
-  hero: "Imagem principal",
-  manifesto: "Manifesto",
-  occasions: "Ocasiões",
-  new_arrivals: "Novidades",
-  privee_divider: "Separador Eterna Privée",
-  bridal: "Eterna Bridal",
-  experience: "A experiência Eterna",
-  privee_band: "Faixa Privée",
-  secure: "Compra segura",
-  stores: "As nossas lojas",
-  social: "Redes sociais",
-};
+  announcement: "Barra de anúncio",
+  hero: "Topo · vídeo ou slides",
+  entrada: "Entrada · frase",
+  colecao: "Colecção activa",
+  ocasioes: "Ocasiões",
+  novidades: "Acabadas de chegar",
+  noivas: "Noivas · Eterna Bridal",
+  acessorios: "Acessórios",
+  modeladores: "Modeladores",
+  sobre: "Sobre nós",
+  contactos: "Contacte-nos",
+} satisfies Record<(typeof HOME_KEYS)[number], string>;
 
 export const INFO_LABELS: Record<string, string> = {
   tamanhos: "Guia de tamanhos",
