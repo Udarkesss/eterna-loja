@@ -10,28 +10,28 @@ import { whatsappLink } from "@/data/site";
 import { t } from "@/i18n";
 import { useI18n } from "@/i18n/I18nProvider";
 import { formatMZN } from "@/lib/format";
-import { resolveHref } from "@/lib/links";
+import { sizeParts, sortSizes } from "@/lib/sizes";
 import type { ProductDTO } from "@/types";
 import styles from "./ProductDetail.module.css";
 
-/** EN: "6US/38EUR/S" → "6US / 38EUR / S", as shown on the product page. PT: Como na página de produto. */
-const spacedSize = (size: string) => size.split("/").join(" / ");
-
 /**
- * EN: Interactive part of the product page (design "Produto · 8G1L7"): gallery that follows the chosen colour,
- *     colour and size pickers, stock message, "Adicionar ao carrinho", "Marcar prova" and favourite.
- *     Server-rendered blocks (trust list, panels) come in as `children`.
- * PT: Parte interactiva da página de produto: galeria que segue a cor, escolha de cor e tamanho, mensagem de stock,
- *     "Adicionar ao carrinho", "Marcar prova" e favorito. Os blocos do servidor entram como `children`.
+ * EN: Interactive part of the product page of design V3 ("Loja · Produto"): photos per colour (thumbnails on the left,
+ *     a swipe gallery on phones), colour swatches, size boxes (letter + US · EU; sizes that do not exist in the chosen
+ *     colour are struck through), "Adicionar ao carrinho", favourite, and a fixed bar on phones. Server-rendered blocks
+ *     (information lines, panels) come in as `children`.
+ * PT: Parte interactiva da página da peça do V3: fotos por cor, amostras de cor, caixas de tamanho (os que não existem
+ *     na cor ficam riscados), "Adicionar ao carrinho", favorito e barra fixa no telemóvel. Os blocos do servidor entram
+ *     como `children`.
  */
-export function ProductDetail({ product, children }: { product: ProductDTO; children: ReactNode }) {
+export function ProductDetail({ product, eyebrow, badge, children }: { product: ProductDTO; eyebrow: string; badge: string | null; children: ReactNode }) {
   const { dict, locale, href } = useI18n();
   const { add } = useCart();
 
   const firstInStock = product.colors.find((c) => product.variants.some((v) => v.color === c.key && v.stock > 0))?.key;
   const [color, setColor] = useState<string | null>(firstInStock ?? product.colors[0]?.key ?? null);
-  const sizes = product.variants.filter((v) => !product.colors.length || v.color === color);
-  const [variantId, setVariantId] = useState<string | null>(sizes.find((v) => v.stock > 0)?.id ?? sizes[0]?.id ?? null);
+  const inColor = product.variants.filter((v) => !product.colors.length || v.color === color || v.color === null);
+  const allSizes = sortSizes([...new Set(product.variants.map((v) => v.size))]);
+  const [variantId, setVariantId] = useState<string | null>(inColor.find((v) => v.stock > 0)?.id ?? null);
   const [imageIndex, setImageIndex] = useState(0);
   const [added, setAdded] = useState(false);
 
@@ -41,15 +41,16 @@ export function ProductDetail({ product, children }: { product: ProductDTO; chil
   }, [product.images, color]);
   const main = images[Math.min(imageIndex, images.length - 1)];
   const selected = product.variants.find((v) => v.id === variantId) ?? null;
-  const colorName = product.colors.find((c) => c.key === color)?.name;
+  const colorName = product.colors.find((c) => c.key === color)?.name ?? null;
   const price = product.salePrice ?? product.price;
   const soldOut = product.variants.every((v) => v.stock <= 0);
+  const struck = allSizes.some((s) => !inColor.some((v) => v.size === s));
 
   function chooseColor(key: string) {
     setColor(key);
     setImageIndex(0);
     setAdded(false);
-    const first = product.variants.find((v) => v.color === key && v.stock > 0) ?? product.variants.find((v) => v.color === key);
+    const first = product.variants.find((v) => v.color === key && v.stock > 0);
     setVariantId(first?.id ?? null);
   }
 
@@ -59,15 +60,8 @@ export function ProductDetail({ product, children }: { product: ProductDTO; chil
     setAdded(true);
   }
 
-  const stockLine = !selected
-    ? null
-    : selected.stock <= 0
-      ? { cls: styles.stockOut, icon: "alert" as const, text: dict.product.soldOutSize }
-      : selected.stock === 1
-        ? { cls: styles.stockLow, icon: "clock" as const, text: dict.product.lastUnit }
-        : { cls: styles.stockOk, icon: "check" as const, text: dict.product.available };
-
-  const collectionClass = product.collection ? styles[`badge-${product.collection.slug}`] : "";
+  const addLabel = soldOut ? dict.product.soldOut : added ? t(dict.product.addedButton, { price: formatMZN(price, locale) }) : selected ? dict.product.addToCart : dict.product.chooseSize;
+  const canAdd = !soldOut && !!selected && selected.stock > 0;
 
   return (
     <section className={`page-x ${styles.layout}`}>
@@ -86,28 +80,45 @@ export function ProductDetail({ product, children }: { product: ProductDTO; chil
                 <Image src={img.url} alt="" fill sizes="96px" className={styles.cover} />
               </button>
             ))}
+            {colorName && (
+              <span className={styles.thumbNote}>
+                {t(dict.product.photosOf, { color: colorName, n: images.length })}
+                <br />
+                {dict.product.photosHint}
+              </span>
+            )}
           </div>
         )}
         <div className={styles.main}>
-          {main && <Image src={main.url} alt={main.alt} fill priority sizes="(min-width: 1024px) 648px, 100vw" className={styles.coverTop} />}
-          {product.collection && <span className={`${styles.badge} ${collectionClass}`}>{product.collection.name}</span>}
+          {main && <Image src={main.url} alt={main.alt} fill priority sizes="(min-width: 1024px) 620px, 100vw" className={styles.coverTop} />}
+          {badge && <span className={styles.badge}>{badge}</span>}
+          {colorName && <span className={styles.colorBadge}>{t(dict.product.colorBadge, { color: colorName })}</span>}
+        </div>
+        {/* EN: Phones: swipe through the colour's photos. PT: Telemóvel: deslizar pelas fotos da cor. */}
+        <div className={styles.swipe}>
+          {images.map((img, i) => (
+            <div key={img.url} className={styles.slide}>
+              <Image src={img.url} alt={img.alt} fill priority={i === 0} sizes="100vw" className={styles.coverTop} />
+            </div>
+          ))}
+          {badge && <span className={styles.badge}>{badge}</span>}
         </div>
       </div>
 
       <div className={styles.info}>
         <div className={styles.titles}>
-          <span className="eyebrow">{[product.occasions[0]?.name, product.type?.name].filter(Boolean).join(" · ")}</span>
+          {eyebrow && <span className="eyebrow">{eyebrow}</span>}
           <h1 className={styles.code}>{product.code}</h1>
           <span className={styles.name}>{product.name}</span>
           <span className={styles.price}>
             {product.salePrice != null && <s className={styles.old}>{formatMZN(product.price, locale)}</s>}
-            {formatMZN(price, locale)}
+            <span className={product.salePrice != null ? styles.sale : undefined}>{formatMZN(price, locale)}</span>
           </span>
         </div>
 
         {product.colors.length > 0 && (
           <div className={styles.colorBlock}>
-            <span className="label">
+            <span className={styles.label}>
               {dict.product.color}: <span className={styles.plain}>{colorName}</span>
             </span>
             <div className={styles.swatches} role="radiogroup" aria-label={dict.product.color}>
@@ -118,8 +129,9 @@ export function ProductDetail({ product, children }: { product: ProductDTO; chil
                   role="radio"
                   aria-checked={c.key === color}
                   aria-label={c.name}
+                  title={c.name}
                   className={styles.swatch}
-                  style={{ background: c.hex ?? "var(--blush-light)" }}
+                  style={{ background: c.hex ?? "var(--alt)" }}
                   onClick={() => chooseColor(c.key)}
                 />
               ))}
@@ -129,54 +141,48 @@ export function ProductDetail({ product, children }: { product: ProductDTO; chil
 
         <div className={styles.sizeBlock}>
           <div className={styles.sizeHead}>
-            <span className="label">{dict.product.size}</span>
-            <Link href={href("/info/tamanhos")} className={`underline ${styles.guide}`}>
+            <span className={styles.label}>{dict.product.size}</span>
+            <Link href={href("/info/tamanhos")} className={styles.guide}>
+              <Icon name="ruler" size={14} />
               {dict.product.sizeGuide}
             </Link>
           </div>
           <div role="radiogroup" aria-label={dict.product.size} className={styles.sizes}>
-            {sizes.map((v) => (
-              <button
-                key={v.id}
-                type="button"
-                role="radio"
-                aria-checked={v.id === variantId}
-                disabled={v.stock <= 0}
-                className={styles.size}
-                onClick={() => {
-                  setVariantId(v.id);
-                  setAdded(false);
-                }}
-              >
-                {spacedSize(v.size)}
-              </button>
-            ))}
+            {allSizes.map((s) => {
+              const v = inColor.find((x) => x.size === s);
+              const p = sizeParts(s);
+              const missing = !v;
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  role="radio"
+                  aria-checked={!!v && v.id === variantId}
+                  disabled={!v || v.stock <= 0}
+                  className={`${styles.size} ${missing ? styles.sizeMissing : ""}`}
+                  onClick={() => {
+                    if (!v) return;
+                    setVariantId(v.id);
+                    setAdded(false);
+                  }}
+                >
+                  <b>{p.letter === "Único" ? dict.product.oneSize : p.letter}</b>
+                  {p.detail && <small>{p.detail}</small>}
+                </button>
+              );
+            })}
           </div>
-          {stockLine && (
-            <span className={`${styles.stock} ${stockLine.cls}`}>
-              <Icon name={stockLine.icon} size={16} />
-              {stockLine.text}
-            </span>
-          )}
-          <a
-            href={whatsappLink(t(dict.product.otherSizeMessage, { code: product.code }))}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.otherSize}
-          >
+          {struck && <span className={styles.note}>{dict.product.sizesStruck}</span>}
+          <a href={whatsappLink(t(dict.product.otherSizeMessage, { code: product.code }))} target="_blank" rel="noopener noreferrer" className={styles.otherSize}>
             {dict.product.otherSize}
           </a>
         </div>
 
         <div className={styles.actions}>
-          <button type="button" className={styles.add} onClick={handleAdd} disabled={soldOut || !selected || selected.stock <= 0}>
-            {soldOut ? dict.product.soldOut : added ? t(dict.product.addedButton, { price: formatMZN(price, locale) }) : dict.product.addToCart}
-          </button>
           <div className={styles.actionRow}>
-            <Link href={`${resolveHref("#prova", locale)}?piece=${product.slug}`} className={styles.fitting}>
-              <Icon name="calendar" size={18} />
-              {dict.product.bookFitting}
-            </Link>
+            <button type="button" className={styles.add} onClick={handleAdd} disabled={!canAdd}>
+              {addLabel}
+            </button>
             <FavoriteButton slug={product.slug} code={product.code} variant="square" />
           </div>
           {added && (
@@ -192,27 +198,31 @@ export function ProductDetail({ product, children }: { product: ProductDTO; chil
 
         {children}
       </div>
+
+      {/* EN: Phones: fixed bar with the button, price and colour. PT: Telemóvel: barra fixa com o botão, preço e cor. */}
+      <div className={styles.fixedBar}>
+        <button type="button" className={styles.add} onClick={handleAdd} disabled={!canAdd}>
+          {addLabel}
+        </button>
+        <span className={styles.fixedPrice}>
+          <b>{formatMZN(price, locale)}</b>
+          {colorName && <small>{colorName}</small>}
+        </span>
+      </div>
     </section>
   );
 }
 
-/** EN: The four accordion panels (Descrição open by default). PT: Os quatro painéis (Descrição aberto). */
+/** EN: The accordion panels (Descrição open by default). PT: Os painéis (Descrição aberto por defeito). */
 export function ProductPanels({ panels }: { panels: { title: string; body: string }[] }) {
   const [open, setOpen] = useState<Record<number, boolean>>({ 0: true });
   return (
     <div className={styles.panels}>
       {panels.map((panel, i) => (
         <div key={panel.title} className={styles.panel}>
-          <button
-            type="button"
-            className={styles.panelButton}
-            aria-expanded={!!open[i]}
-            onClick={() => setOpen((o) => ({ ...o, [i]: !o[i] }))}
-          >
+          <button type="button" className={styles.panelButton} aria-expanded={!!open[i]} onClick={() => setOpen((o) => ({ ...o, [i]: !o[i] }))}>
             {panel.title}
-            <span aria-hidden="true" className={styles.sign}>
-              {open[i] ? "−" : "+"}
-            </span>
+            <Icon name={open[i] ? "minus" : "plus"} size={16} />
           </button>
           {open[i] && <p className={styles.panelBody}>{panel.body}</p>}
         </div>

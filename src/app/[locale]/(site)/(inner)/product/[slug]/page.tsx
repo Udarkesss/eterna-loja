@@ -29,8 +29,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /**
- * EN: Product page ("Produto · 8G1L7" in the design).
- * PT: Página de produto ("Produto · 8G1L7" no design).
+ * EN: Product page of design V3 ("Loja · Produto: cor, tamanho e reserva"): crumbs collection / line / reference,
+ *     the interactive block, the information lines (secure payment, free collection, final sales), the panels and
+ *     "Complete o look".
+ * PT: Página da peça do V3: caminho colecção / linha / referência, o bloco interactivo, as linhas de informação
+ *     (pagamento seguro, levantamento grátis, vendas finais), os painéis e "Complete o look".
  */
 export default async function ProductPage({ params }: Props) {
   const locale = await resolveLocale(params);
@@ -38,15 +41,22 @@ export default async function ProductPage({ params }: Props) {
   if (!product) notFound();
 
   const dict = getDictionary(locale);
-  const [related, showPrice] = await Promise.all([relatedProducts(product, locale), cardPriceVisible()]);
-  const occasion = product.occasions[0];
-  const occasionParent = occasion ? (await findCategory(occasion.slug, locale))?.parent : null;
+  const [related, showPrice, typeCategory] = await Promise.all([
+    relatedProducts(product, locale),
+    cardPriceVisible(),
+    product.type ? findCategory(product.type.slug, locale) : Promise.resolve(null),
+  ]);
+  // EN: The line is the type's group (Roupa Executiva, Acessórios de Festa…). PT: A linha é o grupo do tipo.
+  const line = typeCategory?.parent ?? null;
   const storeCode = product.variants.find((v) => v.store)?.store?.code ?? "02";
+  const eyebrow = [product.collection?.name, product.type?.name].filter(Boolean).join(" · ");
+  const badge = [product.isNew ? dict.product.new : null, product.collection?.name].filter(Boolean).join(" · ") || null;
 
   const panels = [
     { title: dict.product.panels.description, body: product.description },
     ...(product.composition ? [{ title: dict.product.panels.composition, body: product.composition }] : []),
-    { title: dict.product.panels.shipping, body: t(dict.product.panels.shippingBody, { store: storeCode }) },
+    { title: dict.product.panels.pickup, body: t(dict.product.panels.pickupBody, { store: storeCode }) },
+    { title: dict.product.panels.reservation, body: dict.product.panels.reservationBody },
     { title: dict.product.panels.returns, body: dict.product.panels.returnsBody },
   ];
 
@@ -54,23 +64,23 @@ export default async function ProductPage({ params }: Props) {
     <>
       <nav aria-label={dict.nav.breadcrumb} className={`page-x ${styles.breadcrumb}`}>
         <Link href={localizePath(locale)}>{dict.nav.homeCrumb}</Link>
-        {occasion && (
+        {product.collection && (
           <>
             <span aria-hidden="true">/</span>
-            {occasionParent && (
-              <>
-                <Link href={categoryHref(occasionParent.slug, locale)}>{occasionParent.name}</Link>
-                <span aria-hidden="true">/</span>
-              </>
-            )}
-            <Link href={categoryHref(occasion.slug, locale)}>{occasion.name}</Link>
+            <Link href={categoryHref(product.collection.slug, locale)}>{product.collection.name}</Link>
+          </>
+        )}
+        {line && (
+          <>
+            <span aria-hidden="true">/</span>
+            <Link href={categoryHref(line.slug, locale)}>{line.name}</Link>
           </>
         )}
         <span aria-hidden="true">/</span>
         <span aria-current="page">{product.code}</span>
       </nav>
 
-      <ProductDetail product={product}>
+      <ProductDetail product={product} eyebrow={eyebrow} badge={badge}>
         <ul className={detail.trust}>
           <li className={detail.trustItem}>
             <span className={detail.trustIcon}>
@@ -83,13 +93,18 @@ export default async function ProductPage({ params }: Props) {
             <span className={detail.trustIcon}>
               <Icon name="store" size={18} />
             </span>
-            {t(dict.product.pickupAt, { store: storeCode })}
+            {t(dict.product.pickupFree, { store: storeCode })}
           </li>
           <li className={detail.trustItem}>
             <span className={detail.trustIcon}>
               <Icon name="return" size={18} />
             </span>
-            <Link href={localizePath(locale, "/info/trocas-devolucoes")}>{dict.product.exchanges}</Link>
+            <span>
+              {dict.product.finalSale}{" "}
+              <Link href={localizePath(locale, "/contact")} className={detail.trustLink}>
+                {dict.product.tryInStore}
+              </Link>
+            </span>
           </li>
         </ul>
         <ProductPanels panels={panels} />
@@ -98,16 +113,19 @@ export default async function ProductPage({ params }: Props) {
       {related.length > 0 && (
         <section className={`page-x ${styles.related}`}>
           <div className={styles.relatedHead}>
-            <h2 className={styles.relatedTitle}>
-              <RichText text={dict.product.related} />
-            </h2>
-            {occasion && (
-              <Link href={categoryHref(occasion.slug, locale)} className="link-line">
-                {t(dict.product.seeCategory, { name: occasion.name })}
+            <div className={styles.relatedTitles}>
+              {eyebrow && <span className="eyebrow">{[product.collection?.name, line?.name].filter(Boolean).join(" · ")}</span>}
+              <h2 className={styles.relatedTitle}>
+                <RichText text={dict.product.completeLook} />
+              </h2>
+            </div>
+            {line && (
+              <Link href={categoryHref(line.slug, locale)} className="link-line">
+                {t(dict.product.seeCategory, { name: line.name })}
               </Link>
             )}
           </div>
-          <ProductGrid products={related} locale={locale} showPrice={showPrice} />
+          <ProductGrid products={related.slice(0, 4)} locale={locale} showPrice={showPrice} />
         </section>
       )}
     </>

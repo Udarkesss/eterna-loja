@@ -18,7 +18,7 @@
 }
 
 .related {
-  padding-top: var(--section-y);
+  padding-bottom: var(--section-y);
   display: flex;
   flex-direction: column;
   gap: 40px;
@@ -30,8 +30,12 @@
   align-items: flex-end;
   flex-wrap: wrap;
   gap: 16px;
-  border-top: 1px solid var(--line);
-  padding-top: 48px;
+}
+
+.relatedTitles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .relatedTitle {

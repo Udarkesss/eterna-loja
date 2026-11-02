@@ -217,10 +217,18 @@ export async function findProduct(slug: string, locale: Locale): Promise<Product
 }
 
 /** EN: "Também pode gostar": same occasion first, then the rest. PT: Mesma ocasião primeiro. */
+/**
+ * EN: "Complete o look" (design V3): other pieces of the same line (the type's group), same collection first and other
+ *     types before the same type, so the suggestions complete the outfit.
+ * PT: "Complete o look": outras peças da mesma linha, primeiro da mesma colecção e de outros tipos.
+ */
 export async function relatedProducts(product: ProductDTO, locale: Locale, limit = 4): Promise<ProductDTO[]> {
-  const occasion = product.occasions[0]?.slug;
-  const pool = await listProducts({ category: occasion }, locale);
-  return pool.filter((p) => p.id !== product.id).slice(0, limit);
+  const rows = await loadCategories();
+  const type = product.type ? rows.find((r) => r.slug === product.type!.slug) : undefined;
+  const line = type?.parentId ? rows.find((r) => r.id === type.parentId)?.slug : undefined;
+  const pool = (await listProducts({ category: line ?? product.occasions[0]?.slug }, locale)).filter((p) => p.id !== product.id);
+  const score = (p: ProductDTO) => (p.collection?.slug === product.collection?.slug ? 0 : 2) + (p.type?.slug === product.type?.slug ? 1 : 0);
+  return pool.sort((a, b) => score(a) - score(b)).slice(0, limit);
 }
 
 export function effectivePrice(product: Pick<ProductDTO, "price" | "salePrice">): number {
