@@ -19,10 +19,11 @@ interface StoreForm {
 
 const DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
-export function SystemEditor(props: { stores: StoreForm[]; schedule: FittingSettings; delivery: boolean }) {
+export function SystemEditor(props: { stores: StoreForm[]; schedule: FittingSettings; delivery: boolean; cardPrice: boolean }) {
   const [stores, setStores] = useState(props.stores);
   const [sc, setSc] = useState(props.schedule);
   const [delivery, setDelivery] = useState(props.delivery);
+  const [cardPrice, setCardPrice] = useState(props.cardPrice);
   const [result, setResult] = useState<SettingsResult | null>(null);
   const [pending, start] = useTransition();
   const upd = (i: number, patch: Partial<StoreForm>) => {
@@ -39,11 +40,30 @@ export function SystemEditor(props: { stores: StoreForm[]; schedule: FittingSett
       <div className={s.top} style={{ marginTop: -16, justifyContent: "flex-end" }}>
         <div className={s.actions}>
           {result && <span className={s.chip} data-tone={result.ok ? "ok" : "bad"}>{result.ok ? "✓ Guardado" : result.message}</span>}
-          <button className={s.btn} disabled={pending} onClick={() => start(async () => setResult(await saveSystemAction({ stores, schedule: sc, delivery })))}>
+          <button className={s.btn} disabled={pending} onClick={() => start(async () => setResult(await saveSystemAction({ stores, schedule: sc, delivery, cardPrice })))}>
             Guardar alterações
           </button>
         </div>
       </div>
+
+      <section className={s.card}>
+        <h2 className={s.h2}>Preço nos cartões</h2>
+        <label className={s.check}>
+          <input
+            type="checkbox"
+            checked={cardPrice}
+            onChange={(e) => {
+              setCardPrice(e.target.checked);
+              setResult(null);
+            }}
+          />
+          Mostrar o preço nos cartões das listas
+        </label>
+        <p className={s.hint}>
+          Desligado (como no design): as listas mostram a referência, as cores e os tamanhos; o preço vê-se na página da peça. As peças em
+          campanha ou saldo mostram sempre o selo −% e o preço.
+        </p>
+      </section>
 
       <section className={s.card}>
         <h2 className={s.h2}>Módulo de entregas</h2>

@@ -1,7 +1,7 @@
 .list {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .item {
@@ -9,10 +9,10 @@
 }
 
 .logo {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 28px;
   flex-shrink: 0;
-  border-radius: 8px;
+  border-radius: 4px;
   overflow: hidden;
   display: inline-flex;
   align-items: center;
@@ -20,9 +20,9 @@
 }
 
 .small {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  width: 33px;
+  height: 22px;
+  border-radius: 3px;
 }
 
 .visa {
@@ -36,7 +36,20 @@
 }
 
 .small.visa {
-  font-size: 8px;
+  font-size: 10px;
+}
+
+.paypal {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  font-family: Arial, Helvetica, sans-serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.small.paypal {
+  font-size: 9px;
 }
 
 .mastercard {

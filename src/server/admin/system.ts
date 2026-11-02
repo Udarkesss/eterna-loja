@@ -16,15 +16,17 @@ import type { StaffContext } from "../staff/access";
 
 export async function loadSystemSettings() {
   const db = await getDb();
-  const [storeRows, schedule, delivery] = await Promise.all([
+  const [storeRows, schedule, delivery, cardPrice] = await Promise.all([
     db.select().from(stores).orderBy(asc(stores.position)),
     getSetting<FittingSettings>("fittings.schedule", FITTING_SETTINGS_DEFAULT),
     getSetting<boolean>("delivery.enabled", false),
+    getSetting<boolean>("catalog.cardPrice", false),
   ]);
   return {
     stores: storeRows.map((s) => ({ id: s.id, code: s.code, name: s.name, location: s.location, phone: s.phone, hours: s.hours ?? { pt: "", en: "" } })),
     schedule,
     delivery,
+    cardPrice,
   };
 }
 
@@ -32,6 +34,7 @@ export interface SystemSave {
   stores: { id: string; name: string; location: string; phone: string; hours: Localized }[];
   schedule: FittingSettings;
   delivery: boolean; // EN: delivery module on/off. PT: módulo de entregas ligado/desligado.
+  cardPrice: boolean; // EN: "Preço nos cartões". PT: preço nos cartões de produto.
 }
 
 export async function saveSystemSettings(staff: StaffContext, input: SystemSave) {
@@ -57,6 +60,13 @@ export async function saveSystemSettings(staff: StaffContext, input: SystemSave)
     },
     staff.id,
   );
+  if ((await getSetting<boolean>("catalog.cardPrice", false)) !== input.cardPrice) {
+    await setSetting("catalog.cardPrice", input.cardPrice, staff.id);
+    await audit({
+      actor: { type: "staff", id: staff.id, name: staff.name, role: staff.roleName },
+      action: input.cardPrice ? "Preço nos cartões ligado" : "Preço nos cartões desligado",
+    });
+  }
   const wasOn = await getSetting<boolean>("delivery.enabled", false);
   if (wasOn !== input.delivery) {
     await setSetting("delivery.enabled", input.delivery, staff.id);

@@ -1,6 +1,7 @@
 import "server-only";
 import { and, asc, desc, eq, ilike, inArray, lte, or, sql, type SQL } from "drizzle-orm";
 import { cache } from "react";
+import { sizeParts } from "@/lib/sizes";
 import type { CategoryDTO, CategorySummary, ColorFamily, Locale, ProductDTO } from "@/types";
 import { getDb } from "./db";
 import { categories, productCategories, products, productVariants } from "./db/schema";
@@ -59,12 +60,14 @@ function withDescendants(rootId: string, rows: CategoryRow[]): string[] {
 
 // ── Products / Produtos ──────────────────────────────────────────────
 
-export type ProductSort = "recommended" | "price_asc" | "price_desc";
+export type ProductSort = "recommended" | "newest" | "price_asc" | "price_desc";
 
 export interface ProductFilter {
   category?: string; // EN: includes sub-categories. PT: inclui subcategorias.
   types?: string[]; // EN: type slugs (chips "Vestidos longos", "Cocktail"). PT: slugs de tipo.
   sizes?: string[];
+  sizeLetters?: string[]; // EN: "S", "M"… of sizes in stock (design V3 filter). PT: letras dos tamanhos em stock.
+  onSale?: boolean; // EN: "Em campanha": with a sale price. PT: com preço de saldo/campanha.
   colors?: ColorFamily[];
   priceMax?: number;
   priceMin?: number;
@@ -95,7 +98,9 @@ async function queryProducts(where: SQL | undefined, sort: ProductSort = "recomm
       ? [asc(products.price)]
       : sort === "price_desc"
         ? [desc(products.price)]
-        : [desc(products.isNew), desc(products.createdAt)];
+        : sort === "newest"
+          ? [desc(products.createdAt)]
+          : [desc(products.isNew), desc(products.createdAt)];
   return db.query.products.findMany({
     where,
     limit,
@@ -187,6 +192,10 @@ export async function listProducts(filter: ProductFilter, locale: Locale): Promi
 
   // EN: Filters on jsonb/derived values are applied here. PT: Filtros sobre jsonb/valores derivados aplicados aqui.
   if (filter.colors?.length) list = list.filter((p) => p.colors.some((c) => c.family && filter.colors!.includes(c.family)));
+  if (filter.sizeLetters?.length) {
+    list = list.filter((p) => p.variants.some((v) => v.stock > 0 && filter.sizeLetters!.includes(sizeParts(v.size).letter)));
+  }
+  if (filter.onSale) list = list.filter((p) => p.salePrice != null && p.salePrice < p.price);
   if (filter.priceMin !== undefined) list = list.filter((p) => (p.salePrice ?? p.price) >= filter.priceMin!);
   if (filter.priceMax !== undefined) list = list.filter((p) => (p.salePrice ?? p.price) <= filter.priceMax!);
   return list;

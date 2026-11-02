@@ -12,7 +12,7 @@ export default async function SystemPage() {
   return (
     <>
       <PageTop eyebrow="Só o Superadministrador" title="Definições" />
-      <SystemEditor stores={d.stores} schedule={d.schedule} delivery={d.delivery} />
+      <SystemEditor stores={d.stores} schedule={d.schedule} delivery={d.delivery} cardPrice={d.cardPrice} />
     </>
   );
 }

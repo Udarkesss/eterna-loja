@@ -89,6 +89,12 @@ export async function enabledPaymentMethods() {
  */
 export const deliveryEnabled = () => getSetting<boolean>("delivery.enabled", false);
 
+/**
+ * EN: "Preço nos cartões" (Gestão → Definições): off by default in design V3; pieces on sale always show the price.
+ * PT: "Preço nos cartões": desligado por defeito no V3; as peças em saldo mostram sempre o preço.
+ */
+export const cardPriceVisible = () => getSetting<boolean>("catalog.cardPrice", false);
+
 export async function getCheckoutOptions(locale: Locale): Promise<CheckoutOptionsDTO> {
   const [methods, allStores, zones, pricing, delivery] = await Promise.all([
     enabledPaymentMethods(),

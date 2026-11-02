@@ -1,22 +1,23 @@
 /*
- * EN: Eterna design system tokens (v3, provisional). Use these variables — never raw colours or sizes.
- * PT: Tokens do design system Eterna (v3, provisório). Usar estas variáveis — nunca cores ou tamanhos soltos.
+ * EN: Eterna design system v8 (design V3, theme "Mescla" + Bridal). Use these variables — never raw colours or sizes.
+ *     The semantic names (--surface, --raised, --alt, --accent, --accent-ink, --muted, --contrast…) are the design's.
+ *     The older names (--ivory, --privee, --champagne-deep…) point to the same values while screens are moved to V3.
+ * PT: Design system Eterna v8 (design V3, tema "Mescla" + Bridal). Usar estas variáveis — nunca cores ou tamanhos
+ *     soltos. Os nomes semânticos são os do design; os nomes antigos apontam para os mesmos valores durante a mudança.
  */
 :root {
   /* Colour / Cor */
-  --ivory: #faf7f2;
-  --white: #ffffff;
-  --blush: #e9d8cf;
-  --blush-light: #f3ece6;
+  --surface: #faf7f2;
+  --raised: #ffffff;
+  --alt: #e9d8cf;
+  --accent: #b6a999; /* EN: ornaments, badges, on-dark labels; never text on light. PT: ornamentos; nunca texto em claro. */
+  --accent-ink: #71552f; /* EN: gold text on light. PT: texto dourado em fundo claro. */
   --line: #e6ddd3;
   --border: #7d7568;
   --ink: #2b2320;
-  --ink-muted: #6b5e57;
-  --champagne: #c8a97e; /* EN: ornaments only, never text on light. PT: só ornamentos, nunca texto em fundo claro. */
-  --champagne-deep: #7a5c34; /* EN: gold text. PT: texto dourado. */
-  --privee: #1c1917;
-  --on-privee: #faf7f2;
-  --sage: #8e9a86;
+  --muted: #655047;
+  --contrast: #1c1917;
+  --on-contrast: #faf7f2;
   --success: #2f6b4f;
   --success-soft: #e3eee7;
   --warning: #8a5a00;
@@ -25,9 +26,24 @@
   --danger-soft: #f6e3df;
   --focus: var(--ink);
 
-  /* Type / Tipografia — --font-cormorant and --font-jost come from next/font */
+  /* EN: Older names (same values). PT: Nomes antigos (mesmos valores). */
+  --ivory: var(--surface);
+  --white: var(--raised);
+  --blush: var(--alt);
+  --blush-light: #f3ece6;
+  --ink-muted: var(--muted);
+  --champagne: var(--accent);
+  --champagne-deep: var(--accent-ink);
+  --privee: var(--contrast);
+  --on-privee: var(--on-contrast);
+  --sage: #8e9a86;
+
+  /* Type / Tipografia — EN: the --font-* families come from next/font. PT: as famílias vêm do next/font. */
   --font-serif: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
   --font-sans: var(--font-jost), "Jost", system-ui, sans-serif;
+  --font-caps: var(--font-cinzel), "Cinzel", Georgia, serif; /* EN: "Colecção II · 2026". PT: "Colecção II · 2026". */
+  --font-script: var(--font-pinyon), "Pinyon Script", cursive; /* EN: short accents only. PT: só destaques curtos. */
+  --font-deco: var(--font-cinzel-deco), "Cinzel Decorative", "Cinzel", Georgia, serif; /* EN: campaign names. PT: campanhas. */
 
   /* Space / Espaço */
   --space-1: 4px;
@@ -42,10 +58,25 @@
   --radius-sm: 2px;
   --radius-md: 6px;
   --radius-full: 999px;
-  --shadow-lift: 0 8px 24px rgba(43, 35, 32, 0.08);
+  --shadow-lift: 0 8px 24px rgba(0, 0, 0, 0.08);
 
   /* Layout — EN: design canvas is 1440px wide with 80px margins. PT: canvas de 1440px com margens de 80px. */
   --page-x: clamp(16px, 5.56vw, 80px);
-  --section-y: clamp(64px, 8.3vw, 120px);
-  --header-h: 88px;
+  --section-y: clamp(64px, 6.67vw, 96px);
+  --header-h: 125px;
+}
+
+/* EN: Bridal theme (Noivas sections and pages). PT: Tema Bridal (secções e páginas de Noivas). */
+[data-theme="bridal"] {
+  --surface: #f4ebe9;
+  --raised: #ffffff;
+  --alt: #e9dcd6;
+  --accent: #d0bcb1;
+  --accent-ink: #795a49;
+  --line: #e9dcd6;
+  --border: #a47d68;
+  --ink: #000000;
+  --muted: #6f5343;
+  --contrast: #000000;
+  --on-contrast: #ffffff;
 }

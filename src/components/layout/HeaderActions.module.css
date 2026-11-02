@@ -2,7 +2,7 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .icon {
@@ -17,22 +17,23 @@
 
 .badge {
   position: absolute;
-  top: 6px;
-  right: 4px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 3px;
+  top: 5px;
+  right: 3px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
   border-radius: var(--radius-full);
-  background: var(--privee);
-  color: var(--on-privee);
+  background: var(--contrast);
+  color: var(--on-contrast);
   font-size: 10px;
-  line-height: 16px;
+  font-weight: 500;
+  line-height: 17px;
   text-align: center;
 }
 
-/* EN: On phones only favourites + bag stay in the top row (design "Telemóvel · Início"). PT: No telemóvel ficam só favoritos + carrinho. */
-@media (max-width: 767px) {
-  .desktopOnly {
+/* EN: Below 1024 px account and favourites live in the menu drawer. PT: Abaixo de 1024 px estão na gaveta do menu. */
+@media (max-width: 1023px) {
+  .wide {
     display: none;
   }
 }

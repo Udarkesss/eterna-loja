@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
-import { CompactFooter } from "@/components/layout/Footer";
+import { SiteFooter } from "@/components/layout/Footer";
 import { resolveLocale } from "@/i18n/params";
 
-/** EN: Inner pages (category, product, bag…) use the design's compact footer. PT: Páginas interiores: rodapé compacto. */
+/** EN: Inner pages (category, product, bag…) share the V3 footer. PT: Páginas interiores com o rodapé do V3. */
 export default async function InnerLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
   const locale = await resolveLocale(params);
   return (
     <>
       {children}
-      <CompactFooter locale={locale} />
+      <SiteFooter locale={locale} />
     </>
   );
 }

@@ -12,16 +12,22 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+/* EN: Tablet: 3 columns; phone: 2 (design V3, section 8). PT: Tablet: 3 colunas; telemóvel: 2. */
 @media (max-width: 1023px) {
   .four,
   .three {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 599px) {
+@media (max-width: 767px) {
   .grid {
     column-gap: 12px;
     row-gap: 32px;
+  }
+
+  .four,
+  .three {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

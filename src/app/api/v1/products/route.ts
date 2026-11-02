@@ -3,7 +3,7 @@ import { listProducts, type ProductSort } from "@/server/catalog";
 import { jsonData, withErrorHandling } from "@/server/errors";
 import { localeFromRequest } from "@/server/request";
 
-const SORTS: ProductSort[] = ["recommended", "price_asc", "price_desc"];
+const SORTS: ProductSort[] = ["recommended", "newest", "price_asc", "price_desc"];
 const list = (v: string | null) => v?.split(",").filter(Boolean).slice(0, 100);
 const num = (v: string | null) => (v && /^\d+$/.test(v) ? Number(v) : undefined);
 

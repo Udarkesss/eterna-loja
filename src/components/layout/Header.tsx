@@ -1,16 +1,19 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Icon } from "@/components/ui/Icon";
 import { getDictionary } from "@/i18n";
 import { localizePath } from "@/i18n/config";
 import type { Locale } from "@/types";
 import { HeaderActions } from "./HeaderActions";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { MobileMenu } from "./MobileMenu";
 import { NavLinks } from "./NavLinks";
 import styles from "./Header.module.css";
 
 /**
- * EN: Store header of design V3: two rows — language · ETERNA · icons (search, account, favourites, bag), then the menu.
- * PT: Cabeçalho da loja do design V3: duas linhas — idioma · ETERNA · ícones (pesquisa, conta, favoritos, saco), e o menu.
+ * EN: Store header of design V3. Computer: two rows — PT/EN · logo · icons (search, account, favourites, bag), then the
+ *     menu. Phone (< 768 px): menu button · logo · search and bag; the menu opens as a drawer (MobileMenu).
+ * PT: Cabeçalho da loja do design V3. Computador: duas linhas — PT/EN · logótipo · ícones, e depois o menu.
+ *     Telemóvel (< 768 px): botão do menu · logótipo · pesquisa e saco; o menu abre em gaveta.
  */
 export function Header({ locale }: { locale: Locale }) {
   const dict = getDictionary(locale);
@@ -18,26 +21,22 @@ export function Header({ locale }: { locale: Locale }) {
   return (
     <header className={styles.header}>
       <div className={`page-x ${styles.top}`}>
-        <LanguageSwitcher />
+        <div className={styles.start}>
+          <span className={styles.desktop}>
+            <LanguageSwitcher />
+          </span>
+          <span className={styles.phone}>
+            <MobileMenu />
+          </span>
+        </div>
         <Link href={localizePath(locale)} className={styles.brand} aria-label={dict.nav.home}>
-          ETERNA
+          <Image src="/images/brand/eterna-logo.svg" alt="Eterna" width={148} height={34} priority unoptimized className={styles.logo} />
         </Link>
-        <HeaderActions mobileMinimal />
+        <HeaderActions />
       </div>
       <nav aria-label={dict.nav.main} className={styles.nav}>
         <ul className={`page-x ${styles.navList}`}>
-          <NavLinks linkClassName={styles.navLink} />
-          {/* EN: phones: search + account move here. PT: telemóvel: pesquisa + conta vêm para aqui. */}
-          <li className={styles.mobileOnly}>
-            <Link href={localizePath(locale, "/search")} aria-label={dict.nav.search} className={styles.navLink}>
-              <Icon name="search" size={20} />
-            </Link>
-          </li>
-          <li className={styles.mobileOnly}>
-            <Link href={localizePath(locale, "/account")} aria-label={dict.nav.account} className={styles.navLink}>
-              <Icon name="user" size={20} />
-            </Link>
-          </li>
+          <NavLinks linkClassName={styles.navLink} collectionClassName={styles.collection} />
         </ul>
       </nav>
     </header>

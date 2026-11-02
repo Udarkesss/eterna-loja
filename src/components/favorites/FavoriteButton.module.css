@@ -1,12 +1,12 @@
 .round {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 44px;
-  height: 44px;
+  top: 8px;
+  right: 8px;
+  width: 40px;
+  height: 40px;
   border: 0;
   border-radius: var(--radius-full);
-  background: var(--ivory);
+  background: rgba(250, 247, 242, 0.92);
   color: var(--ink);
   display: flex;
   align-items: center;

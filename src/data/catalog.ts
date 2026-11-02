@@ -68,7 +68,12 @@ export const categoryTree: CategorySeed[] = [
       node("occasion", "noivado-lobolo", "Noivado & Lobolo", "Engagement & Lobolo"),
       node("occasion", "evento-corporativo", "Evento Corporativo", "Corporate Event"),
       node("occasion", "gala", "Gala", "Gala"),
-      node("occasion", "convidada", "Convidada", "Wedding guest"),
+      node("occasion", "convidada", "Convidada", "Wedding guest", {
+        description: {
+          pt: "Casamentos, aniversários e galas: vestidos longos, cocktail e macacões com cortes que valorizam a silhueta.",
+          en: "Weddings, birthdays and galas: long and cocktail dresses and jumpsuits with flattering cuts.",
+        },
+      }),
       node("occasion", "finalistas-debutantes", "Finalistas & Debutantes", "Graduation & Debutante"),
     ],
   }),

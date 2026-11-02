@@ -1,20 +1,16 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import { ProductCard } from "@/components/product/ProductCard";
 import { useI18n } from "@/i18n/I18nProvider";
 import { api } from "@/lib/api-client";
-import { formatMZN } from "@/lib/format";
 import type { ProductDTO } from "@/types";
-import card from "@/components/product/ProductCard.module.css";
 import grid from "@/components/product/ProductGrid.module.css";
-import { FavoriteButton } from "./FavoriteButton";
 import { useFavorites } from "./FavoritesProvider";
 
 /** EN: Loads the saved pieces through the API and shows them as product cards. PT: Carrega as peças guardadas. */
-export function FavoritesList() {
-  const { locale, dict, href } = useI18n();
+export function FavoritesList({ showPrice = false }: { showPrice?: boolean }) {
+  const { locale, dict } = useI18n();
   const { slugs } = useFavorites();
   const [products, setProducts] = useState<ProductDTO[] | null>(null);
 
@@ -36,18 +32,7 @@ export function FavoritesList() {
   return (
     <div className={`${grid.grid} ${grid.four}`}>
       {products.map((p) => (
-        <div key={p.id} className={card.card}>
-          <Link href={href(`/product/${p.slug}`)} className={card.link}>
-            <span className={card.media}>
-              {p.images[0] && <Image src={p.images[0].url} alt={p.images[0].alt} fill sizes="25vw" className={card.image} />}
-            </span>
-            <span className={card.row}>
-              <span className={card.code}>{p.code}</span>
-              <span className={card.price}>{formatMZN(p.salePrice ?? p.price, locale)}</span>
-            </span>
-          </Link>
-          <FavoriteButton slug={p.slug} code={p.code} />
-        </div>
+        <ProductCard key={p.id} product={p} locale={locale} showPrice={showPrice} />
       ))}
     </div>
   );

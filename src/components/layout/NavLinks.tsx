@@ -12,18 +12,20 @@ import { resolveHref } from "@/lib/links";
  * PT: O menu principal do design V3. Sem "Agendar prova": na V3 a prova marca-se na secção Noivas. A secção actual
  *     recebe aria-current="page".
  */
-export function NavLinks({ linkClassName }: { linkClassName: string }) {
+export function NavLinks({ linkClassName, collectionClassName }: { linkClassName: string; collectionClassName?: string }) {
   const { locale } = useI18n();
   const pathname = usePathname();
 
   return (
     <>
-      {mainNav.map((item) => {
+      {mainNav.map((item, i) => {
         const href = resolveHref(item.href, locale);
         const current = !item.href.startsWith("#") && pathname.startsWith(href);
+        // EN: The first item is the active collection (gold). PT: O primeiro item é a colecção activa (dourado).
+        const className = i === 0 && collectionClassName ? `${linkClassName} ${collectionClassName}` : linkClassName;
         return (
           <li key={item.href}>
-            <Link href={href} className={linkClassName} aria-current={current ? "page" : undefined}>
+            <Link href={href} className={className} aria-current={current ? "page" : undefined}>
               {item.label[locale]}
             </Link>
           </li>

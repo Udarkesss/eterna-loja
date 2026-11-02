@@ -1,108 +1,173 @@
+/* EN: Product card of design V3 (".pc"). PT: Cartão de produto do design V3. */
+
 .card {
   position: relative;
+  min-width: 0;
 }
 
 .link {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   color: var(--ink);
 }
 
 .media {
   position: relative;
   display: block;
-  aspect-ratio: 4 / 5;
-  background: var(--blush-light);
+  aspect-ratio: 3 / 4;
+  background: var(--alt);
   overflow: hidden;
-  transition: box-shadow 0.25s ease;
-}
-
-.link:hover .media {
-  box-shadow: var(--shadow-lift);
 }
 
 .image {
   object-fit: cover;
-  object-position: center 15%;
+  object-position: center 18%;
+  transition: transform 0.6s ease;
 }
 
-.text {
+.link:hover .image {
+  transform: scale(1.02);
+}
+
+.tags {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--radius-full);
+  background: var(--raised);
+  color: var(--ink);
+  font-size: 11px;
+  line-height: 24px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sale {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-}
-
-.row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
+  min-height: 104px;
 }
 
 .code {
   font-family: var(--font-serif);
-  font-size: 24px;
-  line-height: 28px;
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 26px;
 }
 
-.codeSmall {
-  font-family: var(--font-serif);
-  font-size: 22px;
+.prices {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
 }
 
 .price {
-  font-family: var(--font-serif);
-  font-size: 20px;
   font-weight: 500;
-  color: var(--champagne-deep);
-  text-align: right;
+  font-size: 18px;
+  line-height: 24px;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--accent-ink);
 }
 
-.priceSmall {
-  font-family: var(--font-serif);
-  font-size: 19px;
-  font-weight: 500;
-  color: var(--champagne-deep);
+.salePrice {
+  color: var(--danger);
 }
 
 .old {
   font-size: 15px;
-  color: var(--ink-muted);
-  font-weight: 400;
+  color: var(--muted);
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
-.meta {
-  font-size: 13px;
-  line-height: 20px;
-  color: var(--ink-muted);
+.swatches {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 2px;
 }
 
-.badge {
-  position: absolute;
-  top: 20px;
-  left: 16px;
-  padding: 5px 12px;
+.swatch {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.18);
   border-radius: var(--radius-full);
-  background: var(--ivory);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
 }
 
-@media (max-width: 599px) {
+.ring {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--ink);
+}
+
+.more,
+.colorName {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.colorName {
+  margin-left: 4px;
+}
+
+.sizes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.size {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--raised);
+  line-height: 1.2;
+}
+
+.size b {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.size small {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+@media (max-width: 767px) {
   .code {
-    font-size: 19px;
+    font-size: 17px;
     line-height: 22px;
   }
 
-  .price {
-    font-size: 15px;
-  }
-
-  .row {
-    flex-direction: column;
-    gap: 2px;
+  .size {
+    min-width: 38px;
+    padding: 4px 6px;
   }
 }

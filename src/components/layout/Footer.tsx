@@ -1,24 +1,44 @@
 import Link from "next/link";
+import { Icon, type IconName } from "@/components/ui/Icon";
 import { PaymentLogos } from "@/components/ui/PaymentLogos";
-import { infoPages, site } from "@/data/site";
+import { mainNav, site } from "@/data/site";
 import { getDictionary, t } from "@/i18n";
 import { localizePath } from "@/i18n/config";
-import { categoryHref } from "@/lib/links";
-import { listOccasions } from "@/server/catalog";
+import { resolveHref } from "@/lib/links";
 import type { Locale } from "@/types";
 import { NewsletterForm } from "./NewsletterForm";
-import { SocialLinks } from "./SocialLinks";
 import styles from "./Footer.module.css";
 
 const year = new Date().getFullYear();
 
+const SOCIAL_ICON: Record<(typeof site.social)[number]["key"], IconName> = {
+  instagram: "instagram",
+  facebook: "facebook",
+  tiktok: "tiktok",
+  whatsapp: "whatsapp",
+};
+
 /**
- * EN: Full footer of the design's Início: brand + social · Ocasiões · Informações · newsletter, then payments.
- * PT: Rodapé completo do Início do design: marca + redes · Ocasiões · Informações · novidades, e pagamentos.
+ * EN: Footer of design V3, the same on every store page: brand · Comprar · Ajuda · Contactos · Novidades, then the
+ *     social links and payment badges. On phones the columns stack (design "Telemóvel · Início 2/2").
+ * PT: Rodapé do design V3, igual em todas as páginas da loja: marca · Comprar · Ajuda · Contactos · Novidades, e depois
+ *     as redes sociais e os selos de pagamento. No telemóvel as colunas empilham.
  */
-export async function SiteFooter({ locale }: { locale: Locale }) {
+export function SiteFooter({ locale }: { locale: Locale }) {
   const dict = getDictionary(locale);
-  const occasions = await listOccasions(locale);
+  const f = dict.footer;
+  const shop = mainNav.slice(0, 5).map((item, i) => ({
+    href: resolveHref(item.href, locale),
+    label: i === 0 ? f.collectionLine : item.label[locale],
+  }));
+  const help = [
+    { href: localizePath(locale, "/como-comprar"), label: f.howToBuy },
+    { href: localizePath(locale, "/fidelidade"), label: f.loyalty },
+    { href: localizePath(locale, "/info/tamanhos"), label: f.sizeGuide },
+    { href: localizePath(locale, "/info/trocas-devolucoes"), label: f.exchanges },
+    { href: localizePath(locale, "/info/privacidade"), label: f.privacy },
+  ];
+  const whatsapp = `+${site.whatsapp.slice(0, 3)} ${site.whatsapp.slice(3, 5)} ${site.whatsapp.slice(5, 8)} ${site.whatsapp.slice(8)}`;
 
   return (
     <footer className={`on-privee ${styles.footer}`}>
@@ -26,85 +46,53 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
         <div className={styles.columns}>
           <div className={styles.brandCol}>
             <span className={styles.brand}>ETERNA</span>
-            <p className={styles.tagline}>{t(dict.footer.tagline, { year: site.foundedYear })}</p>
-            <SocialLinks label={dict.common.social} />
+            <p className={styles.tagline}>{t(f.tagline, { year: site.foundedYear })}</p>
           </div>
-          <div className={styles.col}>
-            <span className={styles.heading}>{dict.footer.occasions}</span>
-            {occasions.map((o) => (
-              <Link key={o.slug} href={categoryHref(o.slug, locale)}>
-                {o.name}
-              </Link>
-            ))}
-          </div>
-          <div className={styles.col}>
-            <span className={styles.heading}>{dict.footer.info}</span>
-            {infoPages.map((slug) => (
-              <Link key={slug} href={localizePath(locale, `/info/${slug}`)}>
-                {dict.footer.infoPages[slug]}
-              </Link>
-            ))}
-          </div>
-          <div className={styles.newsCol}>
-            <span className={styles.heading}>{dict.footer.newsletterTitle}</span>
-            <p className={styles.small}>{dict.footer.newsletterBody}</p>
-            <NewsletterForm />
-            <span className={styles.address}>
-              {dict.footer.stores}
-              <br />
-              +258 82 487 6300 · +258 84 073 3688
-              <br />
-              {site.email}
-            </span>
-          </div>
-        </div>
-        <div className={styles.bottom}>
-          <span>
-            © {site.foundedYear}–{year} Eterna. {dict.footer.rights} · {dict.footer.city}
-          </span>
-          <div className={styles.payments}>
-            <span className={styles.paymentsLabel}>{dict.footer.payments}</span>
-            <PaymentLogos label={dict.common.paymentLogos} />
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
-}
-
-/**
- * EN: Compact footer of the design's Categoria / Produto pages.
- * PT: Rodapé compacto das páginas Categoria / Produto do design.
- */
-export function CompactFooter({ locale }: { locale: Locale }) {
-  const dict = getDictionary(locale);
-  const links = [
-    ...(["tamanhos", "trocas-devolucoes", "reservas", "pagamentos", "envios"] as const).map((slug) => ({
-      href: localizePath(locale, `/info/${slug}`),
-      label: dict.footer.infoPages[slug],
-    })),
-    { href: localizePath(locale, "/contact"), label: dict.footer.contacts },
-  ];
-
-  return (
-    <footer className={`on-privee ${styles.compact}`}>
-      <div className={`page-x ${styles.compactInner}`}>
-        <div className={styles.compactTop}>
-          <span className={styles.brandSmall}>ETERNA</span>
-          <nav aria-label={dict.footer.info} className={styles.compactNav}>
-            {links.map((l) => (
+          <nav aria-label={f.shop} className={styles.col}>
+            <h2 className={styles.heading}>{f.shop}</h2>
+            {shop.map((l) => (
               <Link key={l.href} href={l.href}>
                 {l.label}
               </Link>
             ))}
           </nav>
-          <SocialLinks label={dict.common.social} />
+          <nav aria-label={f.help} className={styles.col}>
+            <h2 className={styles.heading}>{f.help}</h2>
+            {help.map((l) => (
+              <Link key={l.href} href={l.href}>
+                {l.label}
+              </Link>
+            ))}
+          </nav>
+          <div className={styles.col}>
+            <h2 className={styles.heading}>{f.contacts}</h2>
+            <a href={`tel:${site.supportPhone.replace(/\s/g, "")}`}>{site.phonesLine}</a>
+            <a href={`https://wa.me/${site.whatsapp}`} target="_blank" rel="noopener noreferrer">
+              WhatsApp {whatsapp}
+            </a>
+            <a href={`mailto:${site.email}`}>{site.email}</a>
+            <Link href={localizePath(locale, "/contact")}>{f.storesShort}</Link>
+          </div>
+          <div className={styles.newsCol}>
+            <h2 className={styles.heading}>{f.newsletterTitle}</h2>
+            <p className={styles.small}>{f.newsletterBody}</p>
+            <NewsletterForm />
+          </div>
+        </div>
+        <div className={styles.row}>
+          <nav aria-label={dict.common.social} className={styles.social}>
+            {site.social.map((s) => (
+              <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer">
+                <Icon name={SOCIAL_ICON[s.key]} size={16} />
+                {s.handle}
+              </a>
+            ))}
+          </nav>
+          <PaymentLogos label={dict.common.paymentLogos} />
         </div>
         <div className={styles.bottom}>
-          <span>
-            © {site.foundedYear}–{year} Eterna · Glória Mall, Maputo · {site.email}
-          </span>
-          <PaymentLogos label={dict.common.paymentLogos} />
+          <span>{t(f.copyright, { from: site.foundedYear, to: year })}</span>
+          <span>PT · EN</span>
         </div>
       </div>
     </footer>

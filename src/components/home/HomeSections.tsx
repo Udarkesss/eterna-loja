@@ -113,7 +113,7 @@ export function NewArrivals({
   return (
     <section className={`page-x ${styles.block}`}>
       <SectionHead eyebrow={data.eyebrow} title={data.title} link={{ label: data.linkLabel, href: data.href }} locale={locale} />
-      <ProductGrid products={products} locale={locale} meta="full" />
+      <ProductGrid products={products} locale={locale} />
     </section>
   );
 }

@@ -1,0 +1,122 @@
+/* EN: Phone menu of design V3 ("Telemóvel · Menu aberto"). PT: Menu do telemóvel do design V3. */
+
+.trigger {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+}
+
+.panel {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: var(--surface);
+  overflow-y: auto;
+  padding: 0 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.top {
+  height: 60px;
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) 96px;
+  align-items: center;
+  margin: 0 -10px;
+}
+
+.top > :last-child {
+  justify-self: end;
+}
+
+.logo {
+  justify-self: center;
+  display: flex;
+}
+
+.list {
+  border-top: 1px solid var(--line);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-serif);
+  font-size: 26px;
+  line-height: 32px;
+  color: var(--ink);
+}
+
+.item > span:first-child {
+  flex: 1;
+}
+
+.tag {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.outline,
+.dark {
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.outline {
+  border: 1px solid var(--ink);
+  color: var(--ink);
+}
+
+.dark {
+  background: var(--contrast);
+  color: var(--on-contrast);
+}
+
+.contact {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.eyebrow {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.small {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--muted);
+}

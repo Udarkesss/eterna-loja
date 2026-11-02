@@ -1,8 +1,9 @@
 import styles from "./PaymentLogos.module.css";
 
 /**
- * EN: Visa · Mastercard · M-Pesa · e-Mola · mKesh badges, as in the design (40px, or 28px when small).
- * PT: Selos Visa · Mastercard · M-Pesa · e-Mola · mKesh, como no design (40px, ou 28px quando pequenos).
+ * EN: Payment badges of design V3 (".pay": 42×28, Visa · Mastercard · PayPal · M-Pesa · e-Mola · mKesh). `small` is
+ *     used next to the "Add to bag" button.
+ * PT: Selos de pagamento do design V3 (42×28). `small` é usado junto ao botão "Adicionar ao carrinho".
  */
 export function PaymentLogos({ label, small }: { label: string; small?: boolean }) {
   const cls = `${styles.logo} ${small ? styles.small : ""}`;
@@ -15,10 +16,16 @@ export function PaymentLogos({ label, small }: { label: string; small?: boolean 
       </span>
       <span role="listitem" className={styles.item}>
         <span role="img" aria-label="Mastercard" className={`${cls} ${styles.mastercard}`}>
-          <svg width={small ? 20 : 29} height={small ? 13 : 19} viewBox="0 0 34 22" aria-hidden="true">
-            <circle cx="12" cy="11" r="9" fill="#EB001B" />
-            <circle cx="22" cy="11" r="9" fill="#F79E1B" fillOpacity="0.9" />
+          <svg width={small ? 22 : 30} height={small ? 14 : 20} viewBox="0 0 30 20" aria-hidden="true">
+            <circle cx="11" cy="10" r="7" fill="#EB001B" />
+            <circle cx="19" cy="10" r="7" fill="#F79E1B" fillOpacity="0.9" />
           </svg>
+        </span>
+      </span>
+      <span role="listitem" className={styles.item}>
+        <span role="img" aria-label="PayPal" className={`${cls} ${styles.paypal}`}>
+          <span style={{ color: "#003087" }}>Pay</span>
+          <span style={{ color: "#009CDE" }}>Pal</span>
         </span>
       </span>
       {(

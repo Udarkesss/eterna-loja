@@ -12,6 +12,7 @@ import { localizePath } from "@/i18n/config";
 import { resolveLocale } from "@/i18n/params";
 import { categoryHref } from "@/lib/links";
 import { findCategory, findProduct, relatedProducts } from "@/server/catalog";
+import { cardPriceVisible } from "@/server/content";
 import styles from "./product.module.css";
 
 type Props = { params: Promise<{ locale: string; slug: string }> };
@@ -37,7 +38,7 @@ export default async function ProductPage({ params }: Props) {
   if (!product) notFound();
 
   const dict = getDictionary(locale);
-  const related = await relatedProducts(product, locale);
+  const [related, showPrice] = await Promise.all([relatedProducts(product, locale), cardPriceVisible()]);
   const occasion = product.occasions[0];
   const occasionParent = occasion ? (await findCategory(occasion.slug, locale))?.parent : null;
   const storeCode = product.variants.find((v) => v.store)?.store?.code ?? "02";
@@ -106,7 +107,7 @@ export default async function ProductPage({ params }: Props) {
               </Link>
             )}
           </div>
-          <ProductGrid products={related} locale={locale} meta="none" />
+          <ProductGrid products={related} locale={locale} showPrice={showPrice} />
         </section>
       )}
     </>

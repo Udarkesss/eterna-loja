@@ -16,6 +16,7 @@ export const site = {
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   email: "apoio@eterna.co.mz",
   supportPhone: "+258 82 487 6300",
+  phonesLine: "+258 82 487 6300 · 6330", // EN: store phones as shown in the design. PT: telefones das lojas, como no design.
   // EN: Main WhatsApp of the old eterna.co.mz. PT: WhatsApp principal do eterna.co.mz antigo.
   whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || "258840733688",
   social: [
@@ -147,6 +148,7 @@ export const permissionMatrix: [area: string, access: [string, string, string, s
 /** EN: Initial key/value settings. PT: Definições iniciais. */
 export const settingSeeds: Record<string, unknown> = {
   "delivery.enabled": false, // EN: design V3: the delivery module starts switched off. PT: V3: começa desligado.
+  "catalog.cardPrice": false, // EN: design V3: prices hidden on product cards. PT: V3: preço escondido nos cartões.
   "delivery.pricing": { mode: "zone", fixedFee: null, baseFee: null, perKm: null, maxFee: null },
   "delivery.commissionPct": 70,
   "notifications.events": {

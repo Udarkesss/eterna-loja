@@ -1,4 +1,4 @@
-import { count, eq, inArray } from "drizzle-orm";
+import { and, count, eq, inArray, isNull } from "drizzle-orm";
 import { categoryTree, type CategorySeed } from "@/data/catalog";
 import { homeSections, occasionTiles as tileSeeds } from "@/data/content";
 import { aboutSeed, infoSeeds } from "@/data/pages";
@@ -183,6 +183,25 @@ const DATA_MIGRATIONS: { name: string; run: (db: Database) => Promise<void> }[] 
         const placeholder = !st.hours || st.hours.pt.startsWith("[") || st.name === "Eterna & Beyond Time";
         if (placeholder) await db.update(stores).set({ name: seed.name, location: seed.location, phone: seed.phone, hours: seed.hours }).where(eq(stores.id, st.id));
       }
+    },
+  },
+  {
+    // EN: Category descriptions added to src/data/catalog.ts, only where a category still has none.
+    // PT: Descrições de categorias acrescentadas ao catálogo, só onde a categoria ainda não tem nenhuma.
+    name: "descricoes-categorias",
+    run: async (db) => {
+      const walk = async (nodes: CategorySeed[]) => {
+        for (const n of nodes) {
+          if (n.description) {
+            await db
+              .update(categories)
+              .set({ description: n.description })
+              .where(and(eq(categories.slug, n.slug), isNull(categories.description)));
+          }
+          if (n.children) await walk(n.children);
+        }
+      };
+      await walk(categoryTree);
     },
   },
 ];
