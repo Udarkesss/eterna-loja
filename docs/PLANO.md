@@ -1,29 +1,28 @@
 # Plano de construção / Build plan
 
-Fonte da verdade / Source of truth: canvas **"Eterna — Loja Online de Luxo"**
-(https://claude.ai/artifact/PcYXgMJz5dQ75QsKKYZgiE). O site segue o design à risca.
+Fonte da verdade / Source of truth: página **"Versão 3 · Design system v8"** do canvas
+(https://claude.ai/artifact/PcYXgMJz5dQ75QsKKYZgiE). Lista dos ecrãs: [design-v3/ECRAS.md](design-v3/ECRAS.md);
+regras: [design-v3/ESPECIFICACAO.md](design-v3/ESPECIFICACAO.md). Migração do site antigo: [MIGRACAO.md](MIGRACAO.md).
 
-| Fase | Ecrãs do design | Estado |
-| ---- | --------------- | ------ |
-| **0. Base de dados** | Modelo completo para todas as fases (27 tabelas) | ✅ Feito |
-| **1. Loja pública** | Início, Categoria, Produto, Checkout (6 métodos + estados), Telemóvel · Início / Pagamento / A aguardar PIN, acompanhamento (sem mapa ao vivo) | ✅ Feito |
-| **2. Conta de cliente** | Entrar ou criar conta (e-mail, WhatsApp com código), recuperar palavra-passe, área de cliente (encomendas, provas, favoritos na conta, dados, formas de entrar). Google/Facebook: botões prontos, falta a conta de programador | ✅ Feito |
-| **3. Acesso à gestão** | /gestao: entrar, primeiro acesso, bloqueio 15 min, palavra-passe temporária, A1 Utilizadores, A2 Papéis, A3 menu por papel, A4 Auditoria (+CSV), A5 Sem acesso | ✅ Feito |
-| **4. Gestão da loja** | Painel, Encomendas (lista, por cliente, detalhe, comprovativos, devoluções), Provas, Produtos (+ editor, fotos, stock por loja), Colecções, Conteúdo do site, Vídeo/parallax/ocasiões, Pagamentos e avisos, Definições, dados de exemplo | ✅ Feito |
-| **5. Entregas** | App do entregador (/gestao/entregador: as minhas entregas, iniciar, GPS, código de 4 dígitos, ganhos), acompanhar entrega da cliente (mapa ao vivo, entregador, confirmar recepção), Gestão → Entregas (atribuir, WhatsApp ao entregador, mapa, preço fixo/zona/distância, comissões, relatório de ganhos + CSV) | ✅ Feito |
-| **6. Integrações reais** | ✅ M-Pesa (C2B + consulta de estado, `src/server/payments/mpesa.ts` — falta testar com as chaves da Eterna) · e-Mola / mKesh, cartão 3-D Secure (campos seguros do gateway), SMS/WhatsApp/e-mail, fornecedor de mapas | 🔶 |
+| Fase (V3) | O que inclui | Estado |
+| --------- | ------------ | ------ |
+| **Base** | Base de dados, API /api/v1, contas, gestão com papéis e auditoria, entregas, M-Pesa (falta testar com as chaves) | ✅ Feito (versões 1–2) |
+| **Migração** | Produtos do Shopify (CSV + espelho do eterna.co.mz, fotos), categorias e conteúdo do site antigo | ✅ Feito |
+| **2. Loja** | Início (vídeo ou slides, efeitos), colecção Essenza, categorias e ocasiões, peça, pesquisa com sugestões, favoritos, conta com nível, fidelidade, como comprar, entrar | ✅ Feito |
+| **3. Compra e pagamentos** | Carrinho rápido e carrinho, checkout, voucher, termos obrigatórios, reservas (50%), provas Bridal pagas (Satin/Silk/Cashmere), desconto do nível no checkout, avisos | ⏳ Próxima |
+| **4. Gestão** | Ecrãs V3-G-* e V3-M-G-* (computador e telemóvel), campanhas e épocas, tipos de peça, contactos e redes, descontos e vouchers, reservas, importar Excel + ZIP | ⏳ |
+| **5. Lançamento** | Domínio, chaves reais, testes com a equipa, formação | ⏳ |
+| **Assistentes** | Chat no site e bot no WhatsApp | ⏳ |
 
 ## Decisões / Decisions
 
-- **Navegação:** a navbar activa é a da versão anterior (escolha da cliente), com o menu **exactamente** como no design:
-  Noivas · Ocasiões · Beyond Time · Acessórios · Modeladores · Agendar prova + pesquisa, conta, favoritos, carrinho.
-  A navbar do design está em `src/components/layout/DesignHeader.tsx` e fica comentada em
-  `src/app/[locale]/(site)/layout.tsx` — para a usar, trocar as duas linhas indicadas no ficheiro.
-- **Textos com [parênteses rectos]** no design (horário, banco, NIB, taxas de entrega…) ficam iguais: são dados por preencher.
-- **Imagens e vídeos** do design estão em `public/images/*` e `public/videos/*`.
-- **Favoritos** ficam no browser até à fase 2 (depois passam para a conta).
-- **Cartão:** os campos do design são validados no browser mas **nunca** enviados ao servidor; na fase 6 são trocados
-  pelos campos seguros do gateway escolhido.
+- **Pagamentos:** todos os métodos ficam (incluindo o de teste, ilustrativo); cada um desliga-se em Gestão → Pagamentos e
+  um método desligado não aparece no checkout.
+- **Entregas:** módulo construído mas desligado (Gestão → Definições); desligado = só levantamento.
+- **Preço nos cartões:** escondido por defeito (Gestão → Definições); peças em saldo mostram sempre o preço.
+- **Dados de exemplo:** só em local (`npm run db:demo`, `npm run db:demo -- clear`), nunca na gestão nem em produção.
+- **Cartão:** os campos são validados no browser mas **nunca** enviados ao servidor; no lançamento são trocados pelos
+  campos seguros do gateway.
 
 ## Por confirmar com a Eterna / To confirm
 
@@ -57,7 +56,7 @@ Fonte da verdade / Source of truth: canvas **"Eterna — Loja Online de Luxo"**
 ## Primeiro acesso à gestão
 
 - Abrir /gestao/entrar → "Criar a conta de Superadministrador" (só aparece enquanto não existir nenhum real).
-- Dados de exemplo: Gestão → Definições → "Carregar dados de exemplo" (apagam-se no mesmo sítio).
+- Dados de exemplo (só em local, com o servidor parado): `npm run db:demo`; apagam-se com `npm run db:demo -- clear`.
   A equipa de exemplo (demo.super, demo.admin, demo.gestora02, demo.gestora22, demo.atend02, demo.entregador) usa
-  DEMO_PASSWORD do .env.local. `npm run db:demo-admin` cria só o demo.super (com o servidor parado).
+  DEMO_PASSWORD do .env.local.
 - Mensagens (WhatsApp/SMS/e-mail) ainda não saem: em modo de demonstração os códigos aparecem no ecrã (fase 6).

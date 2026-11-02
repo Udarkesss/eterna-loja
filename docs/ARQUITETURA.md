@@ -36,7 +36,7 @@ PostgreSQL com Drizzle ORM. Em desenvolvimento usa-se o PGlite (PostgreSQL embut
 
 | Area / Área | Tables / Tabelas | Design screens / Ecrãs do design |
 | ----------- | ---------------- | -------------------------------- |
-| Stores / Lojas | `stores` | Loja 02 (Eterna & Beyond Time), Loja 22 (Eterna Bridal) |
+| Stores / Lojas | `stores` | Loja 02 (Eterna · Roupa de Festa, Executiva e Acessórios), Loja 22 (Eterna Bridal · Showroom) |
 | Catalog / Catálogo | `categories` (kind: department, occasion, type, collection), `products`, `product_categories`, `product_variants` (size + colour + store + stock), `product_images` | Início, Categoria, Produto, Gestão · 6/7 |
 | Content / Conteúdo | `content_sections`, `occasion_tiles`, `newsletter_subscribers` | Início, Gestão · 8/9 |
 | Customers / Clientes | `customers`, `customer_identities` (e-mail, WhatsApp, Google, Facebook), `favorites` | Conta · Entrar, Formas de entrar |
