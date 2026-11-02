@@ -26,6 +26,16 @@ export function setLineQuantity(lines: CartLine[], variantId: string, quantity: 
   return lines.map((l) => (l.variantId === variantId ? { ...l, quantity: Math.min(quantity, MAX_QUANTITY) } : l));
 }
 
+/** EN: "Comprar agora" on/off (design V3 cart). PT: Liga ou desliga "comprar agora". */
+export function toggleLater(lines: CartLine[], variantId: string): CartLine[] {
+  return lines.map((l) => (l.variantId === variantId ? { ...l, later: !l.later } : l));
+}
+
+/** EN: The lines bought now (the rest stays in the cart). PT: As linhas que se compram agora. */
+export function nowLines(lines: CartLine[]): CartLine[] {
+  return lines.filter((l) => !l.later);
+}
+
 export function cartCount(lines: CartLine[]): number {
   return lines.reduce((sum, l) => sum + l.quantity, 0);
 }

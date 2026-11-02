@@ -1,0 +1,207 @@
+/* EN: Quick cart of design V3 ("V3-Carrinho-Rapido", "V3-M-Carrinho-Rapido"). PT: Carrinho rápido do V3. */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(28, 25, 23, 0.4);
+}
+
+.panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(440px, 100%);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lift);
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 28px;
+  border-bottom: 1px solid var(--line);
+}
+
+.added {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--success);
+}
+
+.close {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: none;
+  color: var(--ink);
+}
+
+.big {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 16px;
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--line);
+}
+
+.big .thumb {
+  width: 96px;
+  height: 128px;
+}
+
+.thumb {
+  position: relative;
+  width: 48px;
+  height: 64px;
+  background: var(--alt);
+}
+
+.thumb img {
+  object-fit: cover;
+  object-position: center 20%;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.code {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  line-height: 28px;
+}
+
+.small {
+  font-size: 13px;
+}
+
+.meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.price,
+.linePrice {
+  font-weight: 500;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--accent-ink);
+}
+
+.price {
+  font-size: 18px;
+}
+
+.linePrice {
+  font-size: 13px;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.loading {
+  padding: 24px 28px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.others {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 28px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.line {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.foot {
+  margin-top: auto;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.subtotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.subtotal .price {
+  font-size: 20px;
+}
+
+.note {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.btn,
+.btnOutline {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.btn {
+  background: var(--contrast);
+  color: var(--on-contrast);
+}
+
+.btnOutline {
+  border: 1px solid var(--ink);
+  color: var(--ink);
+}
+
+/* EN: Phones: sheet from the bottom. PT: Telemóvel: painel de baixo. */
+@media (max-width: 767px) {
+  .panel {
+    top: auto;
+    left: 0;
+    width: 100%;
+    max-height: 85vh;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .head,
+  .big,
+  .others,
+  .foot {
+    padding-inline: var(--page-x);
+  }
+}

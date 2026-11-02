@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useCart } from "@/components/cart/CartProvider";
 import { describeLine, useCartProducts } from "@/components/cart/useCartProducts";
 import { ButtonLink } from "@/components/ui/Button";
@@ -13,7 +13,7 @@ import { whatsappLink } from "@/data/site";
 import { t } from "@/i18n";
 import { useI18n } from "@/i18n/I18nProvider";
 import { ApiClientError, api } from "@/lib/api-client";
-import { cartTotal } from "@/lib/cart";
+import { cartTotal, nowLines } from "@/lib/cart";
 import { formatMZN } from "@/lib/format";
 import { methodFromMsisdn, normalizeMsisdn, OPERATOR_NAMES } from "@/lib/payments/msisdn";
 import { createOrderSchema, type CreateOrderInput } from "@/lib/validation";
@@ -56,8 +56,10 @@ function formatPhone(value: string): string {
 export function CheckoutView() {
   const { locale, dict, href } = useI18n();
   const c = dict.checkout;
-  const { clear } = useCart();
-  const { lines, products, loading } = useCartProducts();
+  const { clearBought: clear } = useCart();
+  const { lines: all, products, loading } = useCartProducts();
+  // EN: Only the pieces chosen for now; the rest stays in the cart. PT: Só as peças escolhidas para agora.
+  const lines = useMemo(() => nowLines(all), [all]);
 
   const [options, setOptions] = useState<CheckoutOptionsDTO | null>(null);
   const [phase, setPhase] = useState<Phase>("form");

@@ -134,6 +134,7 @@ export interface CartLine {
   slug: string;
   variantId: string;
   quantity: number;
+  later?: boolean; // EN: kept for later, not bought now (design V3). PT: guardada para depois, não se compra agora.
 }
 
 // ── Payments / Pagamentos ────────────────────────────────────────────

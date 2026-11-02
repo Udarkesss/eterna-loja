@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { QuickCart } from "@/components/cart/QuickCart";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { BrandScrollbar } from "@/components/layout/Effects";
 import { Header } from "@/components/layout/Header";
@@ -20,6 +21,7 @@ export default async function SiteLayout({ children, params }: { children: React
       <AnnouncementBar locale={locale} />
       <Header locale={locale} />
       <main id="main">{children}</main>
+      <QuickCart />
     </>
   );
 }
