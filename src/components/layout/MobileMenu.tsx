@@ -9,6 +9,7 @@ import { mainNav, site, storeSeeds, whatsappLink } from "@/data/site";
 import { useI18n } from "@/i18n/I18nProvider";
 import { resolveHref } from "@/lib/links";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useSectionNav } from "./useSectionNav";
 import styles from "./MobileMenu.module.css";
 
 /**
@@ -22,6 +23,7 @@ export function MobileMenu() {
   const { locale, dict, href } = useI18n();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { go } = useSectionNav();
   const button = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
 
@@ -67,7 +69,16 @@ export function MobileMenu() {
             <ul className={styles.list}>
               {mainNav.map((item, i) => (
                 <li key={item.href}>
-                  <Link href={resolveHref(item.href, locale)} className={styles.item} onClick={() => setOpen(false)}>
+                  <Link
+                    href={resolveHref(item.href, locale)}
+                    className={styles.item}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setOpen(false);
+                      // EN: After the drawer closes (page scroll unlocked). PT: Depois de fechar a gaveta.
+                      window.setTimeout(() => go(item.href.replace(/^#/, "")), 50);
+                    }}
+                  >
                     <span>{item.label[locale]}</span>
                     {i === 0 && <span className={styles.tag}>{dict.nav.activeCollection}</span>}
                     <Icon name="chevronRight" size={18} />

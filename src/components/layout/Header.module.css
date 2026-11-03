@@ -55,7 +55,7 @@
 }
 
 .navLink:hover,
-.navLink[aria-current="page"] {
+.navLink[aria-current] {
   border-bottom-color: var(--ink);
 }
 

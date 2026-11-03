@@ -1,36 +1,63 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { mainNav } from "@/data/site";
 import { useI18n } from "@/i18n/I18nProvider";
 import { resolveHref } from "@/lib/links";
+import { useSectionNav } from "./useSectionNav";
 
 /**
- * EN: The main menu of design V3 (src/data/site.ts mainNav). No "Agendar prova" here: in V3 the fitting is booked from
- *     the Noivas section. The current section gets aria-current="page".
- * PT: O menu principal do design V3. Sem "Agendar prova": na V3 a prova marca-se na secção Noivas. A secção actual
- *     recebe aria-current="page".
+ * EN: The main menu of design V3 (src/data/site.ts mainNav): every item is a section of the home page; on the home page
+ *     it scrolls there and the section in view is underlined (useSectionNav). The first item (the active collection) is
+ *     gold.
+ * PT: O menu principal do V3: cada item é uma secção do Início; no Início desliza até lá e a secção à vista fica
+ *     sublinhada. O primeiro item (a colecção activa) é dourado.
  */
 export function NavLinks({ linkClassName, collectionClassName }: { linkClassName: string; collectionClassName?: string }) {
   const { locale } = useI18n();
-  const pathname = usePathname();
+  const { active, go } = useSectionNav();
 
   return (
     <>
       {mainNav.map((item, i) => {
-        const href = resolveHref(item.href, locale);
-        const current = !item.href.startsWith("#") && pathname.startsWith(href);
-        // EN: The first item is the active collection (gold). PT: O primeiro item é a colecção activa (dourado).
+        const id = item.href.replace(/^#/, "");
         const className = i === 0 && collectionClassName ? `${linkClassName} ${collectionClassName}` : linkClassName;
         return (
           <li key={item.href}>
-            <Link href={href} className={className} aria-current={current ? "page" : undefined}>
+            <Link
+              href={resolveHref(item.href, locale)}
+              className={className}
+              aria-current={active === id ? "location" : undefined}
+              onClick={(e) => {
+                e.preventDefault();
+                go(id);
+              }}
+            >
               {item.label[locale]}
             </Link>
           </li>
         );
       })}
     </>
+  );
+}
+
+/** EN: The logo: on the home page it scrolls back to the top. PT: O logótipo: no Início volta ao topo. */
+export function HomeLogoLink({ className, label, children }: { className: string; label: string; children: React.ReactNode }) {
+  const { locale } = useI18n();
+  const { go, onHome } = useSectionNav();
+  return (
+    <Link
+      href={`/${locale}`}
+      className={className}
+      aria-label={label}
+      onClick={(e) => {
+        if (!onHome) return;
+        e.preventDefault();
+        go("");
+      }}
+    >
+      {children}
+    </Link>
   );
 }

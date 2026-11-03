@@ -448,7 +448,49 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4px;
-  scroll-margin-top: 130px;
+}
+
+/* ── Colecção · revelar (computador e tablet) ── */
+.stage {
+  --coll-h: max(420px, min(52.8vw, 760px));
+  position: relative;
+}
+
+.stageMark {
+  position: absolute;
+  left: 0;
+  top: var(--coll-h);
+  scroll-margin-top: var(--header-h);
+}
+
+@media (min-width: 768px) {
+  .stage {
+    height: calc(2 * var(--coll-h));
+  }
+
+  .stage > .cover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+  }
+
+  .duoSticky {
+    position: sticky;
+    top: var(--header-h);
+    z-index: 1;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .duoSticky {
+    top: 60px;
+  }
+
+  .stageMark {
+    scroll-margin-top: 60px;
+  }
 }
 
 .duoPanel {
@@ -1265,6 +1307,10 @@
 
   .duo {
     grid-template-columns: 1fr;
+  }
+
+  .duoSticky {
+    margin-top: 4px;
   }
 
   .duoPanel {

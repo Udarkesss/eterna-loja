@@ -63,11 +63,11 @@ export const storeSeeds = [
  * PT: Menu principal do design V3. `href`: "#noivas" = secção do Início, "category:x" = categoria.
  */
 export const mainNav: { label: Localized; href: string }[] = [
-  { label: L("Essenza", "Essenza"), href: "category:essenza" },
-  { label: L("Ocasiões", "Occasions"), href: "category:ocasioes" },
+  { label: L("Essenza", "Essenza"), href: "#colecao" },
+  { label: L("Ocasiões", "Occasions"), href: "#ocasioes" },
   { label: L("Noivas", "Bridal"), href: "#noivas" },
-  { label: L("Acessórios", "Accessories"), href: "category:acessorios" },
-  { label: L("Modeladores", "Shapewear"), href: "category:modeladores" },
+  { label: L("Acessórios", "Accessories"), href: "#acessorios" },
+  { label: L("Modeladores", "Shapewear"), href: "#modeladores" },
   { label: L("Sobre nós", "About us"), href: "#sobre" },
   { label: L("Contacte-nos", "Contact us"), href: "#contactos" },
 ];

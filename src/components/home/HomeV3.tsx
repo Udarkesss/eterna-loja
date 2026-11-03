@@ -51,6 +51,10 @@ export function Colecao({ data, collection, locale }: { data: { cue: string; lin
   if (!collection) return null;
   return (
     <section id="colecao" className={styles.colecao}>
+      {/* EN: Design V3 reveal: the two lines stay pinned under the header while the cover slides up over them (on
+          scroll, or on a click on the cover). PT: As duas linhas ficam presas por baixo do cabeçalho enquanto a capa
+          sobe por cima delas (ao descer ou ao clicar na capa). */}
+      <div className={styles.stage}>
       {collection.imageUrl && (
         <a href="#colecao-linhas" className={styles.cover} aria-label={data.cue}>
           <div className={styles.parallaxLayer} data-parallax="">
@@ -69,7 +73,8 @@ export function Colecao({ data, collection, locale }: { data: { cue: string; lin
           </div>
         </a>
       )}
-      <div id="colecao-linhas" className={styles.duo}>
+      <div className={styles.duoSticky}>
+      <div className={styles.duo}>
         {data.lines.map((line) => (
           <div key={line.eyebrow} className={styles.duoPanel}>
             <Image src={line.image} alt={line.eyebrow} fill sizes="(min-width: 768px) 50vw, 100vw" style={{ objectPosition: line.position }} />
@@ -87,6 +92,9 @@ export function Colecao({ data, collection, locale }: { data: { cue: string; lin
             </div>
           </div>
         ))}
+      </div>
+      </div>
+      <span id="colecao-linhas" className={styles.stageMark} aria-hidden="true" />
       </div>
     </section>
   );

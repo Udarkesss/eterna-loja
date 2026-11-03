@@ -1,12 +1,10 @@
 import Image from "next/image";
-import Link from "next/link";
 import { getDictionary } from "@/i18n";
-import { localizePath } from "@/i18n/config";
 import type { Locale } from "@/types";
 import { HeaderActions } from "./HeaderActions";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { MobileMenu } from "./MobileMenu";
-import { NavLinks } from "./NavLinks";
+import { HomeLogoLink, NavLinks } from "./NavLinks";
 import styles from "./Header.module.css";
 
 /**
@@ -29,9 +27,9 @@ export function Header({ locale }: { locale: Locale }) {
             <MobileMenu />
           </span>
         </div>
-        <Link href={localizePath(locale)} className={styles.brand} aria-label={dict.nav.home}>
+        <HomeLogoLink className={styles.brand} label={dict.nav.home}>
           <Image src="/images/brand/eterna-logo.svg" alt="Eterna" width={148} height={34} priority unoptimized className={styles.logo} />
-        </Link>
+        </HomeLogoLink>
         <HeaderActions />
       </div>
       <nav aria-label={dict.nav.main} className={styles.nav}>
