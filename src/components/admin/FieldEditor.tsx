@@ -141,19 +141,24 @@ function Upload({ onDone, accept }: { onDone: (url: string) => void; accept: str
 
 export function MediaField({ name, value, onChange }: { name: string; value: string; onChange: (v: string) => void }) {
   const video = /\.mp4$/.test(value) || /video/i.test(name);
+  const pdf = /\.pdf$/i.test(value) || /pdf/i.test(name);
   return (
     <div className={s.fieldset}>
       <span className={s.label}>{label(name)}</span>
       <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
         {value &&
-          (video ? (
+          (pdf ? (
+            <a href={value} target="_blank" rel="noopener noreferrer" className={s.a}>
+              Abrir PDF ↗
+            </a>
+          ) : video ? (
             <video src={value} muted style={{ width: 120, height: 72, objectFit: "cover", background: "var(--blush-light)" }} />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element -- EN: preview of any path. PT: pré-visualização.
             <img src={value} alt="" style={{ width: 96, height: 72, objectFit: "cover", background: "var(--blush-light)" }} />
           ))}
         <input className={s.input} style={{ flex: "1 1 200px" }} value={value} onChange={(e) => onChange(e.target.value)} />
-        <Upload onDone={onChange} accept={video ? "video/mp4" : "image/jpeg,image/png,image/webp"} />
+        <Upload onDone={onChange} accept={video ? "video/mp4" : pdf ? "application/pdf" : "image/jpeg,image/png,image/webp"} />
       </div>
     </div>
   );

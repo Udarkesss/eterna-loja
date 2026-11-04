@@ -607,6 +607,14 @@ export const fittings = pgTable(
     notes: text("notes"), // EN: from the customer. PT: da cliente.
     internalNotes: text("internal_notes"), // EN: team only. PT: só a equipa.
     productIds: jsonb("product_ids").$type<string[]>().notNull().default([]),
+    // EN: Paid Bridal fitting (design V3): package, extra dresses and the payment. PT: Prova paga da Bridal.
+    packageKey: text("package_key"),
+    extraDresses: integer("extra_dresses").notNull().default(0),
+    amount: integer("amount").notNull().default(0), // MT
+    paymentMethod: text("payment_method"),
+    paymentStatus: text("payment_status").$type<"none" | "pending" | "paid" | "failed">().notNull().default("none"),
+    paymentReference: text("payment_reference"),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
     confirmedById: uuid("confirmed_by_id").references(() => staffUsers.id, { onDelete: "set null" }),
     confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
     isDemo: boolean("is_demo").notNull().default(false),

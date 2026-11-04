@@ -1,0 +1,92 @@
+/* EN: "Provas ligadas", "Pacotes de prova" and "Regras e agenda" of design V3. PT: Pacotes e regras da Bridal (V3). */
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.toggleLabel {
+  font-size: 15px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  scroll-margin-top: 90px;
+}
+
+.name {
+  width: 120px;
+  font-weight: 500;
+}
+
+.small {
+  width: 64px;
+  text-align: right;
+}
+
+.price {
+  width: 110px;
+  text-align: right;
+}
+
+.includes {
+  min-width: 180px;
+  font-size: 12px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  height: 34px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.chip[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--raised);
+  color: var(--ink);
+}
+
+.addHour {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.addHour input {
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+  font-size: 13px;
+}
+
+.save {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 1279px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

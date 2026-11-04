@@ -1,6 +1,7 @@
 import "server-only";
 import { and, asc, eq, gte, inArray, lt, ne } from "drizzle-orm";
 import { FITTING_KIND_LABELS, FITTING_SETTINGS_DEFAULT, type FittingSettings } from "@/data/fittings";
+import { BRIDAL_DEFAULT, type BridalSettings } from "@/data/bridal";
 import { site, whatsappLink } from "@/data/site";
 import type { FittingRequestInput } from "@/lib/auth-schemas";
 import { formatMsisdn } from "@/lib/payments/msisdn";
@@ -36,6 +37,9 @@ type StoreRow = typeof stores.$inferSelect;
 const ACTIVE: FittingStatus[] = ["requested", "pending", "confirmed"];
 
 export const fittingSchedule = () => getSetting<FittingSettings>("fittings.schedule", FITTING_SETTINGS_DEFAULT);
+
+/** EN: Eterna Bridal packages, days, hours and rules (design V3). PT: Pacotes, dias, horas e regras da Bridal (V3). */
+export const bridalSettings = () => getSetting<BridalSettings>("fittings.bridal", BRIDAL_DEFAULT);
 
 export function durationFor(kind: FittingKind, schedule: FittingSettings): number {
   return BRIDAL_FITTING_KINDS.includes(kind) ? schedule.bridalMinutes : schedule.defaultMinutes;
@@ -284,12 +288,27 @@ export async function rescheduleFitting(id: string, date: string, time: string) 
 
 /** EN: "Nova prova" — for requests that come by WhatsApp, phone or in store. PT: Pedidos que chegam por outros meios. */
 export async function createFittingByStaff(
-  input: { name: string; phone: string; kind: FittingKind; storeCode: string; date: string; time: string; notes?: string; source: "store" | "whatsapp"; locale: Locale },
+  input: {
+    name: string;
+    phone: string;
+    kind: FittingKind;
+    storeCode: string;
+    date: string;
+    time: string;
+    notes?: string;
+    source: "store" | "whatsapp";
+    locale: Locale;
+    packageKey?: string;
+    extras?: number;
+  },
   staffUserId: string,
 ) {
-  const schedule = await fittingSchedule();
+  const [schedule, bridal] = await Promise.all([fittingSchedule(), bridalSettings()]);
   const store = await storeByCode(input.storeCode);
-  const duration = durationFor(input.kind, schedule);
+  // EN: A Bridal package sets the length and the price. PT: O pacote da Bridal define a duração e o valor.
+  const pkg = input.packageKey ? bridal.packages.find((p) => p.key === input.packageKey) : undefined;
+  const extras = Math.max(0, Math.min(bridal.extraMax, input.extras ?? 0));
+  const duration = pkg ? pkg.minutes : durationFor(input.kind, schedule);
   const startsAt = fromMaputo(input.date, input.time);
   await assertSlotFree(store.id, startsAt, duration);
   const db = await getDb();
@@ -307,6 +326,9 @@ export async function createFittingByStaff(
       kind: input.kind,
       status: "confirmed",
       source: input.source,
+      packageKey: pkg?.key ?? null,
+      extraDresses: pkg ? extras : 0,
+      amount: pkg ? pkg.price + extras * bridal.extraPrice : 0,
       internalNotes: input.notes || null,
       confirmedById: staffUserId,
       confirmedAt: new Date(),

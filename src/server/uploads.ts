@@ -27,6 +27,7 @@ const PUBLIC_ALLOWED: Record<string, { ext: string; max: number }> = {
   "image/png": { ext: "png", max: 5 * 1024 * 1024 },
   "image/webp": { ext: "webp", max: 5 * 1024 * 1024 },
   "video/mp4": { ext: "mp4", max: 8 * 1024 * 1024 }, // EN: design: "MP4 até 8 MB". PT: design.
+  "application/pdf": { ext: "pdf", max: 5 * 1024 * 1024 }, // EN: Bridal terms (design V3). PT: termos da Bridal.
 };
 
 // EN: Local public uploads; Next.js only serves /public files that exist at build time. PT: Uploads públicos locais.
@@ -57,7 +58,7 @@ export async function readPrivateUpload(ref: string): Promise<{ data: Buffer; ty
 /** EN: Saves a public file and returns its URL. PT: Guarda um ficheiro público e devolve o endereço. */
 export async function savePublicUpload(file: File, folder: "products" | "content"): Promise<string> {
   const rule = PUBLIC_ALLOWED[file.type];
-  if (!rule) throw new AppError("VALIDATION_ERROR", "Only JPG, PNG, WebP or MP4", 400);
+  if (!rule) throw new AppError("VALIDATION_ERROR", "Only JPG, PNG, WebP, MP4 or PDF", 400);
   if (file.size > rule.max) throw new AppError("VALIDATION_ERROR", `File larger than ${rule.max / 1024 / 1024} MB`, 400);
   const name = `${randomUUID()}.${rule.ext}`;
   if (blobEnabled()) {

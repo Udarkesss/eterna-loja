@@ -50,6 +50,13 @@
       "when": 1793623337492,
       "tag": "0006_category_image_details",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793768594241,
+      "tag": "0007_fitting_packages",
+      "breakpoints": true
     }
   ]
 }

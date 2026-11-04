@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { readLocalPublicUpload } from "@/server/uploads";
 
-const TYPES: Record<string, string> = { jpg: "image/jpeg", png: "image/png", webp: "image/webp", mp4: "video/mp4" };
+const TYPES: Record<string, string> = { jpg: "image/jpeg", png: "image/png", webp: "image/webp", mp4: "video/mp4", pdf: "application/pdf" };
 
 /**
  * GET /uploads/<folder>/<file>
@@ -13,7 +13,7 @@ const TYPES: Record<string, string> = { jpg: "image/jpeg", png: "image/png", web
  */
 export async function GET(_: Request, { params }: { params: Promise<{ path: string[] }> }) {
   const parts = (await params).path;
-  if (parts.length !== 2 || !["products", "content"].includes(parts[0]) || !/^[a-z0-9][a-z0-9-]*\.(jpg|png|webp|mp4)$/.test(parts[1])) {
+  if (parts.length !== 2 || !["products", "content"].includes(parts[0]) || !/^[a-z0-9][a-z0-9-]*\.(jpg|png|webp|mp4|pdf)$/.test(parts[1])) {
     return new NextResponse("Not found", { status: 404 });
   }
   try {
