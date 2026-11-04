@@ -1,0 +1,254 @@
+/* EN: "Gestão · Painel" of design V3 (".kpis", ".panel"). PT: Painel da gestão do V3. */
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.kpi {
+  background: var(--raised);
+  border: 1px solid var(--line);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kpiLabel {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.kpi b {
+  font-weight: 500;
+  font-size: 28px;
+  line-height: 34px;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.kpi b.gold {
+  color: var(--accent-ink);
+}
+
+.kpiSub {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: 24px;
+  align-items: start;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.panel {
+  background: var(--raised);
+  border: 1px solid var(--line);
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.panelHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.panelHead h2 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 28px;
+}
+
+.ulink {
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.empty {
+  padding: 20px 22px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.muted {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.strong {
+  font-weight: 500;
+}
+
+/* ── Colecção activa ── */
+.collection {
+  padding: 20px 22px;
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 20px;
+}
+
+.cover {
+  position: relative;
+  height: 150px;
+  background: var(--alt);
+}
+
+.cover img {
+  object-fit: cover;
+}
+
+.collText {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.edition {
+  font-family: var(--font-caps);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.collName {
+  font-family: var(--font-serif);
+  font-size: 30px;
+  line-height: 34px;
+}
+
+.counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  font-size: 14px;
+}
+
+.counts b {
+  font-weight: 500;
+}
+
+.counts .muted {
+  display: inline;
+  font-size: 14px;
+  color: var(--accent-ink);
+}
+
+/* ── Avisos e provas ── */
+.notices,
+.fittings {
+  list-style: none;
+  margin: 0;
+  padding: 8px 22px;
+}
+
+.notices li,
+.fittings li {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.notices li:last-child,
+.fittings li:last-child {
+  border-bottom: 0;
+}
+
+.noticeIcon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: var(--alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.noticeText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.time {
+  width: 52px;
+  flex-shrink: 0;
+  font-size: 18px;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* ── Tabela ── */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th {
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.table td {
+  padding: 16px 14px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.deliveryOff {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 18px 20px;
+  background: var(--alt);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.deliveryOff strong {
+  font-weight: 500;
+}
+
+@media (max-width: 1279px) {
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

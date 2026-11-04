@@ -3,6 +3,8 @@ import { and, eq, inArray, notInArray } from "drizzle-orm";
 import { addDays, fromMaputo, mondayOf, todayMaputo } from "@/lib/time";
 import { getDb } from "../db";
 import { productImages, products, productVariants, refunds, stores } from "../db/schema";
+import { findCategory, getCategoryTree, listProducts } from "../catalog";
+import { deliveryEnabled } from "../content";
 import { listFittingsBetween } from "../fittings";
 import { storeScope, type StaffContext } from "../staff/access";
 import { listOrdersFor, METHOD_LABEL } from "./orders";
@@ -62,6 +64,11 @@ export async function dashboardFor(staff: StaffContext) {
   }
 
   const fittingsToday = await listFittingsBetween(today, addDays(today, 1), storeScope(staff, "fittings"));
+  const fittingsWeek = (await listFittingsBetween(mondayOf(today), addDays(mondayOf(today), 7), storeScope(staff, "fittings"))).filter(
+    (f) => f.status !== "cancelled",
+  );
+  // EN: Paid and still to prepare (collection or delivery). PT: Pagas e por preparar.
+  const toPrepare = all.filter((r) => r.order.paymentStatus === "paid" && r.order.fulfillmentStatus === "pending");
   const storeRows = await db.select().from(stores);
   const storeCode = (id: string) => storeRows.find((s) => s.id === id)?.code ?? "";
   const active = fittingsToday.filter((f) => f.status !== "cancelled");
@@ -89,5 +96,37 @@ export async function dashboardFor(staff: StaffContext) {
     recent: all.slice(0, 6),
     attention,
     fittingsToday: active.map((f) => ({ ...f, storeCode: storeCode(f.storeId) })),
+    toPrepare: toPrepare.length,
+    toPrepareStores: [...new Set(toPrepare.map((r) => (r.order.fulfillmentType === "pickup" ? "Levantamento" : "Entrega")))].join(" · "),
+    fittingsWeek: fittingsWeek.length,
+    fittingRequests: fittingsWeek.filter((f) => f.status === "requested").length,
+    collection: await activeCollection(),
+    delivery: await deliveryEnabled(),
+  };
+}
+
+/**
+ * EN: "Colecção activa" panel of design V3: cover, edition, name, pieces per line and how many are sold out.
+ * PT: Painel "Colecção activa" do V3: capa, edição, nome, peças por linha e quantas estão esgotadas.
+ */
+async function activeCollection() {
+  const tree = await getCategoryTree("pt");
+  const all = tree.flatMap((c) => [c, ...c.children]);
+  const current = all.find((c) => c.kind === "collection" && c.details?.active);
+  if (!current) return null;
+  const pieces = await listProducts({ category: current.slug }, "pt");
+  const lines = await Promise.all(
+    (current.details?.lines ?? []).map(async (slug) => {
+      const line = await findCategory(slug, "pt");
+      const types = new Set(line?.children.map((c) => c.slug) ?? []);
+      return { name: line?.name ?? slug, count: pieces.filter((p) => p.type && types.has(p.type.slug)).length };
+    }),
+  );
+  return {
+    name: current.name,
+    edition: current.details?.edition ?? null,
+    imageUrl: current.imageUrl,
+    lines,
+    soldOut: pieces.filter((p) => p.stock === 0).length,
   };
 }
