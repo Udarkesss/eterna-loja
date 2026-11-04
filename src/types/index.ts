@@ -274,10 +274,12 @@ export interface FittingPublicDTO {
   whatsappUrl: string; // EN: opens the store chat with the message. PT: abre a conversa da loja.
 }
 
-export interface FittingSlotsDTO {
-  date: string; // YYYY-MM-DD (Maputo)
-  store: string; // "02" | "22"
-  times: string[]; // "09:00", "09:30"…
+/** EN: A Bridal fitting booking with its payment (design V3). PT: Uma marcação da Bridal com o pagamento (V3). */
+export interface BridalBookingDTO extends FittingPublicDTO {
+  paymentStatus: "none" | "pending" | "paid" | "failed";
+  amount: number;
+  packageKey: string | null;
+  extraDresses: number;
 }
 
 // ── Accounts / Contas ────────────────────────────────────────────────

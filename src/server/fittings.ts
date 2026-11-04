@@ -3,14 +3,11 @@ import { and, asc, eq, gte, inArray, lt, ne } from "drizzle-orm";
 import { FITTING_KIND_LABELS, FITTING_SETTINGS_DEFAULT, type FittingSettings } from "@/data/fittings";
 import { BRIDAL_DEFAULT, type BridalSettings } from "@/data/bridal";
 import { site, whatsappLink } from "@/data/site";
-import type { FittingRequestInput } from "@/lib/auth-schemas";
-import { formatMsisdn } from "@/lib/payments/msisdn";
-import { addDays, formatLongDate, fromMaputo, hhmm, minutes, toMaputo, todayMaputo } from "@/lib/time";
+import { formatLongDate, fromMaputo, toMaputo } from "@/lib/time";
 import {
   BRIDAL_FITTING_KINDS,
   type FittingKind,
   type FittingPublicDTO,
-  type FittingSlotsDTO,
   type FittingStatus,
   type Locale,
 } from "@/types";
@@ -50,7 +47,7 @@ export function defaultStoreFor(kind: FittingKind): string {
   return BRIDAL_FITTING_KINDS.includes(kind) ? "22" : "02";
 }
 
-async function storeByCode(code: string): Promise<StoreRow> {
+export async function storeByCode(code: string): Promise<StoreRow> {
   const db = await getDb();
   const [row] = await db.select().from(stores).where(eq(stores.code, code));
   if (!row) throw new AppError("VALIDATION_ERROR", "Unknown store", 400);
@@ -63,7 +60,7 @@ export function storeWhatsapp(store: Pick<StoreRow, "phone">): string {
   return digits.length >= 9 ? (digits.startsWith("258") ? digits : `258${digits.slice(-9)}`) : site.whatsapp;
 }
 
-async function busyIntervals(storeId: string, from: Date, to: Date, exceptId?: string) {
+export async function busyIntervals(storeId: string, from: Date, to: Date, exceptId?: string) {
   const db = await getDb();
   const rows = await db
     .select({ startsAt: fittings.startsAt, durationMinutes: fittings.durationMinutes })
@@ -80,39 +77,13 @@ async function busyIntervals(storeId: string, from: Date, to: Date, exceptId?: s
   return rows.map((r) => ({ start: r.startsAt.getTime(), end: r.startsAt.getTime() + r.durationMinutes * 60_000 }));
 }
 
-/**
- * EN: Free start times for one store and day. One fitting at a time per store (each store has one fitting room team).
- * PT: Horas livres de uma loja num dia. Uma prova de cada vez por loja.
- */
-export async function listSlots(storeCode: string, date: string, kind: FittingKind): Promise<FittingSlotsDTO> {
-  const schedule = await fittingSchedule();
-  const store = await storeByCode(storeCode);
-  const { weekday } = toMaputo(fromMaputo(date, "12:00"));
-  const today = todayMaputo();
-  if (!schedule.days.includes(weekday) || date < today || date > addDays(today, schedule.maxDaysAhead)) {
-    return { date, store: storeCode, times: [] };
-  }
-  const duration = durationFor(kind, schedule);
-  const busy = await busyIntervals(store.id, fromMaputo(date), fromMaputo(addDays(date, 1)));
-  const earliest = Date.now() + schedule.leadHours * 3_600_000;
-  const times: string[] = [];
-  for (let m = minutes(schedule.open); m + duration <= minutes(schedule.close); m += schedule.stepMinutes) {
-    const start = fromMaputo(date, hhmm(m)).getTime();
-    const end = start + duration * 60_000;
-    if (start < earliest) continue;
-    if (busy.some((b) => start < b.end && b.start < end)) continue;
-    times.push(hhmm(m));
-  }
-  return { date, store: storeCode, times };
-}
-
-async function assertSlotFree(storeId: string, startsAt: Date, duration: number, exceptId?: string) {
+export async function assertSlotFree(storeId: string, startsAt: Date, duration: number, exceptId?: string) {
   const end = startsAt.getTime() + duration * 60_000;
   const busy = await busyIntervals(storeId, new Date(startsAt.getTime() - 86_400_000), new Date(end), exceptId);
   if (busy.some((b) => startsAt.getTime() < b.end && b.start < end)) throw new AppError("SLOT_TAKEN", "Slot taken", 409);
 }
 
-async function nextFittingCode(): Promise<string> {
+export async function nextFittingCode(): Promise<string> {
   return `PR-${String(await nextCounter("fittings.sequence")).padStart(4, "0")}`;
 }
 
@@ -205,45 +176,6 @@ export async function toFittingPublicDTO(f: FittingRow, locale: Locale = f.local
     products: items,
     whatsappUrl: whatsappLink(requestMessage(f, store, items.map((p) => p.code)), storeWhatsapp(store)),
   };
-}
-
-export async function createFittingRequest(input: FittingRequestInput & { phone: string }, customerId: string | null) {
-  const schedule = await fittingSchedule();
-  const store = await storeByCode(input.storeCode);
-  const duration = durationFor(input.kind, schedule);
-  const free = await listSlots(input.storeCode, input.date, input.kind);
-  if (!free.times.includes(input.time)) throw new AppError("SLOT_TAKEN", "Slot taken", 409);
-  const startsAt = fromMaputo(input.date, input.time);
-  await assertSlotFree(store.id, startsAt, duration);
-
-  const db = await getDb();
-  const slugs = [...new Set(input.productSlugs ?? [])];
-  const productRows = slugs.length
-    ? await db.select({ id: products.id, slug: products.slug }).from(products).where(inArray(products.slug, slugs))
-    : [];
-  const productIds = slugs.map((s) => productRows.find((p) => p.slug === s)?.id).filter((id): id is string => !!id);
-
-  const [row] = await db
-    .insert(fittings)
-    .values({
-      code: await nextFittingCode(),
-      publicToken: randomToken(18),
-      customerId,
-      clientName: input.name,
-      phone: input.phone,
-      locale: input.locale ?? "pt",
-      storeId: store.id,
-      startsAt,
-      durationMinutes: duration,
-      kind: input.kind,
-      status: "requested",
-      source: "site",
-      notes: input.notes || null,
-      productIds,
-    })
-    .returning();
-  console.info(`[fittings] ${row.code} ${input.kind} · Loja ${store.code} · ${input.date} ${input.time} · ${formatMsisdn(input.phone)}`);
-  return toFittingPublicDTO(row);
 }
 
 export async function findFittingByToken(token: string): Promise<FittingRow | null> {

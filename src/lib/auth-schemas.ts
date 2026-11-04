@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { FITTING_KINDS, LOCALES } from "@/types";
+import { LOCALES } from "@/types";
 import { normalizeMsisdn } from "./payments/msisdn";
 
 /**
@@ -53,18 +53,29 @@ export const profileSchema = z.object({
   name: z.string().trim().min(2).max(100),
 });
 
-export const fittingRequestSchema = z.object({
+/**
+ * EN: "Agendar prova de noiva" (design V3): dresses, package, extra dresses, day and time, details and payment. The
+ *     price is always computed on the server from Gestão → Provas.
+ * PT: "Agendar prova de noiva" (V3): vestidos, pacote, vestidos extra, dia e hora, dados e pagamento. O valor é sempre
+ *     calculado no servidor a partir de Gestão → Provas.
+ */
+export const bridalBookingSchema = z.object({
   locale: z.enum(LOCALES).default("pt"),
-  name: z.string().trim().min(2).max(100),
-  phone: phoneSchema,
-  kind: z.enum(FITTING_KINDS),
-  storeCode: z.string().min(1).max(10),
+  productSlugs: z.array(z.string().min(1).max(100)).min(1).max(12),
+  packageKey: z.string().min(1).max(20),
+  extras: z.number().int().min(0).max(10).default(0),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   time: z.string().regex(/^\d{2}:\d{2}$/),
-  productSlugs: z.array(z.string().min(1).max(100)).max(6).default([]),
+  name: z.string().trim().min(2).max(100),
+  email: z.union([z.string().trim().email().max(150), z.literal("")]).optional(),
+  phone: phoneSchema,
+  weddingDate: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal("")]).optional(),
   notes: z.string().trim().max(500).optional(),
+  method: z.enum(["card", "mpesa", "emola", "mkesh", "test"]),
+  msisdn: z.string().max(20).optional(),
+  acceptTerms: z.boolean(),
 });
-export type FittingRequestInput = z.input<typeof fittingRequestSchema>;
+export type BridalBookingInput = z.input<typeof bridalBookingSchema>;
 
 /** EN: Identifier is an e-mail when it has "@". PT: O identificador é e-mail quando tem "@". */
 export function parseIdentifier(identifier: string): { kind: "email"; value: string } | { kind: "phone"; value: string } | null {

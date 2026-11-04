@@ -5,9 +5,8 @@ import type {
   CategoryDTO,
   CheckoutOptionsDTO,
   CustomerDTO,
-  FittingKind,
+  BridalBookingDTO,
   FittingPublicDTO,
-  FittingSlotsDTO,
   IdentityProvider,
   Locale,
   MyOrderDTO,
@@ -15,7 +14,7 @@ import type {
   ProductDTO,
   SearchSuggestionsDTO,
 } from "@/types";
-import type { FittingRequestInput } from "./auth-schemas";
+import type { BridalBookingInput } from "./auth-schemas";
 import type { CreateOrderInput } from "./validation";
 
 /**
@@ -160,11 +159,11 @@ export function createApiClient(baseUrl = "") {
     },
 
     // EN: Fittings. PT: Provas.
-    fittingSlots(store: string, date: string, kind: FittingKind) {
-      return request<FittingSlotsDTO>(`/fittings/slots?store=${store}&date=${date}&kind=${kind}`);
+    bookBridalFitting(input: BridalBookingInput) {
+      return request<BridalBookingDTO>("/fittings", post(input));
     },
-    requestFitting(input: FittingRequestInput) {
-      return request<FittingPublicDTO>("/fittings", post(input));
+    bridalFittingPayment(token: string) {
+      return request<BridalBookingDTO>(`/fittings/${encodeURIComponent(token)}/payment`);
     },
     getFitting(token: string, locale: Locale) {
       return request<FittingPublicDTO>(`/fittings/${encodeURIComponent(token)}?locale=${locale}`);

@@ -1,0 +1,789 @@
+/* EN: "Agendar prova de noiva" of design V3 ("V3-Prova", "V3-M-Prova"), on the Bridal theme. PT: Prova de noiva do V3. */
+
+.theme {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.page {
+  padding-top: 28px;
+  padding-bottom: 96px;
+}
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.breadcrumb [aria-current] {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.intro {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  margin: 28px 0 40px;
+  align-items: start;
+}
+
+.introText {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.logo {
+  height: 56px;
+  width: auto;
+  align-self: center;
+}
+
+.display {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: 60px;
+  line-height: 64px;
+}
+
+.display em {
+  font-style: italic;
+}
+
+.lead {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  line-height: 30px;
+}
+
+.muted {
+  font-size: 16px;
+  line-height: 26px;
+  color: var(--muted);
+}
+
+.small {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--muted);
+}
+
+.xs {
+  display: block;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--muted);
+}
+
+.script {
+  font-family: var(--font-script);
+  font-size: 30px;
+  line-height: 36px;
+}
+
+.prepare {
+  padding: 24px 26px;
+  background: var(--alt);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.prepare ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prepare li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.prepare li svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.link {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.off {
+  padding: 24px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+}
+
+.steps {
+  list-style: none;
+  margin: 0 0 40px;
+  padding: 0;
+  display: flex;
+  gap: 8px;
+}
+
+.steps li {
+  flex: 1;
+  padding-top: 8px;
+  border-top: 2px solid var(--ink);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 64px;
+  align-items: start;
+}
+
+.flow {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+  min-width: 0;
+}
+
+.flow > section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.stepNum {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.stepTitle {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 34px;
+}
+
+/* ── 1. Vestidos ── */
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.search {
+  flex: 0 1 320px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+  color: var(--muted);
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font-size: 14px;
+  outline: none;
+  color: var(--ink);
+}
+
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.seg button {
+  height: 40px;
+  padding: 0 16px;
+  border: 0;
+  background: var(--raised);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.seg button + button {
+  border-left: 1px solid var(--border);
+}
+
+.seg button[aria-pressed="true"] {
+  background: var(--contrast);
+  color: var(--on-contrast);
+}
+
+.warn {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: 14px;
+}
+
+.dresses {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px 14px;
+}
+
+.dress {
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--ink);
+}
+
+.dressImage {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: var(--alt);
+}
+
+.dressImage img {
+  object-fit: cover;
+  object-position: center 20%;
+}
+
+.dress[aria-pressed="true"] .dressImage {
+  outline: 1.5px solid var(--ink);
+  outline-offset: -1px;
+}
+
+.mark {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-full);
+  background: var(--contrast);
+  color: var(--on-contrast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dressCode {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.badge {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--alt);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ── 2. Pacote ── */
+.packages {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.package {
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  background: var(--raised);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+  color: var(--ink);
+}
+
+.package[aria-pressed="true"] {
+  border: 1.5px solid var(--ink);
+}
+
+.package[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pkgHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.pkgName {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  line-height: 32px;
+}
+
+.pkgPrice {
+  font-size: 20px;
+  font-weight: 500;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.extras {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+  font-size: 13px;
+}
+
+.extras > span:first-child {
+  flex: 1;
+}
+
+.extras strong {
+  font-weight: 500;
+}
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stepper button {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  background: var(--raised);
+}
+
+.stepper b {
+  min-width: 22px;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* ── 3. Data e hora ── */
+.days,
+.times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.day {
+  width: 60px;
+  min-height: 68px;
+  padding: 0 4px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 1px solid var(--border);
+  background: var(--raised);
+  color: var(--ink);
+}
+
+.dayNum {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  line-height: 28px;
+}
+
+.day:disabled,
+.time:disabled {
+  border-style: dashed;
+  background: transparent;
+  color: var(--muted);
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+.day[aria-pressed="true"],
+.time[aria-pressed="true"] {
+  border-color: var(--contrast);
+  background: var(--contrast);
+  color: var(--on-contrast);
+}
+
+.day[aria-pressed="true"] .xs {
+  color: var(--on-contrast);
+}
+
+.time {
+  min-width: 96px;
+  height: 40px;
+  border: 1px solid var(--border);
+  background: var(--raised);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+/* ── 4. Dados ── */
+.fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fields input,
+.fields textarea {
+  min-height: 52px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--raised);
+  font: inherit;
+  font-size: 15px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+/* ── 5. Pagamento ── */
+.pay {
+  scroll-margin-top: 140px;
+}
+
+.methods {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.method {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--raised);
+  cursor: pointer;
+}
+
+.method[data-on] {
+  border: 1.5px solid var(--ink);
+}
+
+.method input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--contrast);
+}
+
+.method > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.methodName {
+  font-size: 16px;
+}
+
+.phoneBox {
+  padding: 16px;
+  background: var(--alt);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.phoneInput {
+  display: flex;
+  height: 52px;
+  border: 1px solid var(--border);
+  background: var(--raised);
+}
+
+.phoneInput span {
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  border-right: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.phoneInput input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  padding: 0 14px;
+  font-size: 17px;
+  background: transparent;
+}
+
+.terms {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  background: var(--raised);
+  font-size: 14px;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.terms input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--contrast);
+}
+
+.terms strong {
+  font-weight: 500;
+}
+
+.submit,
+.btn {
+  height: 56px;
+  padding: 0 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--contrast);
+  color: var(--on-contrast);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.submit:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.error {
+  font-size: 14px;
+  color: var(--danger);
+}
+
+.waiting {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 14px 16px;
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: 14px;
+}
+
+/* ── Resumo ── */
+.summary {
+  position: sticky;
+  top: 150px;
+  padding: 28px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+}
+
+.summary .script {
+  font-size: 36px;
+  line-height: 40px;
+}
+
+.line {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.chosen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chosen img {
+  object-fit: cover;
+}
+
+.totals {
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.totals div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.totals dd {
+  margin: 0;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.grand {
+  align-items: baseline;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.grand dt {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.grand dd {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--accent-ink);
+}
+
+.done {
+  padding-top: 72px;
+  padding-bottom: 120px;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.done .logo {
+  align-self: flex-start;
+}
+
+@media (max-width: 1023px) {
+  .intro,
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  .summary {
+    position: static;
+  }
+
+  .dresses {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .display {
+    font-size: 40px;
+    line-height: 46px;
+  }
+
+  .steps {
+    display: none;
+  }
+
+  .dresses {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .packages,
+  .fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .seg {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .submit {
+    width: 100%;
+  }
+}

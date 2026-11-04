@@ -1,42 +1,58 @@
 import type { Metadata } from "next";
-import { FittingBooking } from "@/components/fitting/FittingBooking";
-import { PageHead } from "@/components/layout/PageHead";
+import { BridalBooking } from "@/components/fitting/BridalBooking";
 import { getDictionary } from "@/i18n";
 import { resolveLocale } from "@/i18n/params";
-import { todayMaputo } from "@/lib/time";
 import { currentCustomer } from "@/server/accounts";
-import { listStores } from "@/server/content";
-import { fittingSchedule } from "@/server/fittings";
+import { bridalAvailability, FITTING_METHODS } from "@/server/bridal";
+import { listProducts } from "@/server/catalog";
+import { enabledPaymentMethods } from "@/server/content";
+import { bridalSettings } from "@/server/fittings";
 
 type Props = { params: Promise<{ locale: string }>; searchParams: Promise<{ piece?: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const dict = getDictionary(await resolveLocale(params));
-  return { title: dict.nav.bookFitting, description: dict.fitting.intro };
+  return { title: dict.bridal.crumb, description: dict.bridal.lead };
 }
 
 /**
- * EN: "Agendar prova". Signed-in customers only choose occasion, store and time (name and phone come from the account).
- * PT: "Agendar prova". Com sessão, a cliente só escolhe ocasião, loja e hora (nome e telefone vêm da conta).
+ * EN: "Agendar prova de noiva" of design V3: wedding dresses → package → day and time → details → payment. Packages,
+ *     days, times and rules come from Gestão → Provas; the price is computed again on the server.
+ * PT: "Agendar prova de noiva" do V3: vestidos → pacote → dia e hora → dados → pagamento. Pacotes, dias, horas e regras
+ *     vêm de Gestão → Provas; o valor é calculado de novo no servidor.
  */
 export default async function FittingPage({ params, searchParams }: Props) {
   const locale = await resolveLocale(params);
-  const dict = getDictionary(locale);
   const { piece } = await searchParams;
-  const [stores, schedule, customer] = await Promise.all([listStores(locale), fittingSchedule(), currentCustomer()]);
+  const settings = await bridalSettings();
+  const [dresses, days, methods, customer] = await Promise.all([
+    listProducts({ category: "vestidos-de-noiva" }, locale),
+    bridalAvailability(settings),
+    enabledPaymentMethods(),
+    currentCustomer(),
+  ]);
 
   return (
-    <>
-      <PageHead eyebrow={dict.fitting.eyebrow} title={dict.fitting.title}>
-        <p style={{ maxWidth: 560, color: "var(--ink-muted)", lineHeight: "24px" }}>{dict.fitting.intro}</p>
-      </PageHead>
-      <FittingBooking
-        stores={stores.map((s) => ({ code: s.code, name: s.name, location: s.location }))}
-        schedule={{ days: schedule.days, maxDaysAhead: Math.min(schedule.maxDaysAhead, 28), bridalMinutes: schedule.bridalMinutes, defaultMinutes: schedule.defaultMinutes }}
-        today={todayMaputo()}
-        customer={customer ? { name: customer.name, phone: customer.phone } : null}
-        initialPieces={(piece ?? "").split(",").filter(Boolean).slice(0, 6)}
-      />
-    </>
+    <BridalBooking
+      settings={{
+        enabled: settings.enabled,
+        packages: settings.packages
+          .filter((p) => p.status !== "off")
+          .map((p) => ({ key: p.key, name: p.name, dresses: p.dresses, minutes: p.minutes, price: p.price, includes: p.includes[locale], soon: p.status === "soon" })),
+        extraMax: settings.extraMax,
+        extraPrice: settings.extraPrice,
+        discountDays: settings.discountDays,
+        advanceHours: settings.advanceHours,
+        cancelHours: settings.cancelHours,
+        companions: settings.companions,
+        requireTerms: settings.requireTerms,
+        termsUrl: settings.termsUrl,
+      }}
+      dresses={dresses.map((p) => ({ slug: p.slug, code: p.code, collection: p.collection?.name ?? "", image: p.images[0]?.url ?? null }))}
+      days={days}
+      methods={FITTING_METHODS.filter((m) => methods.includes(m))}
+      initialPieces={(piece ?? "").split(",").filter(Boolean).slice(0, 12)}
+      customer={customer ? { name: customer.name, email: customer.email, phone: customer.phone } : null}
+    />
   );
 }
