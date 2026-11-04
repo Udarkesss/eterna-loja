@@ -213,3 +213,28 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+.dates {
+  display: grid;
+  grid-template-columns: 1fr 120px 1fr 120px;
+  gap: 12px;
+}
+.colors {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.swatchInput {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+@media (max-width: 767px) {
+  .dates {
+    grid-template-columns: 1fr 1fr;
+  }
+}

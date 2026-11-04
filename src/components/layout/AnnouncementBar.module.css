@@ -30,3 +30,9 @@
     display: none;
   }
 }
+
+.link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

@@ -4,6 +4,7 @@ import { normalizeMsisdn } from "@/lib/payments/msisdn";
 import type { CreateOrderInput } from "@/lib/validation";
 import type { OrderStatusDTO, PaymentMethod, PaymentStatus, ProductDTO } from "@/types";
 import { currentCustomer } from "./accounts";
+import { levelDiscount } from "@/lib/discounts";
 import { assertVoucherOk, checkVoucher, combineDiscounts, discountSettings } from "./discounts";
 import { customerLevel } from "./loyalty";
 import { effectivePrice, listProducts } from "./catalog";
@@ -76,8 +77,8 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderStatusD
   const customer = await currentCustomer();
   const level = customer ? await customerLevel(customer.id) : null;
   const settings = await discountSettings();
-  const fullPrice = lines.reduce((sum, l) => (catalog.get(l.slug)?.salePrice == null ? sum + l.unitPrice * l.quantity : sum), 0);
-  const levelAmount = level && settings.level ? Math.round((fullPrice * level.pct) / 100) : 0;
+  const levelAmount =
+    level && settings.level ? levelDiscount(lines.map((l) => ({ price: catalog.get(l.slug)?.price ?? l.unitPrice, unit: l.unitPrice, quantity: l.quantity })), level.pct) : 0;
 
   // ── Fulfilment / Entrega ──
   let shippingFee = 0;

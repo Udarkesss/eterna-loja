@@ -4,6 +4,7 @@ import { cache } from "react";
 import { sizeParts } from "@/lib/sizes";
 import type { CategoryDTO, CategorySummary, ColorFamily, Locale, ProductDTO, SearchSuggestionsDTO } from "@/types";
 import { getDb } from "./db";
+import { campaignPercents, campaignPrice } from "./campaigns";
 import { discountSettings } from "./discounts";
 import { categories, productCategories, productImages, products, productVariants } from "./db/schema";
 
@@ -93,6 +94,7 @@ export interface ProductFilter {
   priceMax?: number;
   priceMin?: number;
   slugs?: string[];
+  ids?: string[]; // EN: campaign pieces. PT: peças da campanha.
   isNew?: boolean;
   /** EN: Only pieces that can go to a bridal fitting (Gestão · Editar produto). PT: Só peças que podem ir a prova. */
   fitting?: boolean;
@@ -199,7 +201,15 @@ async function queryProducts(where: SQL | undefined, sort: ProductSort = "recomm
     },
   });
   // EN: "Saldo numa peça" switched off (Gestão · Descontos): no struck-through prices. PT: Saldo desligado: sem preço riscado.
-  return (await discountSettings()).sale ? rows : rows.map((r) => ({ ...r, salePrice: null }));
+  // EN: Running campaigns: the larger discount of sale and campaign. PT: Campanhas a decorrer: o maior entre saldo e campanha.
+  const [{ sale }, percents] = await Promise.all([discountSettings(), campaignPercents()]);
+  return rows.map((r) => {
+    const own = sale ? r.salePrice : null;
+    const pct = percents.get(r.id);
+    const camp = pct ? campaignPrice(r.price, pct) : null;
+    const best = own != null && camp != null ? Math.min(own, camp) : (own ?? camp);
+    return best === r.salePrice ? r : { ...r, salePrice: best };
+  });
 }
 
 type ProductRow = Awaited<ReturnType<typeof queryProducts>>[number];
@@ -270,6 +280,10 @@ export async function listProducts(filter: ProductFilter, locale: Locale): Promi
       inArray(products.id, db.select({ id: productVariants.productId }).from(productVariants).where(inArray(productVariants.size, filter.sizes))),
     );
   }
+  if (filter.ids) {
+    if (!filter.ids.length) return [];
+    conditions.push(inArray(products.id, filter.ids));
+  }
   if (filter.slugs) {
     if (!filter.slugs.length) return [];
     conditions.push(inArray(products.slug, filter.slugs));
@@ -308,7 +322,7 @@ export async function searchSuggestions(search: string, locale: Locale): Promise
   const where = searchCondition(search, rows);
   if (!where) return { total: 0, places: [], types: [], products: [] };
   const db = await getDb();
-  const { sale } = await discountSettings();
+  const [{ sale }, percents] = await Promise.all([discountSettings(), campaignPercents()]);
   const found = byRelevance(
     await db
       .select({
@@ -381,7 +395,11 @@ export async function searchSuggestions(search: string, locale: Locale): Promise
         code: p.code,
         type: type ? (type.singular ?? type.name)[locale] : null,
         price: p.price,
-        salePrice: sale ? p.salePrice : null,
+        salePrice: (() => {
+          const own = sale ? p.salePrice : null;
+          const camp = percents.get(p.id) ? campaignPrice(p.price, percents.get(p.id)!) : null;
+          return own != null && camp != null ? Math.min(own, camp) : (own ?? camp);
+        })(),
         image: images.find((i) => i.productId === p.id)?.url ?? null,
       };
     }),

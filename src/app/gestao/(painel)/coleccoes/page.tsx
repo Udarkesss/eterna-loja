@@ -7,12 +7,20 @@ import d3 from "@/components/admin/Dashboard.module.css";
 import { PageTop } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
 import { todayMaputo } from "@/lib/time";
+import { listCampaignsAdmin } from "@/server/admin/campaigns";
 import { listCollectionsAdmin } from "@/server/admin/collections";
 import { requireStaffPage } from "@/server/staff/access";
 
 export const metadata = { title: "Colecções" };
 
 type Props = { searchParams: Promise<{ vista?: string }> };
+
+const CAMP_STATE = {
+  draft: { label: "Rascunho", tone: undefined },
+  scheduled: { label: "Agendada", tone: "warn" },
+  running: { label: "A decorrer", tone: "ok" },
+  ended: { label: "Terminada", tone: undefined },
+} as const;
 
 const STATE = { active: { label: "Activa", tone: "ok" }, draft: { label: "Rascunho", tone: undefined }, archived: { label: "Arquivada", tone: undefined } } as const;
 
@@ -26,8 +34,9 @@ export default async function CollectionsPage({ searchParams }: Props) {
   await requireStaffPage("products.publish");
   const p = await searchParams;
   const view = p.vista === "activas" || p.vista === "arquivadas" ? p.vista : "todas";
-  const { list, history } = await listCollectionsAdmin();
+  const [{ list, history }, camps] = await Promise.all([listCollectionsAdmin(), listCampaignsAdmin()]);
   const shown = list.filter((x) => view === "todas" || (view === "activas" ? x.status === "active" : x.status === "archived"));
+  const shownCamps = camps.filter((x) => view === "todas" || (view === "activas" ? x.state === "running" || x.state === "scheduled" : x.state === "ended"));
 
   // EN: Planning calendar: this year and the next, by planned dates. PT: Calendário: este ano e o seguinte.
   const year = Number(todayMaputo().slice(0, 4));
@@ -35,7 +44,7 @@ export default async function CollectionsPage({ searchParams }: Props) {
     const [y, m, d] = date.split("-").map(Number);
     return Math.max(0, Math.min(24, (y - year) * 12 + (m - 1) + (end ? d / 30 : (d - 1) / 30)));
   };
-  const bars = [...list, ...history]
+  const bars = [...list, ...history, ...camps.map((x) => ({ id: x.id, label: x.name, startsOn: x.startsOn, endsOn: x.endsOn, status: "draft" as const, kind: "Campanha" }))]
     .filter((x) => x.startsOn && x.endsOn && Number(x.endsOn.slice(0, 4)) >= year && Number(x.startsOn.slice(0, 4)) <= year + 1)
     .sort((a, b) => (a.startsOn! < b.startsOn! ? -1 : 1));
 
@@ -80,7 +89,7 @@ export default async function CollectionsPage({ searchParams }: Props) {
             ))}
           </nav>
         </div>
-        {shown.length === 0 ? (
+        {shown.length + shownCamps.length === 0 ? (
           <p className={d3.empty}>Nenhuma colecção.</p>
         ) : (
           <table className={d3.table}>
@@ -134,6 +143,36 @@ export default async function CollectionsPage({ searchParams }: Props) {
                         </Link>
                       )}
                     </span>
+                  </td>
+                </tr>
+              ))}
+              {shownCamps.map((x) => (
+                <tr key={x.id} className={x.state === "running" ? c.hl : undefined}>
+                  <td>
+                    <span className={c.row} style={{ gap: 12 }}>
+                      <span className={k.coverCell}>{x.imageUrl ? <Image src={x.imageUrl} alt="" fill sizes="64px" style={{ objectFit: "cover" }} /> : <Icon name="tag" size={16} />}</span>
+                      <span className={c.who}>
+                        <b>
+                          {x.name} <span className={c.xsMuted}>· {x.note}</span>
+                        </b>
+                        <span className={c.xsMuted}>Campanha</span>
+                      </span>
+                    </span>
+                  </td>
+                  <td>{x.year}</td>
+                  <td>{x.dates}</td>
+                  <td>
+                    <span className={c.num}>{x.pieces} peças</span>
+                  </td>
+                  <td>
+                    <span className={c.st} data-tone={CAMP_STATE[x.state].tone}>
+                      {CAMP_STATE[x.state].label}
+                    </span>
+                  </td>
+                  <td>
+                    <Link href={`/gestao/campanhas/${x.id}`} className={`${c.btn} ${c.xs}`}>
+                      Editar
+                    </Link>
                   </td>
                 </tr>
               ))}
@@ -214,7 +253,14 @@ export default async function CollectionsPage({ searchParams }: Props) {
           {bars.map((x) => {
             const a = pos(x.startsOn!);
             const b = pos(x.endsOn!, true);
-            const tone = x.status === "active" ? { background: "var(--contrast)", color: "var(--on-contrast)" } : x.kind === "Edição especial" ? { background: "var(--accent)", color: "var(--ink)" } : { background: "var(--alt)", color: "var(--ink)" };
+            const tone =
+              x.status === "active"
+                ? { background: "var(--contrast)", color: "var(--on-contrast)" }
+                : x.kind === "Campanha"
+                  ? { background: "var(--danger-soft)", color: "var(--danger)" }
+                  : x.kind === "Edição especial"
+                    ? { background: "var(--accent)", color: "var(--ink)" }
+                    : { background: "var(--alt)", color: "var(--ink)" };
             return [
               <span key={`${x.id}-n`} className={c.small} style={{ paddingLeft: 4 }}>
                 {x.label}

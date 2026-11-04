@@ -1,4 +1,9 @@
 import { Fragment } from "react";
+import Link from "next/link";
+import { TimeLeft } from "@/components/campaign/Countdown";
+import { getDictionary, t } from "@/i18n";
+import { localizePath } from "@/i18n/config";
+import { siteCampaign } from "@/server/campaigns";
 import { getSection } from "@/server/content";
 import type { Locale } from "@/types";
 import styles from "./AnnouncementBar.module.css";
@@ -16,6 +21,33 @@ interface AnnouncementData {
  *     opcionais para campanhas como Saldos). No telemóvel aparece só a primeira, como no design.
  */
 export async function AnnouncementBar({ locale }: { locale: Locale }) {
+  // EN: A running campaign takes the bar (design V3: "Black Friday · até −30% … · Ver campanha"). PT: A campanha ocupa a faixa.
+  const campaign = await siteCampaign(locale);
+  if (campaign?.topBar) {
+    const dict = getDictionary(locale);
+    const end = new Intl.DateTimeFormat(locale === "pt" ? "pt-PT" : "en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Maputo" }).format(new Date(campaign.endsAt));
+    return (
+      <div className={`on-privee ${styles.bar}`}>
+        {campaign.kind === "flash" ? (
+          <span>
+            {t(dict.campaign.flashBar, { percent: campaign.maxPercent, time: end })} · {dict.campaign.left} <TimeLeft endsAt={campaign.endsAt} />
+          </span>
+        ) : (
+          <span>{[campaign.name, campaign.phrase?.replace(/\.\s.*$/, "")].filter(Boolean).join(" · ")}</span>
+        )}
+        {campaign.ownPage && (
+          <>
+            <span className={styles.dot} aria-hidden="true">
+              ·
+            </span>
+            <Link href={localizePath(locale, `/campanha/${campaign.slug}`)} className={styles.link}>
+              {dict.campaign.see}
+            </Link>
+          </>
+        )}
+      </div>
+    );
+  }
   const data = await getSection<AnnouncementData>("home", "announcement", locale);
   if (!data?.messages?.length) return null;
   const now = Date.now();

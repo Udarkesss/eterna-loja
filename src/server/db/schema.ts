@@ -598,6 +598,59 @@ export const reservations = pgTable(
   (t) => [index("reservations_status_idx").on(t.status), index("reservations_customer_idx").on(t.customerId)],
 );
 
+/**
+ * EN: Price campaigns of design V3 (Gestão · Nova campanha): name, dates and times (or a flash campaign of a few hours),
+ *     discount for all pieces or per piece, the pieces, where it appears (top bar, home section before or after the
+ *     collection, own page, countdown, colours, image). Draft → scheduled → running (between the dates) → ended.
+ * PT: Campanhas de preços do V3: nome, datas e horas (ou relâmpago de poucas horas), desconto igual ou por peça, as
+ *     peças, onde aparece (barra do topo, secção no Início antes ou depois da colecção, página própria, contagem,
+ *     cores, imagem). Rascunho → agendada → a decorrer (entre as datas) → terminada.
+ */
+export interface CampaignColors {
+  band: string;
+  desc: string;
+  title: string;
+  accent: string;
+  text: string;
+  button: string;
+  buttonText: string;
+}
+
+export const campaigns = pgTable("campaigns", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  slug: text("slug").notNull().unique(),
+  name: jsonb("name").$type<Localized>().notNull(),
+  phrase: jsonb("phrase").$type<Localized>(),
+  kind: text("kind").$type<"normal" | "flash">().notNull().default("normal"),
+  startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+  endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+  status: text("status").$type<"draft" | "scheduled">().notNull().default("draft"),
+  discountMode: text("discount_mode").$type<"uniform" | "per_piece">().notNull().default("uniform"),
+  percent: integer("percent").notNull().default(30),
+  topBar: boolean("top_bar").notNull().default(true),
+  homePlacement: text("home_placement").$type<"before" | "after" | "none">().notNull().default("after"),
+  ownPage: boolean("own_page").notNull().default(true),
+  countdown: boolean("countdown").notNull().default(true),
+  colors: jsonb("colors").$type<CampaignColors>(),
+  imageUrl: text("image_url"),
+  ...timestamps,
+});
+
+export const campaignItems = pgTable(
+  "campaign_items",
+  {
+    campaignId: uuid("campaign_id")
+      .notNull()
+      .references(() => campaigns.id, { onDelete: "cascade" }),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    percent: integer("percent"), // EN: "Por peça". PT: "Por peça".
+    position: integer("position").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.campaignId, t.productId] })],
+);
+
 // ══ Payments & notices / Pagamentos e avisos (Gestão · 10) ═════════════
 
 export const paymentMethodSettings = pgTable("payment_method_settings", {

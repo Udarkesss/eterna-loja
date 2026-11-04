@@ -2,6 +2,7 @@ import "server-only";
 import { and, desc, eq, inArray, isNull, lt, sql } from "drizzle-orm";
 import type { LoyaltyLevel } from "@/data/help";
 import { whatsappLink } from "@/data/site";
+import { levelDiscount } from "@/lib/discounts";
 import { formatMZN } from "@/lib/format";
 import { sizeParts } from "@/lib/sizes";
 import { addDays, fromMaputo, toMaputo, todayMaputo } from "@/lib/time";
@@ -67,7 +68,7 @@ export type ReservationRow = typeof reservations.$inferSelect;
  */
 export function reservationAmounts(piece: { price: number; salePrice: number | null }, level: LoyaltyLevel | null, s: ReservationSettings) {
   const base = piece.salePrice ?? piece.price;
-  const discount = piece.salePrice == null && level ? Math.round((piece.price * level.pct) / 100) : 0;
+  const discount = level ? levelDiscount([{ price: piece.price, unit: base, quantity: 1 }], level.pct) : 0;
   const total = base - discount;
   const deposit = Math.round((total * s.depositPct) / 100);
   return { price: base, discount, total, deposit, rest: total - deposit };

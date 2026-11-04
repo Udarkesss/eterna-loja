@@ -5,6 +5,8 @@ import { Parallax } from "@/components/home/Parallax";
 import { ScrollEffects } from "@/components/layout/Effects";
 import { SiteFooter } from "@/components/layout/Footer";
 import { resolveLocale } from "@/i18n/params";
+import { CampaignBand } from "@/components/campaign/CampaignBand";
+import { siteCampaign } from "@/server/campaigns";
 import { activeCollection, findCategory, listProducts, seasonalSlugs } from "@/server/catalog";
 import { cardPriceVisible, getOccasionTiles, getPageSections, listStores } from "@/server/content";
 
@@ -21,14 +23,20 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const novidades = data("novidades");
   const colecao = data("colecao");
 
-  const [tiles, newProducts, stores, active, showPrice, seasonal] = await Promise.all([
+  const campaign = await siteCampaign(locale);
+  const [tiles, newProducts, stores, active, showPrice, seasonal, campaignProducts] = await Promise.all([
     getOccasionTiles(locale),
     listProducts({ sort: "newest", limit: Number(novidades?.count) || 8 }, locale),
     listStores(locale),
     activeCollection(locale),
     cardPriceVisible(),
     seasonalSlugs(),
+    campaign && campaign.homePlacement !== "none" ? listProducts({ ids: campaign.productIds.slice(0, 40) }, locale) : Promise.resolve([]),
   ]);
+  // EN: Campaign band before or after the collection (Gestão → Nova campanha → Onde aparece). PT: Faixa antes ou depois da colecção.
+  const band = campaign && campaign.homePlacement !== "none" && (
+    <CampaignBand campaign={campaign} products={campaign.productIds.map((id) => campaignProducts.find((p) => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p && p.stock > 0)} showPrice locale={locale} />
+  );
   // EN: The active collection (Gestão → Colecções); otherwise the one chosen in the content. PT: A colecção activa.
   const collection = active ?? (typeof colecao?.collection === "string" ? await findCategory(colecao.collection, locale) : null);
   // EN: Links to a seasonal collection follow the active one ("Comprar Essenza"). PT: Ligações a uma colecção seguem a activa.
@@ -59,7 +67,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       ) : (
         <Entrada data={{ ...d, cta: follow(d.cta) }} locale={locale} />
       ),
-    colecao: (d) => <Colecao data={d} collection={collection} locale={locale} />,
+    colecao: (d) => (
+      <>
+        {campaign?.homePlacement === "before" && band}
+        <Colecao data={d} collection={collection} locale={locale} />
+        {campaign?.homePlacement === "after" && band}
+      </>
+    ),
     ocasioes: (d) => <Ocasioes data={d} tiles={tiles} locale={locale} />,
     novidades: (d) => <Novidades data={d} products={newProducts} showPrice={showPrice} locale={locale} />,
     noivas: (d) => <Noivas data={d} locale={locale} />,

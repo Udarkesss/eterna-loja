@@ -17,7 +17,7 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { ApiClientError, api } from "@/lib/api-client";
 import { cartTotal, nowLines } from "@/lib/cart";
 import { formatMZN } from "@/lib/format";
-import { combineDiscounts } from "@/lib/discounts";
+import { combineDiscounts, levelDiscount } from "@/lib/discounts";
 import { MT_PER_POINT } from "@/lib/loyalty";
 import { sizeParts } from "@/lib/sizes";
 import { methodFromMsisdn, normalizeMsisdn, OPERATOR_NAMES } from "@/lib/payments/msisdn";
@@ -166,13 +166,18 @@ export function CheckoutView({ reserve }: { reserve?: ReserveInfo } = {}) {
   const feeValue = delivery === "pickup" ? 0 : deliveryFee(pricing, zone?.fee, point);
   const fee = feeValue ?? 0;
   const level = options?.level ?? null;
-  const fullPrice = lines.reduce((sum, l) => (products[l.slug] && products[l.slug].salePrice == null ? sum + (priceOf(l.slug) ?? 0) * l.quantity : sum), 0);
-  const levelAmount = level ? Math.round((fullPrice * level.pct) / 100) : 0;
+  // EN: Same rule as the server: the larger of sale/campaign and level. PT: A mesma regra do servidor.
+  const levelAmount = level
+    ? levelDiscount(
+        lines.filter((l) => products[l.slug]).map((l) => ({ price: products[l.slug].price, unit: priceOf(l.slug) ?? 0, quantity: l.quantity })),
+        level.pct,
+      )
+    : 0;
   const discounts = combineDiscounts(levelAmount, voucher);
   const total = subtotal - Math.min(subtotal, discounts.total) + fee;
   const pieces = lines.reduce((n, l) => n + l.quantity, 0);
   // EN: Reservation: customer discount on a piece not on sale, then the deposit. PT: Reserva: desconto de cliente, depois o sinal.
-  const reserveDiscount = reserve && level && reserve.product.salePrice == null ? Math.round((reserve.product.price * level.pct) / 100) : 0;
+  const reserveDiscount = reserve && level ? levelAmount : 0;
   const reserveFinal = subtotal - reserveDiscount;
   const deposit = reserve ? Math.round((reserveFinal * reserve.depositPct) / 100) : 0;
   const totalLabel = formatMZN(order?.total ?? (reserve ? deposit : total), locale);
