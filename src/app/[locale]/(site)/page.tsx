@@ -5,7 +5,7 @@ import { Parallax } from "@/components/home/Parallax";
 import { ScrollEffects } from "@/components/layout/Effects";
 import { SiteFooter } from "@/components/layout/Footer";
 import { resolveLocale } from "@/i18n/params";
-import { findCategory, listProducts } from "@/server/catalog";
+import { activeCollection, findCategory, listProducts, seasonalSlugs } from "@/server/catalog";
 import { cardPriceVisible, getOccasionTiles, getPageSections, listStores } from "@/server/content";
 
 /**
@@ -21,13 +21,25 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const novidades = data("novidades");
   const colecao = data("colecao");
 
-  const [tiles, newProducts, stores, collection, showPrice] = await Promise.all([
+  const [tiles, newProducts, stores, active, showPrice, seasonal] = await Promise.all([
     getOccasionTiles(locale),
     listProducts({ sort: "newest", limit: Number(novidades?.count) || 8 }, locale),
     listStores(locale),
-    typeof colecao?.collection === "string" ? findCategory(colecao.collection, locale) : Promise.resolve(null),
+    activeCollection(locale),
     cardPriceVisible(),
+    seasonalSlugs(),
   ]);
+  // EN: The active collection (Gestão → Colecções); otherwise the one chosen in the content. PT: A colecção activa.
+  const collection = active ?? (typeof colecao?.collection === "string" ? await findCategory(colecao.collection, locale) : null);
+  // EN: Links to a seasonal collection follow the active one ("Comprar Essenza"). PT: Ligações a uma colecção seguem a activa.
+  const shop = locale === "pt" ? "Comprar" : "Shop";
+  const follow = <T extends { label: string; href: string } | undefined>(cta: T): T => {
+    if (!cta || !active) return cta;
+    const slug = cta.href.startsWith("category:") ? cta.href.slice(9).split("?")[0] : null;
+    if (!slug || !seasonal.includes(slug) || slug === active.slug) return cta;
+    const label = cta.label.startsWith(`${shop} `) ? `${shop} ${active.name}` : cta.label;
+    return { ...cta, href: cta.href.replace(`category:${slug}`, `category:${active.slug}`), label } as T;
+  };
   const hero = data("hero") as (HeroV3Data & { parallax?: boolean; parallaxIntensity?: number; progress?: boolean; reveal?: boolean }) | undefined;
   // EN: "Slides" or "Vídeo", chosen in Gestão; slides switched off are left out. PT: Slides desligados ficam de fora.
   const heroView = (d: HeroV3Data & { media?: string; slides?: HeroSlide[]; slidesAuto?: boolean }) => {
@@ -37,8 +49,16 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   /* eslint-disable @typescript-eslint/no-explicit-any -- EN: section data comes from the content editor. PT: dados vindos do editor. */
   const render: Record<string, (d: any) => ReactNode> = {
-    hero: heroView,
-    entrada: (d) => <Entrada data={d} locale={locale} />,
+    hero: (d) => heroView({ ...d, cta: follow(d.cta) }),
+    entrada: (d) =>
+      active?.message ? (
+        <Entrada
+          data={{ ...d, body: active.message, cta: { label: active.buttonText ?? `${locale === "pt" ? "Descobrir" : "Discover"} ${active.name}`, href: active.buttonLink ?? `category:${active.slug}` } }}
+          locale={locale}
+        />
+      ) : (
+        <Entrada data={{ ...d, cta: follow(d.cta) }} locale={locale} />
+      ),
     colecao: (d) => <Colecao data={d} collection={collection} locale={locale} />,
     ocasioes: (d) => <Ocasioes data={d} tiles={tiles} locale={locale} />,
     novidades: (d) => <Novidades data={d} products={newProducts} showPrice={showPrice} locale={locale} />,

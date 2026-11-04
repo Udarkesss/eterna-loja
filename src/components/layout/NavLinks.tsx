@@ -13,7 +13,7 @@ import { useSectionNav } from "./useSectionNav";
  * PT: O menu principal do V3: cada item é uma secção do Início; no Início desliza até lá e a secção à vista fica
  *     sublinhada. O primeiro item (a colecção activa) é dourado.
  */
-export function NavLinks({ linkClassName, collectionClassName }: { linkClassName: string; collectionClassName?: string }) {
+export function NavLinks({ linkClassName, collectionClassName, collection }: { linkClassName: string; collectionClassName?: string; collection?: string }) {
   const { locale } = useI18n();
   const { active, go } = useSectionNav();
 
@@ -33,7 +33,7 @@ export function NavLinks({ linkClassName, collectionClassName }: { linkClassName
                 go(id);
               }}
             >
-              {item.label[locale]}
+              {i === 0 && collection ? collection : item.label[locale]}
             </Link>
           </li>
         );

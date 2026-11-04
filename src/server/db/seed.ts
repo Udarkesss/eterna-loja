@@ -285,6 +285,30 @@ const DATA_MIGRATIONS: { name: string; run: (db: Database) => Promise<void> }[] 
     name: "areas-reservas",
     run: seedRoles,
   },
+  {
+    // EN: Gestão · Colecções (design V3): number, year and planned dates of Essenza, only where still empty.
+    // PT: Gestão · Colecções (V3): número, ano e datas planeadas da Essenza, só onde ainda está vazio.
+    name: "colecoes-v3",
+    run: async (db) => {
+      const [row] = await db.select().from(categories).where(eq(categories.slug, "essenza"));
+      if (!row) return;
+      const d = row.details ?? {};
+      await db
+        .update(categories)
+        .set({
+          details: {
+            ...d,
+            collectionType: d.collectionType ?? "seasonal",
+            number: d.number ?? "II",
+            year: d.year ?? 2026,
+            startsOn: d.startsOn ?? "2026-08-03",
+            endsOn: d.endsOn ?? "2026-12-31",
+            status: d.active ? "active" : (d.status ?? "draft"),
+          },
+        })
+        .where(eq(categories.id, row.id));
+    },
+  },
 ];
 
 /** EN: How many data versions exist (development re-checks it on each request). PT: Quantas versões de dados existem. */

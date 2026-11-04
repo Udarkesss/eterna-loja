@@ -411,3 +411,27 @@ export async function relatedProducts(product: ProductDTO, locale: Locale, limit
 export function effectivePrice(product: Pick<ProductDTO, "price" | "salePrice">): number {
   return product.salePrice ?? product.price;
 }
+
+/**
+ * EN: The active seasonal collection (Gestão → Colecções → "Activar"): menu label, hero button, home "Colecção"
+ *     section and "entrada" message follow it.
+ * PT: A colecção sazonal activa (Gestão → Colecções → "Activar"): o menu, o botão do hero, a secção "Colecção" e a
+ *     mensagem da entrada seguem-na.
+ */
+export async function activeCollection(locale: Locale): Promise<(CategoryDTO & { message: string | null; buttonText: string | null; buttonLink: string | null }) | null> {
+  const rows = await loadCategories();
+  const row = rows.find((r) => r.kind === "collection" && !r.parentId && r.details?.active && !r.details?.history);
+  if (!row) return null;
+  return {
+    ...toCategoryDTO(row, rows, locale),
+    message: row.details?.message?.[locale] ?? null,
+    buttonText: row.details?.buttonText?.[locale] ?? null,
+    buttonLink: row.details?.buttonLink && row.details.buttonLink !== "auto" ? row.details.buttonLink : null,
+  };
+}
+
+/** EN: Every seasonal collection slug (to swap old links for the active one). PT: Slugs das colecções sazonais. */
+export async function seasonalSlugs(): Promise<string[]> {
+  const rows = await loadCategories();
+  return rows.filter((r) => r.kind === "collection" && (!r.parentId || rows.find((x) => x.id === r.parentId)?.kind === "collection")).map((r) => r.slug);
+}

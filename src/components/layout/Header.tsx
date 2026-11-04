@@ -1,3 +1,4 @@
+import { activeCollection } from "@/server/catalog";
 import Image from "next/image";
 import { getDictionary } from "@/i18n";
 import type { Locale } from "@/types";
@@ -13,7 +14,9 @@ import styles from "./Header.module.css";
  * PT: Cabeçalho da loja do design V3. Computador: duas linhas — PT/EN · logótipo · ícones, e depois o menu.
  *     Telemóvel (< 768 px): botão do menu · logótipo · pesquisa e saco; o menu abre em gaveta.
  */
-export function Header({ locale }: { locale: Locale }) {
+export async function Header({ locale }: { locale: Locale }) {
+  // EN: The first menu item is the active collection (Gestão → Colecções). PT: O primeiro item é a colecção activa.
+  const collection = (await activeCollection(locale))?.name;
   const dict = getDictionary(locale);
 
   return (
@@ -24,7 +27,7 @@ export function Header({ locale }: { locale: Locale }) {
             <LanguageSwitcher />
           </span>
           <span className={styles.phone}>
-            <MobileMenu />
+            <MobileMenu collection={collection} />
           </span>
         </div>
         <HomeLogoLink className={styles.brand} label={dict.nav.home}>
@@ -34,7 +37,7 @@ export function Header({ locale }: { locale: Locale }) {
       </div>
       <nav aria-label={dict.nav.main} className={styles.nav}>
         <ul className={`page-x ${styles.navList}`}>
-          <NavLinks linkClassName={styles.navLink} collectionClassName={styles.collection} />
+          <NavLinks linkClassName={styles.navLink} collectionClassName={styles.collection} collection={collection} />
         </ul>
       </nav>
     </header>

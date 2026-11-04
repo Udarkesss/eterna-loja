@@ -1,3 +1,4 @@
+import { activeCollection } from "@/server/catalog";
 import Link from "next/link";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { PaymentLogos } from "@/components/ui/PaymentLogos";
@@ -24,12 +25,13 @@ const SOCIAL_ICON: Record<(typeof site.social)[number]["key"], IconName> = {
  * PT: Rodapé do design V3, igual em todas as páginas da loja: marca · Comprar · Ajuda · Contactos · Novidades, e depois
  *     as redes sociais e os selos de pagamento. No telemóvel as colunas empilham.
  */
-export function SiteFooter({ locale }: { locale: Locale }) {
+export async function SiteFooter({ locale }: { locale: Locale }) {
+  const active = await activeCollection(locale);
   const dict = getDictionary(locale);
   const f = dict.footer;
   const shop = mainNav.slice(0, 5).map((item, i) => ({
     href: resolveHref(item.href, locale),
-    label: i === 0 ? f.collectionLine : item.label[locale],
+    label: i === 0 ? (active ? [active.name, active.details?.edition?.replace(/\s·\s\d{4}$/, "")].filter(Boolean).join(" · ") : f.collectionLine) : item.label[locale],
   }));
   const help = [
     { href: localizePath(locale, "/como-comprar"), label: f.howToBuy },

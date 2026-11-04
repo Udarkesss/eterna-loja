@@ -19,7 +19,7 @@ import styles from "./MobileMenu.module.css";
  * PT: Menu do telemóvel do design V3: gaveta em ecrã inteiro com o menu principal (colecção activa assinalada),
  *     Conta / Favoritos e "Fale connosco". Escape ou o X fecham; o foco volta ao botão do menu.
  */
-export function MobileMenu() {
+export function MobileMenu({ collection }: { collection?: string }) {
   const { locale, dict, href } = useI18n();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -79,7 +79,7 @@ export function MobileMenu() {
                       window.setTimeout(() => go(item.href.replace(/^#/, "")), 50);
                     }}
                   >
-                    <span>{item.label[locale]}</span>
+                    <span>{i === 0 && collection ? collection : item.label[locale]}</span>
                     {i === 0 && <span className={styles.tag}>{dict.nav.activeCollection}</span>}
                     <Icon name="chevronRight" size={18} />
                   </Link>

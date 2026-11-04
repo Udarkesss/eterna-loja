@@ -46,6 +46,17 @@ export interface CategoryDetails {
   active?: boolean; // EN: the active seasonal collection. PT: a colecção sazonal activa.
   /** EN: Bridal accessory types: where they appear (Gestão · Tipos de peça). PT: Acessórios de noiva: onde aparecem. */
   showIn?: "noivas" | "acessorios" | "both";
+  // EN: Gestão · Colecções (design V3). PT: Gestão · Colecções (V3).
+  collectionType?: "seasonal" | "special";
+  number?: string; // "II"
+  year?: number;
+  startsOn?: string; // EN: planned, yyyy-mm-dd. PT: planeado.
+  endsOn?: string;
+  status?: "draft" | "active" | "archived";
+  history?: boolean; // EN: old collection, archive only (not on the site). PT: colecção antiga, só arquivo.
+  message?: Localized; // EN: home "entrada" text while active. PT: texto da entrada enquanto activa.
+  buttonText?: Localized;
+  buttonLink?: string; // EN: "auto" = this collection. PT: "auto" = esta colecção.
 }
 
 /** EN: A colour as stored (all languages). PT: Uma cor como está guardada (todos os idiomas). */
