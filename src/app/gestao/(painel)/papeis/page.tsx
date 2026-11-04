@@ -1,3 +1,5 @@
+import Link from "next/link";
+import s from "@/components/admin/admin.module.css";
 import { RolesMatrix } from "@/components/admin/RolesMatrix";
 import { PageTop } from "@/components/admin/ui";
 import { ACCESS_OPTIONS, loadMatrix } from "@/server/admin/roles";
@@ -17,6 +19,11 @@ export default async function RolesPage() {
           <>
             Papéis <em>e permissões</em>
           </>
+        }
+        actions={
+          <Link href="/gestao/papeis/menu" className={s.btnOutline}>
+            O que cada papel vê
+          </Link>
         }
       />
       <RolesMatrix roles={m.roles} rows={m.rows} options={ACCESS_OPTIONS} editable={me.roleKey === "super"} />

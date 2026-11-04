@@ -16,7 +16,7 @@ import { listOrdersFor } from "./orders";
  *     dourado.
  */
 
-const MENU: { group: NavItem["group"]; href: string; label: string; icon: NavItem["icon"]; area: string }[] = [
+export const MENU: { group: NavItem["group"]; href: string; label: string; icon: NavItem["icon"]; area: string }[] = [
   { group: "Loja", href: "/gestao", label: "Painel", icon: "grid", area: "dashboard" },
   { group: "Loja", href: "/gestao/encomendas", label: "Encomendas", icon: "bag", area: "orders.view" },
   { group: "Loja", href: "/gestao/entregas", label: "Entregas", icon: "truck", area: "deliveries.assign" },
@@ -26,7 +26,7 @@ const MENU: { group: NavItem["group"]; href: string; label: string; icon: NavIte
   { group: "Loja", href: "/gestao/descontos", label: "Descontos e vouchers", icon: "ticket", area: "discounts" },
   { group: "Catálogo", href: "/gestao/produtos", label: "Produtos", icon: "tag", area: "products.view" },
   { group: "Catálogo", href: "/gestao/coleccoes", label: "Colecções", icon: "layers", area: "products.publish" },
-  { group: "Catálogo", href: "/gestao/produtos/importar", label: "Importar", icon: "upload", area: "products.edit" },
+  { group: "Catálogo", href: "/gestao/produtos/importar", label: "Importar", icon: "upload", area: "products.publish" },
   { group: "Site", href: "/gestao/conteudo", label: "Conteúdo do site", icon: "monitor", area: "content" },
   { group: "Sistema", href: "/gestao/pagamentos", label: "Pagamentos e avisos", icon: "card", area: "payments.toggle" },
   { group: "Sistema", href: "/gestao/definicoes", label: "Definições", icon: "sliders", area: "system" },
@@ -34,6 +34,17 @@ const MENU: { group: NavItem["group"]; href: string; label: string; icon: NavIte
   { group: "Sistema", href: "/gestao/papeis", label: "Papéis e permissões", icon: "shield", area: "roles" },
   { group: "Sistema", href: "/gestao/auditoria", label: "Auditoria", icon: "list", area: "audit" },
 ];
+
+/**
+ * EN: "O que cada papel vê" (design V3): each role's side menu, from the access matrix (the same rule as navFor).
+ * PT: "O que cada papel vê" (V3): o menu lateral de cada papel, a partir da matriz de acesso (a mesma regra do navFor).
+ */
+export function menuForAccess(cells: Record<string, string>, delivery: boolean) {
+  const has = (area: string) => (cells[area] ?? "—") !== "—";
+  return MENU.filter((m) => (m.href === "/gestao/entregas" ? delivery : true)).filter((m) =>
+    m.area === "users.staff" ? ["users.staff", "users.managers", "users.admins"].some(has) : has(m.area),
+  );
+}
 
 export async function navFor(staff: StaffContext): Promise<NavItem[]> {
   const badges: Record<string, number> = {};
