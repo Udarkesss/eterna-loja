@@ -1,32 +1,55 @@
+import Image from "next/image";
 import Link from "next/link";
 import s from "@/components/admin/admin.module.css";
-import { Chip, DemoTag, mzn, PageTop, when } from "@/components/admin/ui";
-import { FULFILLMENT_LABEL, listOrdersFor, METHOD_LABEL, PAYMENT_LABEL } from "@/server/admin/orders";
-import { requireStaffPage } from "@/server/staff/access";
-import { PAYMENT_STATUSES, type PaymentStatus } from "@/types";
+import d3 from "@/components/admin/Dashboard.module.css";
+import { MarkReadyButton } from "@/components/admin/MarkReadyButton";
+import { DeliveryOffNote } from "@/components/admin/ModuleOffNote";
+import { Chip, mzn, PageTop, when } from "@/components/admin/ui";
+import { Icon } from "@/components/ui/Icon";
+import { deliveryEnabled } from "@/server/content";
+import { getDb } from "@/server/db";
+import { stores } from "@/server/db/schema";
+import { FULFILLMENT_LABEL, listOrdersFor, METHOD_LABEL, ORDER_VIEWS, orderView, PAYMENT_LABEL, type OrderView } from "@/server/admin/orders";
+import { can, requireStaffPage } from "@/server/staff/access";
+import { PAYMENT_METHODS, type PaymentMethod } from "@/types";
 
 export const metadata = { title: "Encomendas" };
 
-type Props = { searchParams: Promise<{ q?: string; estado?: string; de?: string; ate?: string; pagina?: string }> };
+type Props = { searchParams: Promise<{ q?: string; vista?: string; loja?: string; metodo?: string; pagina?: string }> };
 const PAGE = 25;
 
 /**
- * EN: All orders the person may see, with search and filters (number, name, phone, status, dates).
- * PT: Todas as encomendas visíveis, com pesquisa e filtros.
+ * EN: "Gestão · Encomendas" of design V3: tabs by state (Por preparar, Prontas a levantar, Levantadas, A aguardar
+ *     pagamento, Canceladas), search, store and payment filters, pieces as thumbnails, "Marcar pronta" and CSV export.
+ * PT: Encomendas do V3: separadores por estado, pesquisa, filtros de loja e pagamento, peças em miniatura, "Marcar
+ *     pronta" e exportar CSV.
  */
 export default async function OrdersPage({ searchParams }: Props) {
   const staff = await requireStaffPage("orders.view");
   const p = await searchParams;
-  const status = PAYMENT_STATUSES.includes(p.estado as PaymentStatus) ? (p.estado as PaymentStatus) : "all";
-  const rows = await listOrdersFor(staff, { q: p.q, status, from: p.de, to: p.ate });
+  const view: OrderView = p.vista && p.vista in ORDER_VIEWS ? (p.vista as OrderView) : p.q ? "preparar" : "preparar";
+  const method = PAYMENT_METHODS.includes(p.metodo as PaymentMethod) ? (p.metodo as PaymentMethod) : undefined;
+  const db = await getDb();
+  const [all, storeRows, delivery] = await Promise.all([listOrdersFor(staff, { q: p.q }), db.select().from(stores), deliveryEnabled()]);
+  const storeOf = (id: string | null) => storeRows.find((x) => x.id === id);
+  const filtered = all
+    .filter((r) => !p.loja || storeOf(r.order.pickupStoreId ?? null)?.code === p.loja)
+    .filter((r) => !method || r.order.paymentMethod === method);
+  const counts = Object.fromEntries(Object.keys(ORDER_VIEWS).map((v) => [v, filtered.filter((r) => orderView(r.order) === v).length])) as Record<OrderView, number>;
+  // EN: A search shows matches in every tab. PT: Uma pesquisa mostra resultados de todos os separadores.
+  const rows = p.q ? filtered : filtered.filter((r) => orderView(r.order) === view);
   const page = Math.max(1, Number(p.pagina) || 1);
   const visible = rows.slice((page - 1) * PAGE, page * PAGE);
-  const qs = (n: number) => `?${new URLSearchParams({ ...(p.q ? { q: p.q } : {}), ...(p.estado ? { estado: p.estado } : {}), ...(p.de ? { de: p.de } : {}), ...(p.ate ? { ate: p.ate } : {}), pagina: String(n) })}`;
+  const link = (patch: Record<string, string | undefined>) => {
+    const q = new URLSearchParams(Object.entries({ q: p.q, vista: p.vista, loja: p.loja, metodo: p.metodo, ...patch }).filter((e): e is [string, string] => !!e[1]));
+    return `?${q}`;
+  };
+  const canEdit = can(staff, "orders.edit");
 
   return (
     <>
       <PageTop
-        eyebrow={`${rows.length} ${rows.length === 1 ? "encomenda" : "encomendas"}`}
+        eyebrow={`${all.length} ${all.length === 1 ? "encomenda" : "encomendas"}${all.some((r) => r.order.isDemo) ? " · inclui dados de exemplo" : ""}`}
         title="Encomendas"
         actions={
           <Link href="/gestao/clientes" className={s.btnOutline}>
@@ -34,105 +57,146 @@ export default async function OrdersPage({ searchParams }: Props) {
           </Link>
         }
       />
-      <DemoTag show={rows.some((r) => r.order.isDemo)} />
+      {!delivery && <DeliveryOffNote />}
 
-      <form className={s.filters}>
-        <label className={s.label} style={{ flex: "1 1 280px" }}>
-          Procurar
-          <input className={s.input} type="search" name="q" defaultValue={p.q} placeholder="Nº de encomenda, nome ou telefone" />
-        </label>
-        <label className={s.label}>
-          Pagamento
-          <select className={s.select} name="estado" defaultValue={status}>
-            <option value="all">Todos</option>
-            {PAYMENT_STATUSES.map((st) => (
-              <option key={st} value={st}>
-                {PAYMENT_LABEL[st].label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className={s.label}>
-          De
-          <input className={s.input} type="date" name="de" defaultValue={p.de} />
-        </label>
-        <label className={s.label}>
-          Até
-          <input className={s.input} type="date" name="ate" defaultValue={p.ate} />
-        </label>
-        <button type="submit" className={s.btn}>
-          Filtrar
-        </button>
-      </form>
-
-      <section className={s.cardFlush}>
-        {visible.length === 0 ? (
-          <p className={s.empty}>Nenhuma encomenda com estes filtros.</p>
-        ) : (
-          <table className={s.table}>
-            <thead>
-              <tr>
-                <th>Encomenda</th>
-                <th>Cliente</th>
-                <th>Peças</th>
-                <th>Total</th>
-                <th>Pagamento</th>
-                <th>Entrega</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {visible.map(({ order: o, lines }) => (
-                <tr key={o.id}>
-                  <td>
-                    <span className={s.two}>
-                      <Link href={`/gestao/encomendas/${o.id}`} className={s.a}>
-                        {o.number}
-                      </Link>
-                      <span className={s.muted}>{when(o.createdAt)}</span>
-                    </span>
-                  </td>
-                  <td>{o.contact.name}</td>
-                  <td className={s.muted}>{lines.map((l) => l.code).join(", ")}</td>
-                  <td className={s.num}>{mzn(o.total)}</td>
-                  <td>
-                    <span className={s.two}>
-                      <Chip tone={PAYMENT_LABEL[o.paymentStatus].tone}>{PAYMENT_LABEL[o.paymentStatus].label}</Chip>
-                      <span className={s.muted}>
-                        {METHOD_LABEL[o.paymentMethod]}
-                        {o.paymentMethod === "transfer" && o.paymentStatus === "pending" ? (o.transferProofUrl ? " · a validar" : " · sem comprovativo") : ""}
-                      </span>
-                    </span>
-                  </td>
-                  <td className={s.muted}>
-                    {o.fulfillmentType === "pickup" ? "Levantamento" : "Entrega"} · {FULFILLMENT_LABEL[o.fulfillmentStatus]}
-                  </td>
-                  <td>
-                    <Link href={`/gestao/encomendas/${o.id}`} className={s.a}>
-                      Detalhes
-                    </Link>
-                  </td>
-                </tr>
+      <section className={d3.panel}>
+        <div className={d3.panelHead}>
+          <h2>Encomendas</h2>
+          <Link href="/gestao/encomendas/exportar" className={`${s.btnOutline} ${s.small}`}>
+            <Icon name="download" size={15} />
+            Exportar CSV
+          </Link>
+        </div>
+        <div className={d3.panelBody}>
+          {!p.q && (
+            <nav className={d3.tabs} aria-label="Estado">
+              {(Object.keys(ORDER_VIEWS) as OrderView[]).map((v) => (
+                <Link key={v} href={link({ vista: v, pagina: undefined })} aria-current={v === view ? "page" : undefined}>
+                  {ORDER_VIEWS[v]}
+                  {(v === "preparar" || v === "prontas") && counts[v] > 0 && <span className={d3.count}>{counts[v]}</span>}
+                </Link>
               ))}
-            </tbody>
-          </table>
-        )}
-        <div className={s.pager}>
-          <span>
-            A mostrar {rows.length ? (page - 1) * PAGE + 1 : 0}–{Math.min(page * PAGE, rows.length)} de {rows.length}
-          </span>
-          <span style={{ display: "flex", gap: 8 }}>
-            {page > 1 && (
-              <Link href={qs(page - 1)} className={`${s.btnOutline} ${s.small}`}>
-                Anterior
-              </Link>
-            )}
-            {page * PAGE < rows.length && (
-              <Link href={qs(page + 1)} className={`${s.btnOutline} ${s.small}`}>
-                Seguinte
-              </Link>
-            )}
-          </span>
+            </nav>
+          )}
+          <form className={d3.filterRow}>
+            {p.vista && <input type="hidden" name="vista" value={p.vista} />}
+            <label className={d3.search}>
+              <Icon name="search" size={16} />
+              <input type="search" name="q" defaultValue={p.q} placeholder="N.º de encomenda, nome ou telefone" aria-label="Procurar" />
+            </label>
+            <select className={s.select} name="loja" defaultValue={p.loja ?? ""} aria-label="Loja">
+              <option value="">Todas as lojas</option>
+              {storeRows.map((x) => (
+                <option key={x.id} value={x.code}>
+                  Loja {x.code}
+                </option>
+              ))}
+            </select>
+            <select className={s.select} name="metodo" defaultValue={method ?? ""} aria-label="Pagamento">
+              <option value="">Qualquer pagamento</option>
+              {PAYMENT_METHODS.map((m) => (
+                <option key={m} value={m}>
+                  {METHOD_LABEL[m]}
+                </option>
+              ))}
+            </select>
+            <button type="submit" className={`${s.btnOutline} ${s.small}`}>
+              Filtrar
+            </button>
+          </form>
+
+          {visible.length === 0 ? (
+            <p className={d3.empty}>{p.q ? "Nenhuma encomenda encontrada." : `Nenhuma encomenda em “${ORDER_VIEWS[view]}”.`}</p>
+          ) : (
+            <table className={d3.table}>
+              <thead>
+                <tr>
+                  <th>Encomenda</th>
+                  <th>Cliente</th>
+                  <th>Peças</th>
+                  <th className={d3.right}>Total</th>
+                  <th>Pagamento</th>
+                  <th>Entrega</th>
+                  <th>Acções</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map(({ order: o, lines }) => {
+                  const store = storeOf(o.pickupStoreId ?? null);
+                  const transfer = o.paymentMethod === "transfer" && o.paymentStatus === "pending" ? (o.transferProofUrl ? " · a validar" : " · sem comprovativo") : "";
+                  return (
+                    <tr key={o.id}>
+                      <td>
+                        <Link href={`/gestao/encomendas/${o.id}`} className={d3.strong}>
+                          {o.number}
+                        </Link>
+                        <span className={d3.muted}>{when(o.createdAt)}</span>
+                      </td>
+                      <td>
+                        {o.contact.name}
+                        <span className={d3.muted}>{o.contact.phone ? `+258 ${o.contact.phone}` : o.contact.email ?? ""}</span>
+                      </td>
+                      <td>
+                        <span className={d3.thumbs}>
+                          {lines.slice(0, 3).map((l, i) =>
+                            l.imageUrl ? <Image key={i} src={l.imageUrl} alt={l.code} width={34} height={44} /> : <span key={i}>{l.code}</span>,
+                          )}
+                        </span>
+                      </td>
+                      <td className={`${s.num} ${d3.right}`}>{mzn(o.total)}</td>
+                      <td>
+                        <Chip tone={transfer ? "warn" : PAYMENT_LABEL[o.paymentStatus].tone}>
+                          {o.paymentStatus === "paid" ? "Paga" : PAYMENT_LABEL[o.paymentStatus].label} · {METHOD_LABEL[o.paymentMethod]}
+                          {transfer}
+                        </Chip>
+                      </td>
+                      <td>
+                        <Chip tone="">
+                          <Icon name={o.fulfillmentType === "pickup" ? "store" : "truck"} size={14} />
+                          {o.fulfillmentType === "pickup" ? `Levantamento · Loja ${store?.code ?? ""}` : `Entrega · ${FULFILLMENT_LABEL[o.fulfillmentStatus]}`}
+                        </Chip>
+                      </td>
+                      <td>
+                        <span className={d3.actions}>
+                          {canEdit && o.paymentStatus === "paid" && o.fulfillmentType === "pickup" && o.fulfillmentStatus === "pending" && <MarkReadyButton id={o.id} />}
+                          <Link href={`/gestao/encomendas/${o.id}`} className={d3.textBtn}>
+                            Detalhes
+                          </Link>
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+          <div className={d3.foot}>
+            <span>
+              {p.q
+                ? `${rows.length} ${rows.length === 1 ? "encomenda encontrada" : "encomendas encontradas"}`
+                : `${rows.length} ${rows.length === 1 ? "encomenda" : "encomendas"} · ${ORDER_VIEWS[view].toLowerCase()}`}
+            </span>
+            <span>“Marcar pronta” envia o aviso de levantamento por WhatsApp.</span>
+          </div>
+          {rows.length > PAGE && (
+            <div className={s.pager}>
+              <span>
+                A mostrar {(page - 1) * PAGE + 1}–{Math.min(page * PAGE, rows.length)} de {rows.length}
+              </span>
+              <span style={{ display: "flex", gap: 8 }}>
+                {page > 1 && (
+                  <Link href={link({ pagina: String(page - 1) })} className={`${s.btnOutline} ${s.small}`}>
+                    Anterior
+                  </Link>
+                )}
+                {page * PAGE < rows.length && (
+                  <Link href={link({ pagina: String(page + 1) })} className={`${s.btnOutline} ${s.small}`}>
+                    Seguinte
+                  </Link>
+                )}
+              </span>
+            </div>
+          )}
         </div>
       </section>
     </>

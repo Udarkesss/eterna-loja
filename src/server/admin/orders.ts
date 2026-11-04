@@ -93,6 +93,24 @@ export interface OrderListFilter {
 }
 
 /** EN: Orders the person may see, newest first, with their lines. PT: Encomendas visíveis, mais recentes primeiro. */
+/** EN: Tabs of the order list (design V3). PT: Separadores da lista de encomendas (V3). */
+export const ORDER_VIEWS = {
+  preparar: "Por preparar",
+  prontas: "Prontas a levantar",
+  levantadas: "Levantadas",
+  pagamento: "A aguardar pagamento",
+  canceladas: "Canceladas",
+} as const;
+export type OrderView = keyof typeof ORDER_VIEWS;
+
+export function orderView(o: OrderRow): OrderView {
+  if (o.fulfillmentStatus === "cancelled" || o.paymentStatus === "failed" || o.paymentStatus === "expired" || o.paymentStatus === "refunded") return "canceladas";
+  if (o.paymentStatus === "pending" && o.paymentMethod !== "cod") return "pagamento";
+  if (o.fulfillmentStatus === "pending" || o.fulfillmentStatus === "assigned" || o.fulfillmentStatus === "in_transit") return "preparar";
+  if (o.fulfillmentStatus === "ready") return "prontas";
+  return "levantadas";
+}
+
 export async function listOrdersFor(staff: StaffContext, filter: OrderListFilter = {}) {
   const db = await getDb();
   const rows = await db

@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import s from "@/components/admin/admin.module.css";
 import d3 from "@/components/admin/Dashboard.module.css";
+import { DeliveryOffNote } from "@/components/admin/ModuleOffNote";
 import { Chip, DemoTag, mzn, PageTop, when } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
 import { FITTING_KIND_LABELS } from "@/data/fittings";
@@ -229,18 +230,7 @@ export default async function DashboardPage() {
             </section>
           )}
 
-          {!d.delivery && (
-            <div className={d3.deliveryOff}>
-              <Icon name="truck" size={18} />
-              <span>
-                Módulo de entregas <strong>desligado</strong>: o site só oferece levantamento na loja. Liga-se em Definições → Módulo de
-                entregas.
-              </span>
-              <Link href="/gestao/definicoes" className={d3.ulink}>
-                Definições
-              </Link>
-            </div>
-          )}
+          {!d.delivery && <DeliveryOffNote />}
         </div>
       </div>
     </>
