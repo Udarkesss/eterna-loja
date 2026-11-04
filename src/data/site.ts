@@ -123,6 +123,7 @@ export const permissionMatrix: [area: string, access: [string, string, string, s
   ["transfers.validate", ["T", "T", "L", "—", "—"]],
   ["customers", ["T", "T", "L", "L", "E"]],
   ["customers.export", ["T", "T", "—", "—", "—"]],
+  ["discounts", ["T", "T", "—", "—", "—"]],
   ["deliveries.assign", ["T", "T", "L", "L", "—"]],
   ["deliveries.run", ["—", "—", "—", "—", "P"]],
   ["deliveries.pricing", ["T", "T", "V", "—", "—"]],

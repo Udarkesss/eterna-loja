@@ -521,6 +521,12 @@ export const refunds = pgTable("refunds", {
   ...timestamps,
 });
 
+/**
+ * EN: Vouchers of design V3 (Gestão · Descontos e vouchers): a code for one customer, one level or everyone; fixed value
+ *     or percentage; minimum purchase; valid until; number of uses (counted from the orders that used it).
+ * PT: Vouchers do V3: código para uma cliente, um nível ou todas; valor fixo ou percentagem; compra mínima; validade;
+ *     número de utilizações (contadas pelas encomendas que o usaram).
+ */
 export const discountCodes = pgTable("discount_codes", {
   id: uuid("id").primaryKey().defaultRandom(),
   code: text("code").notNull().unique(),
@@ -530,7 +536,12 @@ export const discountCodes = pgTable("discount_codes", {
   startsAt: timestamp("starts_at", { withTimezone: true }),
   endsAt: timestamp("ends_at", { withTimezone: true }),
   maxUses: integer("max_uses"),
-  uses: integer("uses").notNull().default(0),
+  target: text("target").$type<"all" | "customer" | "level">().notNull().default("all"),
+  customerId: uuid("customer_id").references(() => customers.id, { onDelete: "cascade" }),
+  levelKey: text("level_key"),
+  minPurchase: integer("min_purchase"),
+  stacksWithLevel: boolean("stacks_with_level").notNull().default(false),
+  sentVia: jsonb("sent_via").$type<("whatsapp" | "email")[]>().notNull().default([]),
   ...timestamps,
 });
 

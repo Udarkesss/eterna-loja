@@ -12,7 +12,7 @@ import {
 } from "@/app/gestao/actions/customers";
 import { Icon } from "@/components/ui/Icon";
 import type { ImportResult } from "@/server/admin/customers";
-import c from "./Clients.module.css";
+import c from "./AdminV3.module.css";
 
 /**
  * EN: Interactive parts of "Gestão · Clientes" (design V3): the card's three forms, "Avisar quem sobe" and the import.

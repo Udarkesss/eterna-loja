@@ -274,6 +274,12 @@ const DATA_MIGRATIONS: { name: string; run: (db: Database) => Promise<void> }[] 
       await db.update(contentSections).set({ data }).where(eq(contentSections.id, row.id));
     },
   },
+  {
+    // EN: New areas of the access matrix (design V3: "Descontos e vouchers"); existing cells are kept.
+    // PT: Áreas novas da matriz de acesso (V3: "Descontos e vouchers"); as células existentes mantêm-se.
+    name: "areas-descontos",
+    run: seedRoles,
+  },
 ];
 
 /** EN: How many data versions exist (development re-checks it on each request). PT: Quantas versões de dados existem. */

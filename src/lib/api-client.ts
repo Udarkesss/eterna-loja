@@ -2,6 +2,7 @@ import type {
   ApiError,
   ApiErrorCode,
   ApiSuccess,
+  VoucherCheckDTO,
   CategoryDTO,
   CheckoutOptionsDTO,
   CustomerDTO,
@@ -86,6 +87,9 @@ export function createApiClient(baseUrl = "") {
     },
     checkoutOptions(locale: Locale) {
       return request<CheckoutOptionsDTO>(`/checkout/options?locale=${locale}`);
+    },
+    checkVoucher(code: string, subtotal: number) {
+      return request<VoucherCheckDTO>("/checkout/voucher", { method: "POST", body: JSON.stringify({ code, subtotal }) });
     },
     createOrder(input: CreateOrderInput) {
       return request<OrderStatusDTO>("/orders", { method: "POST", body: JSON.stringify(input) });

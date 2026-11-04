@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useCart } from "@/components/cart/CartProvider";
 import { describeLine, useCartProducts } from "@/components/cart/useCartProducts";
 import { ButtonLink } from "@/components/ui/Button";
@@ -16,6 +16,7 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { ApiClientError, api } from "@/lib/api-client";
 import { cartTotal, nowLines } from "@/lib/cart";
 import { formatMZN } from "@/lib/format";
+import { combineDiscounts } from "@/lib/discounts";
 import { MT_PER_POINT } from "@/lib/loyalty";
 import { sizeParts } from "@/lib/sizes";
 import { methodFromMsisdn, normalizeMsisdn, OPERATOR_NAMES } from "@/lib/payments/msisdn";
@@ -111,11 +112,15 @@ export function CheckoutView() {
   const [file, setFile] = useState<File | null>(null);
   const [changeFor, setChangeFor] = useState("");
   const [discountCode, setDiscountCode] = useState("");
+  // EN: Voucher checked by "Aplicar" (the order checks it again). PT: Voucher verificado em "Aplicar" (a encomenda verifica de novo).
+  const [voucher, setVoucher] = useState<{ code: string; amount: number; stacks: boolean } | null>(null);
+  const [voucherMsg, setVoucherMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [checking, setChecking] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(0);
 
   useEffect(() => {
-    api.checkoutOptions(locale).then(setOptions).catch(() => setOptions({ methods: [], pickupStores: [], zones: [], pricing: DEFAULT_PRICING, delivery: false, level: null }));
+    api.checkoutOptions(locale).then(setOptions).catch(() => setOptions({ methods: [], pickupStores: [], zones: [], pricing: DEFAULT_PRICING, delivery: false, level: null, levelDisplay: "plain", vouchers: false, myVouchers: [] }));
   }, [locale]);
 
   // ── Totals / Totais ──
@@ -135,10 +140,43 @@ export function CheckoutView() {
   const level = options?.level ?? null;
   const fullPrice = lines.reduce((sum, l) => (products[l.slug] && products[l.slug].salePrice == null ? sum + (priceOf(l.slug) ?? 0) * l.quantity : sum), 0);
   const levelAmount = level ? Math.round((fullPrice * level.pct) / 100) : 0;
-  const total = subtotal - levelAmount + fee;
+  const discounts = combineDiscounts(levelAmount, voucher);
+  const total = subtotal - Math.min(subtotal, discounts.total) + fee;
   const pieces = lines.reduce((n, l) => n + l.quantity, 0);
   const totalLabel = formatMZN(order?.total ?? total, locale);
   const known = delivery === "pickup" || pricing.mode !== "zone" || !!zone;
+  async function applyVoucher(code: string) {
+    const clean = code.trim().toUpperCase();
+    if (clean.length < 2) return;
+    setChecking(true);
+    try {
+      const r = await api.checkVoucher(clean, subtotal);
+      if (r.ok) {
+        setVoucher({ code: r.code, amount: r.amount, stacks: r.stacks });
+        const wins = combineDiscounts(levelAmount, { amount: r.amount, stacks: r.stacks }).voucher > 0;
+        setVoucherMsg({ ok: true, text: wins ? t(c.summary.voucherApplied, { code: r.code }) : c.summary.voucherLevelWins });
+      } else {
+        setVoucher(null);
+        setVoucherMsg({ ok: false, text: t(c.summary.voucherErrors[r.error], { min: formatMZN(r.min ?? 0, locale) }) });
+      }
+    } catch {
+      setVoucherMsg({ ok: false, text: dict.errors.VALIDATION_ERROR });
+    } finally {
+      setChecking(false);
+    }
+  }
+  function removeVoucher() {
+    setVoucher(null);
+    setVoucherMsg(null);
+    setDiscountCode("");
+  }
+  // EN: The cart changed: check the voucher again (minimum purchase, percentage). PT: O carrinho mudou: verificar de novo.
+  const appliedCode = voucher?.code;
+  useEffect(() => {
+    if (appliedCode) void applyVoucher(appliedCode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal, appliedCode]);
+
   const shipLabel = delivery === "pickup" ? c.free : !known ? c.byZone : feeValue != null ? formatMZN(feeValue, locale) : c.feeToSet;
 
   // ── Phone checks (design) / Verificação do número ──
@@ -243,7 +281,7 @@ export function CheckoutView() {
           ? { type: "pickup" as const, storeCode }
           : { type: "delivery" as const, city, neighbourhood, address, lat: point?.lat, lng: point?.lng },
       payment,
-      discountCode: discountCode || undefined,
+      discountCode: voucher?.code,
     };
     const parsed = createOrderSchema.safeParse(input);
     if (!parsed.success) {
@@ -803,34 +841,89 @@ export function CheckoutView() {
               );
             })}
           </ul>
-          <label htmlFor="cupao" className={styles.voucherLabel}>
-            {c.summary.voucher}
-          </label>
-          <div className={styles.discount}>
-            <input
-              id="cupao"
-              className={styles.discountInput}
-              placeholder={c.summary.discountCode}
-              value={discountCode}
-              onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
-            />
-            <button type="button" className={styles.apply} title={c.summary.discountNote}>
-              {c.summary.apply}
-            </button>
-          </div>
-          {customer && <span className={styles.voucherNote}>{c.summary.voucherNote}</span>}
+          {options?.vouchers !== false && (
+            <div className={styles.voucherBox}>
+              <label htmlFor="cupao" className={styles.voucherLabel}>
+                {c.summary.voucher}
+              </label>
+              {voucher ? (
+                <div role="status" className={styles.voucherApplied}>
+                  <span>{voucherMsg?.text ?? t(c.summary.voucherApplied, { code: voucher.code })}</span>
+                  {discounts.voucher > 0 && <span className={styles.num}>−{formatMZN(discounts.voucher, locale)}</span>}
+                  <button type="button" className={styles.voucherRemove} onClick={removeVoucher} aria-label={c.summary.removeVoucher}>
+                    <Icon name="close" size={14} />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className={styles.discount}>
+                    <input
+                      id="cupao"
+                      className={styles.discountInput}
+                      placeholder={c.summary.discountCode}
+                      value={discountCode}
+                      onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          void applyVoucher(discountCode);
+                        }
+                      }}
+                    />
+                    <button type="button" className={styles.apply} onClick={() => void applyVoucher(discountCode)} disabled={checking || discountCode.trim().length < 2}>
+                      {c.summary.apply}
+                    </button>
+                  </div>
+                  {voucherMsg && !voucherMsg.ok && (
+                    <span role="alert" className={styles.voucherError}>
+                      {voucherMsg.text}
+                    </span>
+                  )}
+                  {(options?.myVouchers.length ?? 0) > 0 && (
+                    <span className={styles.voucherNote}>
+                      {c.summary.inAccount}{" "}
+                      {options!.myVouchers.map((v, i) => (
+                        <Fragment key={v.code}>
+                          {i > 0 && " · "}
+                          <button
+                            type="button"
+                            className={styles.voucherUse}
+                            onClick={() => {
+                              setDiscountCode(v.code);
+                              void applyVoucher(v.code);
+                            }}
+                          >
+                            {v.code} · {v.kind === "percent" ? `${v.value}%` : formatMZN(v.value, locale)}
+                          </button>
+                        </Fragment>
+                      ))}
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
+          )}
           <dl className={styles.totals}>
             <div>
               <dt>{plural(c.summary.subtotalCount, pieces)}</dt>
               <dd>{formatMZN(subtotal, locale)}</dd>
             </div>
-            {levelAmount > 0 && level && (
+            {discounts.level > 0 && level && (
               <div className={styles.saving}>
                 <dt>
                   <Icon name="gem" size={16} />
-                  {t(c.summary.levelDiscount, { pct: level.pct })}
+                  {options?.levelDisplay === "named" ? t(c.summary.levelDiscountNamed, { level: level.name, pct: level.pct }) : t(c.summary.levelDiscount, { pct: level.pct })}
                 </dt>
-                <dd>−{formatMZN(levelAmount, locale)}</dd>
+                <dd>−{formatMZN(discounts.level, locale)}</dd>
+              </div>
+            )}
+            {discounts.voucher > 0 && voucher && (
+              <div className={styles.saving}>
+                <dt>
+                  <Icon name="ticket" size={16} />
+                  {t(c.summary.voucherLine, { code: voucher.code })}
+                </dt>
+                <dd>−{formatMZN(discounts.voucher, locale)}</dd>
               </div>
             )}
             <div>

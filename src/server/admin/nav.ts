@@ -21,6 +21,7 @@ const MENU: { group: NavItem["group"]; href: string; label: string; icon: NavIte
   { group: "Loja", href: "/gestao/entregas", label: "Entregas", icon: "truck", area: "deliveries.assign" },
   { group: "Loja", href: "/gestao/provas", label: "Provas · Bridal", icon: "dress", area: "fittings" },
   { group: "Loja", href: "/gestao/clientes", label: "Clientes", icon: "users", area: "customers" },
+  { group: "Loja", href: "/gestao/descontos", label: "Descontos e vouchers", icon: "ticket", area: "discounts" },
   { group: "Catálogo", href: "/gestao/produtos", label: "Produtos", icon: "tag", area: "products.view" },
   { group: "Catálogo", href: "/gestao/coleccoes", label: "Colecções", icon: "layers", area: "products.publish" },
   { group: "Catálogo", href: "/gestao/produtos/importar", label: "Importar", icon: "upload", area: "products.edit" },

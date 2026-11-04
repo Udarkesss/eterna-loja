@@ -17,7 +17,7 @@ import { formatMZN } from "@/lib/format";
 import { BAR_POINTS, MT_PER_POINT, type Loyalty } from "@/lib/loyalty";
 import { formatMsisdn } from "@/lib/payments/msisdn";
 import { formatLongDate, toMaputo } from "@/lib/time";
-import type { CustomerDTO, FittingPublicDTO, IdentityProvider, MyOrderDTO } from "@/types";
+import type { CustomerDTO, CustomerVoucherDTO, FittingPublicDTO, IdentityProvider, MyOrderDTO } from "@/types";
 import styles from "./Account.module.css";
 import { useCustomer } from "./CustomerProvider";
 import { accountError } from "./errors";
@@ -44,7 +44,7 @@ const HASH: Record<Section, string> = {
   details: "dados",
 };
 
-export function AccountDashboard(props: { customer: CustomerDTO; orders: MyOrderDTO[]; fittings: FittingPublicDTO[]; loyalty: Loyalty }) {
+export function AccountDashboard(props: { customer: CustomerDTO; orders: MyOrderDTO[]; fittings: FittingPublicDTO[]; loyalty: Loyalty; vouchers: CustomerVoucherDTO[] }) {
   const { dict, locale, href } = useI18n();
   const a = dict.account;
   const router = useRouter();
@@ -142,7 +142,7 @@ export function AccountDashboard(props: { customer: CustomerDTO; orders: MyOrder
             </EmptyPanel>
           )}
           {section === "orders" && <OrdersPanel orders={props.orders} />}
-          {section === "vouchers" && <EmptyPanel title={a.sections.vouchers} intro={a.vouchersBody} empty={a.noVouchers} />}
+          {section === "vouchers" && <VouchersPanel vouchers={props.vouchers} />}
           {section === "fittings" && <FittingsPanel fittings={props.fittings} />}
           {section === "favorites" && (
             <section className={styles.stack}>
@@ -254,6 +254,65 @@ function EmptyPanel({ title, intro, empty, children }: { title: string; intro: s
       </div>
       <p className={styles.empty}>{empty}</p>
       {children}
+    </section>
+  );
+}
+
+/**
+ * EN: "Os meus vouchers" of design V3: one card per voucher — value, conditions, code with "Copiar", state.
+ * PT: "Os meus vouchers" do V3: um cartão por voucher — valor, condições, código com "Copiar", estado.
+ */
+function VouchersPanel({ vouchers }: { vouchers: CustomerVoucherDTO[] }) {
+  const { dict, locale } = useI18n();
+  const a = dict.account;
+  const [copied, setCopied] = useState<string | null>(null);
+  const day = (iso: string) => new Intl.DateTimeFormat(locale === "pt" ? "pt-PT" : "en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Africa/Maputo" }).format(new Date(iso)).replace(".", "");
+  return (
+    <section className={styles.stack}>
+      <div className={styles.panelHead}>
+        <h2 className={styles.title}>{a.sections.vouchers}</h2>
+        <p className={styles.small}>{a.vouchersBody}</p>
+      </div>
+      {vouchers.length === 0 ? (
+        <p className={styles.empty}>{a.noVouchers}</p>
+      ) : (
+        <div className={styles.vouchers}>
+          {vouchers.map((v) => (
+            <div key={v.code} className={styles.voucher} data-used={v.state === "used" || undefined}>
+              <span className={styles.voucherHead}>
+                <Icon name="ticket" size={18} />
+                <span className="eyebrow">{a.voucher}</span>
+              </span>
+              <span className={styles.voucherValue}>{v.kind === "percent" ? `${v.value}%` : formatMZN(v.value, locale)}</span>
+              {v.state === "used" ? (
+                <span className={styles.small}>{t(a.voucherUsed, { date: day(v.usedAt!), order: v.usedOrder ?? "" })}</span>
+              ) : (
+                <>
+                  <span className={styles.small}>
+                    {[v.minPurchase ? t(a.voucherMin, { min: formatMZN(v.minPurchase, locale) }) : null, v.endsAt ? t(a.voucherUntil, { date: day(v.endsAt) }) : null].filter(Boolean).join(" · ") || a.voucherAny}
+                  </span>
+                  <span className={styles.voucherCode}>
+                    <span className={styles.codeTag}>{v.code}</span>
+                    <button
+                      type="button"
+                      className={styles.copyBtn}
+                      onClick={() => {
+                        void navigator.clipboard?.writeText(v.code);
+                        setCopied(v.code);
+                      }}
+                    >
+                      {copied === v.code ? a.copied : a.copy}
+                    </button>
+                  </span>
+                </>
+              )}
+              <span className={styles.state} data-tone={v.state === "unused" ? "ok" : undefined}>
+                {v.state === "unused" ? a.voucherUnused : a.voucherUsedState}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

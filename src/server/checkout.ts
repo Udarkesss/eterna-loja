@@ -1,15 +1,15 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { and, eq, sql } from "drizzle-orm";
 import { normalizeMsisdn } from "@/lib/payments/msisdn";
 import type { CreateOrderInput } from "@/lib/validation";
 import type { OrderStatusDTO, PaymentStatus, ProductDTO } from "@/types";
 import { currentCustomer } from "./accounts";
+import { assertVoucherOk, checkVoucher, combineDiscounts, discountSettings } from "./discounts";
 import { customerLevel } from "./loyalty";
 import { effectivePrice, listProducts } from "./catalog";
 import { deliveryEnabled, enabledPaymentMethods, listDeliveryZones } from "./content";
 import { getDb } from "./db";
-import { discountCodes, stores } from "./db/schema";
+import { stores } from "./db/schema";
 import { AppError } from "./errors";
 import {
   createOrderWithReservation,
@@ -32,22 +32,6 @@ import { DEFAULT_PRICING, deliveryFee, type DeliveryPricing } from "@/lib/delive
 
 const MOBILE_TIMEOUT_DEFAULT = 90; // EN: seconds, the design's countdown. PT: segundos, a contagem do design.
 const TRANSFER_HOLD_HOURS = 24; // EN: design: "[24 horas]". PT: design: "[24 horas]".
-
-async function applyDiscount(code: string | undefined, subtotal: number): Promise<{ code: string | null; amount: number }> {
-  if (!code) return { code: null, amount: 0 };
-  const db = await getDb();
-  const now = new Date();
-  const [row] = await db.select().from(discountCodes).where(and(eq(discountCodes.code, code.toUpperCase()), eq(discountCodes.active, true)));
-  const valid =
-    row &&
-    (!row.startsAt || row.startsAt <= now) &&
-    (!row.endsAt || row.endsAt >= now) &&
-    (row.maxUses === null || row.uses < row.maxUses);
-  if (!valid) throw new AppError("VALIDATION_ERROR", "Invalid discount code", 400, { field: "discountCode" });
-  const amount = row.kind === "percent" ? Math.round((subtotal * row.value) / 100) : row.value;
-  await db.update(discountCodes).set({ uses: sql`${discountCodes.uses} + 1` }).where(eq(discountCodes.id, row.id));
-  return { code: row.code, amount: Math.min(amount, subtotal) };
-}
 
 /**
  * EN: Creates the order, reserves stock and starts the payment. Prices always come from the catalog.
@@ -89,8 +73,9 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderStatusD
   // PT: Desconto do nível: só peças fora de saldo; aplica-se o maior entre ele e um código de desconto.
   const customer = await currentCustomer();
   const level = customer ? await customerLevel(customer.id) : null;
+  const settings = await discountSettings();
   const fullPrice = lines.reduce((sum, l) => (catalog.get(l.slug)?.salePrice == null ? sum + l.unitPrice * l.quantity : sum), 0);
-  const levelAmount = level ? Math.round((fullPrice * level.pct) / 100) : 0;
+  const levelAmount = level && settings.level ? Math.round((fullPrice * level.pct) / 100) : 0;
 
   // ── Fulfilment / Entrega ──
   let shippingFee = 0;
@@ -119,8 +104,15 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderStatusD
     };
   }
 
-  const code = await applyDiscount(input.discountCode, subtotal);
-  const discount = code.amount >= levelAmount ? code : { code: null, amount: levelAmount };
+  // EN: Voucher checked again on the server (same rules as the summary). PT: Voucher verificado de novo no servidor.
+  let voucher: { code: string; amount: number; stacks: boolean } | null = null;
+  if (input.discountCode) {
+    const r = await checkVoucher(input.discountCode, subtotal, customer && level ? { id: customer.id, level } : null);
+    assertVoucherOk(r);
+    voucher = { code: r.voucher.code, amount: r.amount, stacks: r.voucher.stacksWithLevel };
+  }
+  const combined = combineDiscounts(levelAmount, voucher);
+  const discount = { code: combined.voucher > 0 ? voucher!.code : null, amount: Math.min(subtotal, combined.total) };
   const total = subtotal - discount.amount + shippingFee;
 
   // ── Payment / Pagamento ──

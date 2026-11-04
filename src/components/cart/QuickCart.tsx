@@ -2,9 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useCustomer } from "@/components/account/CustomerProvider";
 import { Icon } from "@/components/ui/Icon";
-import { plural } from "@/i18n";
+import { plural, t } from "@/i18n";
+import { api } from "@/lib/api-client";
 import { useI18n } from "@/i18n/I18nProvider";
 import { cartTotal, nowLines } from "@/lib/cart";
 import { formatMZN } from "@/lib/format";
@@ -25,6 +27,17 @@ export function QuickCart() {
   const c = dict.cart;
   const { justAdded, closeQuick } = useCart();
   const { lines, products } = useCartProducts();
+  const { customer } = useCustomer();
+  // EN: "Com o nome do nível" (Gestão · Descontos): the note names the level. PT: A nota diz o nome do nível.
+  const [named, setNamed] = useState<string | null>(null);
+  const open = !!justAdded;
+  useEffect(() => {
+    if (!open || !customer) return;
+    api
+      .checkoutOptions(locale)
+      .then((o) => setNamed(o.levelDisplay === "named" && o.level && o.level.pct > 0 ? o.level.name : null))
+      .catch(() => setNamed(null));
+  }, [open, customer, locale]);
 
   useEffect(() => {
     if (!justAdded) return;
@@ -75,7 +88,7 @@ export function QuickCart() {
             <span>{c.subtotal}</span>
             <span className={styles.price}>{formatMZN(cartTotal(nowLines(lines), priceOf), locale)}</span>
           </div>
-          <span className={styles.note}>{c.quickNote}</span>
+          <span className={styles.note}>{named ? t(c.quickNoteNamed, { level: named }) : c.quickNote}</span>
           <Link href={href("/checkout")} className={styles.btn} onClick={closeQuick}>
             {c.checkout}
           </Link>

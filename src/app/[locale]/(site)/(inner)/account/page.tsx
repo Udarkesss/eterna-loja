@@ -5,6 +5,7 @@ import { getDictionary } from "@/i18n";
 import { resolveLocale } from "@/i18n/params";
 import { currentCustomer, toCustomerDTO } from "@/server/accounts";
 import { listCustomerFittings } from "@/server/fittings";
+import { customerVouchers } from "@/server/discounts";
 import { customerLoyalty } from "@/server/loyalty";
 import { listCustomerOrders } from "@/server/orders";
 
@@ -31,5 +32,6 @@ export default async function AccountPage({ params }: Props) {
     listCustomerFittings(row.id, locale),
     customerLoyalty(row.id),
   ]);
-  return <AccountDashboard customer={customer} orders={orders} fittings={fittings} loyalty={loyalty} />;
+  const vouchers = await customerVouchers(row.id, loyalty.level.key);
+  return <AccountDashboard customer={customer} orders={orders} fittings={fittings} loyalty={loyalty} vouchers={vouchers} />;
 }

@@ -236,7 +236,30 @@ export interface CheckoutOptionsDTO {
   pricing: { mode: "fixed" | "zone" | "distance"; fixedFee: number | null; baseFee: number | null; perKm: number | null; maxFee: number | null };
   /** EN: Signed-in customer's level and discount (pieces not on sale). PT: Nível e desconto da cliente com sessão. */
   level: { key: string; name: string; pct: number } | null;
+  /** EN: Level discount shown without (plain) or with its name (Gestão · Descontos). PT: Desconto sem ou com o nome do nível. */
+  levelDisplay: "plain" | "named";
+  /** EN: Vouchers switched on. PT: Vouchers ligados. */
+  vouchers: boolean;
+  /** EN: The signed-in customer's vouchers she can still use ("Na sua conta"). PT: Vouchers da cliente por usar. */
+  myVouchers: CustomerVoucherDTO[];
 }
+
+/** EN: A voucher in "Os meus vouchers". PT: Um voucher em "Os meus vouchers". */
+export interface CustomerVoucherDTO {
+  code: string;
+  kind: "percent" | "fixed";
+  value: number;
+  minPurchase: number | null;
+  endsAt: string | null;
+  state: "unused" | "used";
+  usedAt: string | null;
+  usedOrder: string | null;
+}
+
+/** EN: Answer of POST /checkout/voucher. PT: Resposta de POST /checkout/voucher. */
+export type VoucherCheckDTO =
+  | { ok: true; code: string; amount: number; stacks: boolean; kind: "percent" | "fixed"; value: number }
+  | { ok: false; error: "NOT_FOUND" | "OFF" | "EXPIRED" | "NOT_YET" | "USED" | "NOT_YOURS" | "MIN_PURCHASE" | "SIGN_IN"; min: number | null };
 
 // ── Fittings / Provas ────────────────────────────────────────────────
 /**

@@ -1,0 +1,97 @@
+/* EN: "Gestão · Descontos e vouchers" of design V3. PT: Descontos e vouchers da gestão do V3. */
+.cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 24px;
+  align-items: start;
+}
+.left {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+.pad {
+  padding: 18px 22px 22px;
+}
+.kindName {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.w5 {
+  font-weight: 500;
+}
+.muted {
+  color: var(--muted);
+}
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.choice {
+  padding: 14px;
+  border: 1px solid var(--line);
+}
+.choice[data-on] {
+  border: 1.5px solid var(--ink);
+  background: var(--raised);
+}
+.form {
+  padding: 18px 22px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.code {
+  flex: 1;
+  letter-spacing: 0.06em;
+}
+.wa {
+  padding: 14px;
+  background: #e7f3e4;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 20px;
+  color: #1c1917;
+}
+.wa b {
+  font-weight: 600;
+}
+.grow {
+  flex: 1;
+}
+.resend {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.textBtn {
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  background: none;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  cursor: pointer;
+}
+.textBtn:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+.r {
+  text-align: right;
+}
+.table td:nth-child(n + 3) {
+  white-space: nowrap;
+}
+@media (max-width: 1279px) {
+  .cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

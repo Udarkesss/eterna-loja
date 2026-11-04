@@ -4,6 +4,7 @@ import { cache } from "react";
 import { sizeParts } from "@/lib/sizes";
 import type { CategoryDTO, CategorySummary, ColorFamily, Locale, ProductDTO, SearchSuggestionsDTO } from "@/types";
 import { getDb } from "./db";
+import { discountSettings } from "./discounts";
 import { categories, productCategories, productImages, products, productVariants } from "./db/schema";
 
 /**
@@ -171,7 +172,7 @@ async function queryProducts(where: SQL | undefined, sort: ProductSort = "recomm
         : sort === "newest"
           ? [desc(products.createdAt)]
           : [desc(products.isNew), desc(products.createdAt)];
-  return db.query.products.findMany({
+  const rows = await db.query.products.findMany({
     where,
     limit,
     offset,
@@ -184,6 +185,8 @@ async function queryProducts(where: SQL | undefined, sort: ProductSort = "recomm
       images: { orderBy: (i, o) => [o.asc(i.position)] },
     },
   });
+  // EN: "Saldo numa peça" switched off (Gestão · Descontos): no struck-through prices. PT: Saldo desligado: sem preço riscado.
+  return (await discountSettings()).sale ? rows : rows.map((r) => ({ ...r, salePrice: null }));
 }
 
 type ProductRow = Awaited<ReturnType<typeof queryProducts>>[number];
@@ -283,6 +286,7 @@ export async function searchSuggestions(search: string, locale: Locale): Promise
   const where = searchCondition(search, rows);
   if (!where) return { total: 0, places: [], types: [], products: [] };
   const db = await getDb();
+  const { sale } = await discountSettings();
   const found = byRelevance(
     await db
       .select({
@@ -355,7 +359,7 @@ export async function searchSuggestions(search: string, locale: Locale): Promise
         code: p.code,
         type: type ? (type.singular ?? type.name)[locale] : null,
         price: p.price,
-        salePrice: p.salePrice,
+        salePrice: sale ? p.salePrice : null,
         image: images.find((i) => i.productId === p.id)?.url ?? null,
       };
     }),

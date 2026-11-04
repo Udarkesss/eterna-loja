@@ -1,6 +1,7 @@
 import "server-only";
 import { DEFAULT_PRICING, type DeliveryPricing } from "@/lib/delivery";
 import { currentCustomer } from "./accounts";
+import { customerVouchers, discountSettings } from "./discounts";
 import { customerLevel } from "./loyalty";
 import { getSetting } from "./settings";
 import { and, asc, eq } from "drizzle-orm";
@@ -110,13 +111,14 @@ export const cardPriceVisible = () => getSetting<boolean>("catalog.cardPrice", f
 
 export async function getCheckoutOptions(locale: Locale): Promise<CheckoutOptionsDTO> {
   const customer = await currentCustomer();
-  const [methods, allStores, zones, pricing, delivery, level] = await Promise.all([
+  const [methods, allStores, zones, pricing, delivery, level, discounts] = await Promise.all([
     enabledPaymentMethods(),
     listStores(locale),
     listDeliveryZones(locale),
     getSetting<DeliveryPricing>("delivery.pricing", DEFAULT_PRICING),
     deliveryEnabled(),
     customer ? customerLevel(customer.id) : null,
+    discountSettings(),
   ]);
   return {
     methods,
@@ -124,6 +126,9 @@ export async function getCheckoutOptions(locale: Locale): Promise<CheckoutOption
     zones: delivery ? zones : [],
     pricing,
     delivery,
-    level: level ? { key: level.key, name: level.name[locale], pct: level.pct } : null,
+    level: level && discounts.level ? { key: level.key, name: level.name[locale], pct: level.pct } : null,
+    levelDisplay: discounts.display,
+    vouchers: discounts.vouchers,
+    myVouchers: customer && discounts.vouchers ? (await customerVouchers(customer.id, level?.key ?? null)).filter((v) => v.state === "unused") : [],
   };
 }

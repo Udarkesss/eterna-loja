@@ -21,6 +21,7 @@ export const AREA_LABELS: Record<string, string> = {
   "transfers.validate": "Validar comprovativos de transferência",
   customers: "Clientes e encomendas por cliente",
   "customers.export": "Exportar clientes (CSV)",
+  discounts: "Descontos e vouchers",
   "deliveries.assign": "Entregas: atribuir e avisar entregador",
   "deliveries.run": "Entregas: iniciar, GPS, confirmar com código",
   "deliveries.pricing": "Preços de entrega e zonas",

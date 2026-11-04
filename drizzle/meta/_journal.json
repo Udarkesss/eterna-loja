@@ -64,6 +64,13 @@
       "when": 1793777079248,
       "tag": "0008_loyalty_clients",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793778392629,
+      "tag": "0009_vouchers",
+      "breakpoints": true
     }
   ]
 }

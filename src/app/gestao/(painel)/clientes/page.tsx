@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { asc } from "drizzle-orm";
 import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
-import c from "@/components/admin/Clients.module.css";
+import c from "@/components/admin/AdminV3.module.css";
 import { ClientCardForms, ImportClientsButton, NotifyUpsButton } from "@/components/admin/ClientsForms";
 import d3 from "@/components/admin/Dashboard.module.css";
 import { DemoTag, PageTop } from "@/components/admin/ui";
