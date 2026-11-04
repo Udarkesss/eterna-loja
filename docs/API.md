@@ -32,11 +32,14 @@ Types: `src/types/index.ts` · Typed client / Cliente tipado: `src/lib/api-clien
 | ------ | ---- | ------------ |
 | GET | `/checkout/options?locale=pt` | Enabled payment methods, pickup stores, delivery zones |
 | POST | `/orders` | Create order + reserve stock + start payment (`CreateOrderInput`) → `201 OrderStatusDTO` |
+| POST | `/orders` with `reserve: true` | Reserve one piece with the 50% deposit (design V3) → `OrderStatusDTO.reservationToken` |
+| POST | `/checkout/voucher` | `{ code, subtotal }` — checks a voucher for this cart (the order checks it again) |
 | GET | `/orders/:id` | `OrderStatusDTO`. While pending, also asks the provider; after the time limit → `expired` |
 | POST | `/orders/:id/cancel` | "Cancelar e mudar de método": releases the reserved pieces |
 | POST | `/orders/:id/proof` | Bank transfer proof — `multipart/form-data`, field `file`, photo or PDF ≤ 5 MB |
 | GET | `/orders/:id/tracking` | Delivery tracking: driver, vehicle, expected arrival, position (only in transit) |
-| POST | `/orders/:id/confirm-receipt` | "Confirmo que recebi" — after the driver delivered without the code |
+| GET | `/reservations/:token` | A reservation (confirmation page, account) |
+| POST | `/reservations/:token/more-time` | "Pedir mais tempo": the team is told and extends it in Gestão · Reservas |
 | POST | `/newsletter` | `{ email, locale }` — footer "Receba as novidades" |
 
 ```json

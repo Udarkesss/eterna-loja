@@ -7,7 +7,7 @@ import { Icon } from "@/components/ui/Icon";
 import { whatsappLink } from "@/data/site";
 import { t } from "@/i18n";
 import { useI18n } from "@/i18n/I18nProvider";
-import { formatMsisdn } from "@/lib/payments/msisdn";
+import { distanceKm } from "@/lib/delivery";
 import { toMaputo } from "@/lib/time";
 import type { TrackingDTO } from "@/server/delivery";
 import type { MapMarker } from "./LiveMap";
@@ -17,23 +17,90 @@ const LiveMap = dynamic(() => import("./LiveMap").then((m) => m.LiveMap), { ssr:
 const POLL_MS = 15_000;
 
 /**
- * EN: "Telemóvel · Acompanhar entrega": live map (only while on the way), the driver card, expected arrival and
- *     "Confirmo que recebi". Refreshes every 15 s while the delivery is not finished.
- * PT: Mapa ao vivo (só a caminho), cartão do entregador, hora prevista e "Confirmo que recebi". Actualiza a cada 15 s.
+ * EN: Live parts of "Acompanhar a entrega" (design V3-Acompanhar): the map with the store, the driver and the address
+ *     ("Ao vivo · há 20 s"), and the driver card (expected arrival, distance, Ligar, WhatsApp). Refreshes every 15 s
+ *     until the delivery is finished; a new state reloads the page (timeline).
+ * PT: Partes ao vivo de "Acompanhar a entrega" (V3): o mapa com a loja, o entregador e a morada, e o cartão do
+ *     entregador (chegada prevista, distância, Ligar, WhatsApp). Actualiza a cada 15 s até a entrega terminar.
  */
-export function OrderTracking({ orderId, number, initial }: { orderId: string; number: string; initial: TrackingDTO }) {
+export function TrackingMap({ orderId, initial }: { orderId: string; initial: TrackingDTO }) {
+  const data = useTracking(orderId, initial);
   const { dict } = useI18n();
   const tr = dict.order.tracking;
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 5000);
+    return () => clearInterval(id);
+  }, []);
+  const markers: MapMarker[] = [
+    { ...data.origin, kind: "store", label: tr.storeLabel },
+    ...(data.position ? [{ ...data.position, kind: "driver" as const, label: tr.driverLabel }] : []),
+    ...(data.destination ? [{ ...data.destination, kind: "destination" as const, label: tr.you }] : []),
+  ];
+  const age = data.position ? Math.max(0, Math.round((now - new Date(data.position.at).getTime()) / 1000)) : null;
+  return (
+    <div className={styles.map}>
+      <LiveMap markers={markers} ariaLabel={tr.mapLabel} height={520} />
+      {age !== null && (
+        <span className={styles.live}>
+          <Icon name="dot" size={12} />
+          {age < 120 ? t(tr.live, { seconds: age }) : t(tr.liveMinutes, { minutes: Math.round(age / 60) })}
+        </span>
+      )}
+    </div>
+  );
+}
+
+export function DriverCard({ orderId, initial }: { orderId: string; initial: TrackingDTO }) {
+  const data = useTracking(orderId, initial);
+  const { dict, locale } = useI18n();
+  const tr = dict.order.tracking;
+  if (!data.driver) return null;
+  const km = data.position && data.destination ? distanceKm(data.position, data.destination) : null;
+  return (
+    <section className={styles.card} aria-label={tr.yourDriver}>
+      <span className="eyebrow">{tr.yourDriver}</span>
+      <div className={styles.driver}>
+        <span className={styles.avatar}>{data.driver.initials}</span>
+        <span className={styles.driverText}>
+          <b>{data.driver.name}</b>
+          {data.driver.vehicle && <span className={styles.muted}>{data.driver.vehicle}</span>}
+        </span>
+      </div>
+      <div className={styles.facts}>
+        <div>
+          <span className={styles.xs}>{tr.eta}</span>
+          <span className={styles.fact}>{data.status === "delivered" || data.status === "confirmed" ? tr.arrived : data.etaAt ? toMaputo(data.etaAt).time : "—"}</span>
+        </div>
+        <div>
+          <span className={styles.xs}>{tr.distance}</span>
+          <span className={styles.fact}>{km != null ? `${km.toLocaleString(locale === "pt" ? "pt-PT" : "en-GB", { maximumFractionDigits: 1 })} km` : "—"}</span>
+        </div>
+      </div>
+      {data.driver.phone && (
+        <div className={styles.buttons}>
+          <a href={`tel:+258${data.driver.phone}`} className={styles.btn}>
+            <Icon name="phone" size={16} />
+            {tr.call}
+          </a>
+          <a href={whatsappLink(undefined, `258${data.driver.phone}`)} target="_blank" rel="noopener noreferrer" className={styles.btn}>
+            <Icon name="whatsapp" size={16} />
+            WhatsApp
+          </a>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** EN: Shared polling (one request per component, every 15 s). PT: Consulta partilhada, a cada 15 s. */
+function useTracking(orderId: string, initial: TrackingDTO) {
   const router = useRouter();
   const [data, setData] = useState(initial);
-  const [now, setNow] = useState(() => Date.now());
-  const [busy, setBusy] = useState(false);
   const finished = data.status === "confirmed" || data.status === "cancelled";
-
   useEffect(() => {
     if (finished) return;
     const id = setInterval(async () => {
-      setNow(Date.now());
       try {
         const res = await fetch(`/api/v1/orders/${orderId}/tracking`, { cache: "no-store" });
         const body = (await res.json()) as { data?: TrackingDTO };
@@ -47,120 +114,5 @@ export function OrderTracking({ orderId, number, initial }: { orderId: string; n
     }, POLL_MS);
     return () => clearInterval(id);
   }, [finished, orderId, data.status, router]);
-
-  async function confirm() {
-    setBusy(true);
-    try {
-      const res = await fetch(`/api/v1/orders/${orderId}/confirm-receipt`, { method: "POST" });
-      const body = (await res.json()) as { data?: TrackingDTO };
-      if (body.data) setData(body.data);
-      router.refresh();
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const markers: MapMarker[] = [
-    { ...data.origin, kind: "store", label: `${tr.store} 02` },
-    ...(data.position ? [{ ...data.position, kind: "driver" as const }] : []),
-    ...(data.destination ? [{ ...data.destination, kind: "destination" as const, label: tr.you }] : []),
-  ];
-  const age = data.position ? Math.max(0, Math.round((now - new Date(data.position.at).getTime()) / 1000)) : null;
-  const showMap = data.status === "in_transit" && !!data.destination;
-
-  return (
-    <div className={styles.wrap}>
-      {(data.status === "in_transit" || data.status === "delivered" || data.status === "confirmed") && (
-        <div className={styles.head}>
-          <h2 className={styles.title}>
-            {data.status === "in_transit" ? tr.onTheWay : data.status === "delivered" ? tr.deliveredTitle : tr.confirmedTitle}
-          </h2>
-          <span className={styles.sub}>
-            {data.status === "in_transit" && data.startedAt
-              ? t(tr.leftAt, { time: toMaputo(data.startedAt).time })
-              : data.status === "delivered"
-                ? tr.deliveredSub
-                : data.confirmedAt
-                  ? t(tr.confirmedSub, { time: toMaputo(data.confirmedAt).time })
-                  : ""}
-          </span>
-        </div>
-      )}
-
-      {showMap && (
-        <section className={styles.mapBox}>
-          <div style={{ position: "relative" }}>
-            <LiveMap markers={markers} ariaLabel={tr.mapLabel} height={240} />
-            {age !== null && (
-              <span className={styles.live}>{age < 120 ? t(tr.live, { seconds: age }) : t(tr.liveMinutes, { minutes: Math.round(age / 60) })}</span>
-            )}
-          </div>
-          <span className={styles.note}>{tr.mapNote}</span>
-        </section>
-      )}
-
-      {data.driver && data.status !== "confirmed" && (
-        <section className={styles.card} aria-label={tr.yourDriver}>
-          <div className={styles.driver}>
-            <span className={styles.avatar}>{data.driver.initials}</span>
-            <span className={styles.driverText}>
-              <span className={styles.small}>{tr.yourDriver}</span>
-              <span className={styles.name}>{data.driver.name}</span>
-              {data.driver.phone && <span className={styles.note}>+258 {formatMsisdn(data.driver.phone)}</span>}
-            </span>
-          </div>
-          <dl className={styles.facts}>
-            {data.driver.vehicle && (
-              <div>
-                <dt>{tr.vehicle}</dt>
-                <dd>
-                  <Icon name="truck" size={18} /> {data.driver.vehicle}
-                </dd>
-              </div>
-            )}
-            <div>
-              <dt>{tr.eta}</dt>
-              <dd className={styles.eta}>{data.status === "delivered" ? tr.arrived : data.etaAt ? toMaputo(data.etaAt).time : "—"}</dd>
-            </div>
-          </dl>
-          {data.driver.phone && (
-            <div className={styles.buttons}>
-              <a href={`tel:+258${data.driver.phone}`} className={styles.btnOutline}>
-                <Icon name="phone" size={18} />
-                {tr.call}
-              </a>
-              <a href={whatsappLink(undefined, `258${data.driver.phone}`)} className={styles.btnOutline}>
-                <Icon name="whatsapp" size={18} />
-                WhatsApp
-              </a>
-            </div>
-          )}
-        </section>
-      )}
-
-      {data.status === "delivered" && (
-        <section className={styles.confirm}>
-          <h3 className={styles.confirmTitle}>{tr.receivedQuestion}</h3>
-          <p className={styles.note} style={{ fontSize: 14, lineHeight: "22px" }}>
-            {tr.receivedBody}
-          </p>
-          <button className={styles.btn} disabled={busy} onClick={confirm}>
-            <Icon name="check" size={18} />
-            {tr.confirmReceived}
-          </button>
-          <a href={whatsappLink(t(tr.photoMessage, { number }), data.storeWhatsapp)} target="_blank" rel="noopener noreferrer" className={styles.btnOutline}>
-            <Icon name="camera" size={18} />
-            {tr.sendPhoto}
-          </a>
-        </section>
-      )}
-
-      {data.status === "confirmed" && (
-        <div role="status" className={styles.done}>
-          <Icon name="check" size={18} />
-          <span>{tr.confirmedNote}</span>
-        </div>
-      )}
-    </div>
-  );
+  return data;
 }

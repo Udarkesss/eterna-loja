@@ -17,7 +17,7 @@ import type { StaffContext } from "./staff/access";
 /**
  * EN: Deliveries (phase 5; design "Entregador · As minhas entregas", "Entrega, GPS e código", "Acompanhar entrega",
  *     "Gestão · 4 Entregas"). States: pending → assigned → in_transit → delivered (no code, waits for the customer)
- *     → confirmed (code given, or the customer confirmed). Cash on delivery is marked paid when the code is accepted.
+ *     → confirmed (the customer gave the code to the driver). Cash on delivery is marked paid when the code is accepted.
  * PT: Entregas (fase 5). Estados: pendente → atribuída → em trânsito → entregue (sem código, à espera da cliente)
  *     → confirmada (código certo, ou a cliente confirmou). O pagamento na entrega fica pago quando o código é aceite.
  */
@@ -211,16 +211,6 @@ export async function trackingFor(order: OrderRow): Promise<TrackingDTO> {
     confirmedAt: order.deliveryConfirmedAt?.toISOString() ?? null,
     storeWhatsapp: site.whatsapp,
   };
-}
-
-/** EN: "Confirmo que recebi" (customer). PT: A cliente confirma a recepção. */
-export async function confirmReceipt(order: OrderRow) {
-  if (order.fulfillmentStatus !== "delivered") throw new AppError("VALIDATION_ERROR", "Not delivered", 400);
-  const db = await getDb();
-  await db.transaction(async (tx) => {
-    await tx.update(orders).set({ fulfillmentStatus: "confirmed", deliveryConfirmedAt: new Date() }).where(eq(orders.id, order.id));
-    await tx.insert(orderEvents).values({ orderId: order.id, type: "confirmed", detail: "Confirmada pela cliente", actorName: order.contact.name });
-  });
 }
 
 // ── Back-office / Gestão · 4 Entregas ─────────────────────────────────
