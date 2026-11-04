@@ -13,6 +13,7 @@ import { sendMessage } from "./messaging";
 import { settlePayment } from "./orders";
 import { getSetting } from "./settings";
 import type { StaffContext } from "./staff/access";
+import { storeWhatsappNumber } from "./contacts";
 
 /**
  * EN: Deliveries (phase 5; design "Entregador · As minhas entregas", "Entrega, GPS e código", "Acompanhar entrega",
@@ -209,7 +210,7 @@ export async function trackingFor(order: OrderRow): Promise<TrackingDTO> {
     startedAt: order.deliveryStartedAt?.toISOString() ?? null,
     deliveredAt: order.deliveredAt?.toISOString() ?? null,
     confirmedAt: order.deliveryConfirmedAt?.toISOString() ?? null,
-    storeWhatsapp: site.whatsapp,
+    storeWhatsapp: await storeWhatsappNumber(),
   };
 }
 

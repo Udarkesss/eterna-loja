@@ -28,7 +28,12 @@ export const site = {
   ] as const,
 };
 
-export function whatsappLink(message?: string, number: string = site.whatsapp): string {
+/**
+ * EN: WhatsApp link. Without a number it is the store's, chosen in Gestão → Contactos (through /api/v1/whatsapp).
+ * PT: Ligação de WhatsApp. Sem número é o da loja, escolhido na gestão (através de /api/v1/whatsapp).
+ */
+export function whatsappLink(message?: string, number?: string): string {
+  if (!number) return message ? `/api/v1/whatsapp?text=${encodeURIComponent(message)}` : "/api/v1/whatsapp";
   return message ? `https://wa.me/${number}?text=${encodeURIComponent(message)}` : `https://wa.me/${number}`;
 }
 

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
-import { navFor, site, storeSeeds, whatsappLink } from "@/data/site";
+import { navFor, storeSeeds, whatsappLink } from "@/data/site";
 import { useI18n } from "@/i18n/I18nProvider";
 import { resolveHref } from "@/lib/links";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -19,7 +19,7 @@ import styles from "./MobileMenu.module.css";
  * PT: Menu do telemóvel do design V3: gaveta em ecrã inteiro com o menu principal (colecção activa assinalada),
  *     Conta / Favoritos e "Fale connosco". Escape ou o X fecham; o foco volta ao botão do menu.
  */
-export function MobileMenu({ collection, order }: { collection?: string; order?: string[] }) {
+export function MobileMenu({ collection, order, email, phone: phoneProp }: { collection?: string; order?: string[]; email?: string; phone?: string }) {
   const { locale, dict, href } = useI18n();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -47,7 +47,7 @@ export function MobileMenu({ collection, order }: { collection?: string; order?:
     };
   }, [open]);
 
-  const phone = storeSeeds[0].phone.replace(/\s/g, "");
+  const phone = (phoneProp ?? storeSeeds[0].phone).replace(/\s/g, "");
 
   return (
     <>
@@ -110,7 +110,7 @@ export function MobileMenu({ collection, order }: { collection?: string; order?:
               </a>
             </div>
             <span className={styles.small}>{dict.nav.storesLine}</span>
-            <span className={styles.small}>{site.email}</span>
+            {email && <span className={styles.small}>{email}</span>}
           </div>
         </div>
       )}

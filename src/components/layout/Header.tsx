@@ -8,6 +8,7 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 import { MobileMenu } from "./MobileMenu";
 import { HomeLogoLink, NavLinks } from "./NavLinks";
 import styles from "./Header.module.css";
+import { contactsView } from "@/server/contacts";
 
 /**
  * EN: Store header of design V3. Computer: two rows — PT/EN · logo · icons (search, account, favourites, bag), then the
@@ -17,7 +18,7 @@ import styles from "./Header.module.css";
  */
 export async function Header({ locale }: { locale: Locale }) {
   // EN: The first menu item is the active collection (Gestão → Colecções). PT: O primeiro item é a colecção activa.
-  const [active, sections] = await Promise.all([activeCollection(locale), getPageSections("home", locale)]);
+  const [active, sections, contacts] = await Promise.all([activeCollection(locale), getPageSections("home", locale), contactsView("contacts")]);
   const collection = active?.name;
   const order = sections.map((x) => x.key);
   const dict = getDictionary(locale);
@@ -30,7 +31,7 @@ export async function Header({ locale }: { locale: Locale }) {
             <LanguageSwitcher />
           </span>
           <span className={styles.phone}>
-            <MobileMenu collection={collection} order={order} />
+            <MobileMenu collection={collection} order={order} email={contacts.emails[0]?.value} phone={contacts.phones[0]?.value} />
           </span>
         </div>
         <HomeLogoLink className={styles.brand} label={dict.nav.home}>

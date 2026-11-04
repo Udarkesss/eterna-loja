@@ -1,6 +1,8 @@
+import { waDigits } from "@/data/contacts";
 import { activeCollection } from "@/server/catalog";
+import { contactsView } from "@/server/contacts";
 import Link from "next/link";
-import { Icon, type IconName } from "@/components/ui/Icon";
+import { SocialIcon } from "@/components/ui/SocialIcon";
 import { PaymentLogos } from "@/components/ui/PaymentLogos";
 import { mainNav, site } from "@/data/site";
 import { getDictionary, t } from "@/i18n";
@@ -12,13 +14,6 @@ import styles from "./Footer.module.css";
 
 const year = new Date().getFullYear();
 
-const SOCIAL_ICON: Record<(typeof site.social)[number]["key"], IconName> = {
-  instagram: "instagram",
-  facebook: "facebook",
-  tiktok: "tiktok",
-  whatsapp: "whatsapp",
-};
-
 /**
  * EN: Footer of design V3, the same on every store page: brand · Comprar · Ajuda · Contactos · Novidades, then the
  *     social links and payment badges. On phones the columns stack (design "Telemóvel · Início 2/2").
@@ -26,7 +21,8 @@ const SOCIAL_ICON: Record<(typeof site.social)[number]["key"], IconName> = {
  *     as redes sociais e os selos de pagamento. No telemóvel as colunas empilham.
  */
 export async function SiteFooter({ locale }: { locale: Locale }) {
-  const active = await activeCollection(locale);
+  // EN: Contacts and networks from Gestão → Contactos (place "Rodapé"). PT: Contactos e redes da gestão.
+  const [active, contacts] = await Promise.all([activeCollection(locale), contactsView("footer")]);
   const dict = getDictionary(locale);
   const f = dict.footer;
   const shop = mainNav.slice(0, 5).map((item, i) => ({
@@ -40,7 +36,6 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
     { href: localizePath(locale, "/info/trocas-devolucoes"), label: f.exchanges },
     { href: localizePath(locale, "/info/privacidade"), label: f.privacy },
   ];
-  const whatsapp = `+${site.whatsapp.slice(0, 3)} ${site.whatsapp.slice(3, 5)} ${site.whatsapp.slice(5, 8)} ${site.whatsapp.slice(8)}`;
 
   return (
     <footer className={`on-privee ${styles.footer}`}>
@@ -68,11 +63,21 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
           </nav>
           <div className={styles.col}>
             <h2 className={styles.heading}>{f.contacts}</h2>
-            <a href={`tel:${site.supportPhone.replace(/\s/g, "")}`}>{site.phonesLine}</a>
-            <a href={`https://wa.me/${site.whatsapp}`} target="_blank" rel="noopener noreferrer">
-              WhatsApp {whatsapp}
-            </a>
-            <a href={`mailto:${site.email}`}>{site.email}</a>
+            {contacts.phones.map((c) => (
+              <a key={c.value} href={`tel:${c.value.replace(/\s/g, "")}`}>
+                {c.value}
+              </a>
+            ))}
+            {contacts.whatsapp && (
+              <a href={`https://wa.me/${waDigits(contacts.whatsapp.value)}`} target="_blank" rel="noopener noreferrer">
+                WhatsApp {contacts.whatsapp.value}
+              </a>
+            )}
+            {contacts.emails.map((c) => (
+              <a key={c.value} href={`mailto:${c.value}`}>
+                {c.value}
+              </a>
+            ))}
             <Link href={resolveHref("#contactos", locale)}>{f.storesShort}</Link>
           </div>
           <div className={styles.newsCol}>
@@ -83,9 +88,9 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
         </div>
         <div className={styles.row}>
           <nav aria-label={dict.common.social} className={styles.social}>
-            {site.social.map((s) => (
-              <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer">
-                <Icon name={SOCIAL_ICON[s.key]} size={16} />
+            {contacts.social.map((s) => (
+              <a key={s.url + s.handle} href={s.url} target="_blank" rel="noopener noreferrer">
+                <SocialIcon link={s} />
                 {s.handle}
               </a>
             ))}

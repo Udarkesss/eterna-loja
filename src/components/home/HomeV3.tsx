@@ -3,12 +3,14 @@ import Link from "next/link";
 import { ProductCard } from "@/components/product/ProductCard";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { RichText } from "@/components/ui/RichText";
-import { site, whatsappLink } from "@/data/site";
+import { whatsappLink } from "@/data/site";
 import { getDictionary } from "@/i18n";
 import { resolveHref } from "@/lib/links";
 import type { CategoryDTO, Locale, OccasionTileDTO, ProductDTO, StoreDTO } from "@/types";
 import { AccessoriesTabs, Carousel, MoreOccasions, VideoBand, type AccessoryTab } from "./HomeInteractive";
 import styles from "./HomeV3.module.css";
+import type { ContactsView, SocialLink } from "@/data/contacts";
+import { SocialIcon } from "@/components/ui/SocialIcon";
 
 /**
  * EN: Sections of the V3 home page ("Loja · Início 1/2 e 2/2"), drawn from the content of Gestão → Conteúdo do site.
@@ -328,8 +330,8 @@ interface AboutData {
   socialImages: string[];
 }
 
-export function Sobre({ data }: { data: AboutData }) {
-  const instagram = site.social.find((s) => s.key === "instagram")?.url ?? "#";
+export function Sobre({ data, social }: { data: AboutData; social: SocialLink[] }) {
+  const instagram = social.find((s) => s.network === "instagram")?.url ?? "#";
   return (
     <section id="sobre" className={`page-x ${styles.section} ${styles.sobre}`}>
       <div className={styles.founder}>
@@ -397,14 +399,12 @@ export function Sobre({ data }: { data: AboutData }) {
             </h3>
           </div>
           <div className={styles.socialButtons}>
-            {site.social
-              .filter((s) => s.key !== "whatsapp")
-              .map((s) => (
-                <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer" className={styles.btnSmall}>
-                  <Icon name={s.key as IconName} size={16} />
-                  {s.handle}
-                </a>
-              ))}
+            {social.map((s) => (
+              <a key={s.url + s.handle} href={s.url} target="_blank" rel="noopener noreferrer" className={styles.btnSmall}>
+                <SocialIcon link={s} />
+                {s.handle}
+              </a>
+            ))}
           </div>
         </div>
         <div className={styles.socialGrid}>
@@ -423,13 +423,12 @@ export function Sobre({ data }: { data: AboutData }) {
 interface ContactData {
   eyebrow: string;
   title: string;
-  stores: { code: string; image: string; eyebrow: string; name: string; description: string; action: "whatsapp" | "fitting" }[];
+  stores: { code: string; image: string; eyebrow: string; name: string; description: string; action: "whatsapp" | "call" | "fitting"; showHours?: boolean }[];
   mapsUrl: string;
 }
 
-export function Contactos({ data, stores, locale }: { data: ContactData; stores: StoreDTO[]; locale: Locale }) {
+export function Contactos({ data, stores, contacts, locale }: { data: ContactData; stores: StoreDTO[]; contacts: ContactsView; locale: Locale }) {
   const dict = getDictionary(locale);
-  const wa = `+${site.whatsapp.slice(0, 3)} ${site.whatsapp.slice(3, 5)} ${site.whatsapp.slice(5, 8)} ${site.whatsapp.slice(8)}`;
   return (
     <section id="contactos" className={`page-x ${styles.section}`}>
       <div className={styles.sectionHead}>
@@ -443,7 +442,21 @@ export function Contactos({ data, stores, locale }: { data: ContactData; stores:
       <div className={styles.storeGrid}>
         {data.stores.map((card) => {
           const store = stores.find((s) => s.code === card.code);
-          const phone = store?.phone ?? site.supportPhone;
+          const phone = store?.phone ?? contacts.phones[0]?.value ?? "";
+          // EN: Bridal is by appointment only: no hours unless switched on. PT: A Bridal é só por marcação.
+          const showHours = card.showHours ?? card.action !== "fitting";
+          const wa = (
+            <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className={card.action === "whatsapp" ? styles.btnDarkSmall : styles.btnSmall}>
+              <Icon name="whatsapp" size={16} />
+              WhatsApp
+            </a>
+          );
+          const call = (
+            <a href={`tel:${phone.replace(/\s/g, "")}`} className={card.action === "call" ? styles.btnDarkSmall : styles.btnSmall}>
+              <Icon name="phone" size={16} />
+              {dict.nav.call}
+            </a>
+          );
           return (
             <article key={card.code} className={styles.storeCard}>
               <div className={styles.storeImage}>
@@ -458,7 +471,7 @@ export function Contactos({ data, stores, locale }: { data: ContactData; stores:
                     <Icon name="pin" size={18} />
                     {store?.location ?? "Glória Mall, Maputo"}
                   </li>
-                  {store?.hours && (
+                  {showHours && store?.hours && (
                     <li>
                       <Icon name="clock" size={18} />
                       {store.hours}
@@ -471,20 +484,24 @@ export function Contactos({ data, stores, locale }: { data: ContactData; stores:
                 </ul>
                 <div className={styles.storeButtons}>
                   {card.action === "fitting" ? (
-                    <Link href={resolveHref("#prova", locale)} className={styles.btnDarkSmall}>
-                      <Icon name="calendar" size={16} />
-                      {dict.home.bookFittingShort}
-                    </Link>
+                    <>
+                      <Link href={resolveHref("#prova", locale)} className={styles.btnDarkSmall}>
+                        <Icon name="calendar" size={16} />
+                        {dict.home.bookFittingShort}
+                      </Link>
+                      {call}
+                    </>
+                  ) : card.action === "call" ? (
+                    <>
+                      {call}
+                      {wa}
+                    </>
                   ) : (
-                    <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className={styles.btnDarkSmall}>
-                      <Icon name="whatsapp" size={16} />
-                      WhatsApp
-                    </a>
+                    <>
+                      {wa}
+                      {call}
+                    </>
                   )}
-                  <a href={`tel:${phone.replace(/\s/g, "")}`} className={styles.btnSmall}>
-                    <Icon name="phone" size={16} />
-                    {dict.nav.call}
-                  </a>
                   <a href={data.mapsUrl} target="_blank" rel="noopener noreferrer" className={styles.btnText}>
                     <Icon name="pin" size={16} />
                     {dict.home.howToGetThere}
@@ -496,33 +513,39 @@ export function Contactos({ data, stores, locale }: { data: ContactData; stores:
         })}
       </div>
       <div className={styles.channels}>
-        <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className={styles.channel}>
-          <span className={styles.iconCircleSmall}>
-            <Icon name="whatsapp" size={18} />
-          </span>
-          <span>
-            <span className={styles.label}>WhatsApp</span>
-            <span className={styles.small}>{wa}</span>
-          </span>
-        </a>
-        <a href={`tel:${site.supportPhone.replace(/\s/g, "")}`} className={styles.channel}>
-          <span className={styles.iconCircleSmall}>
-            <Icon name="phone" size={18} />
-          </span>
-          <span>
-            <span className={styles.label}>{dict.home.phone}</span>
-            <span className={styles.small}>{site.phonesLine}</span>
-          </span>
-        </a>
-        <a href={`mailto:${site.email}`} className={styles.channel}>
-          <span className={styles.iconCircleSmall}>
-            <Icon name="mail" size={18} />
-          </span>
-          <span>
-            <span className={styles.label}>E-mail</span>
-            <span className={styles.small}>{site.email}</span>
-          </span>
-        </a>
+        {contacts.whatsapp && (
+          <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className={styles.channel}>
+            <span className={styles.iconCircleSmall}>
+              <Icon name="whatsapp" size={18} />
+            </span>
+            <span>
+              <span className={styles.label}>WhatsApp</span>
+              <span className={styles.small}>{contacts.whatsapp.value}</span>
+            </span>
+          </a>
+        )}
+        {contacts.phones.length > 0 && (
+          <a href={`tel:${contacts.phones[0].value.replace(/\s/g, "")}`} className={styles.channel}>
+            <span className={styles.iconCircleSmall}>
+              <Icon name="phone" size={18} />
+            </span>
+            <span>
+              <span className={styles.label}>{dict.home.phone}</span>
+              <span className={styles.small}>{contacts.phones.map((c) => c.value).join(" · ")}</span>
+            </span>
+          </a>
+        )}
+        {contacts.emails.length > 0 && (
+          <a href={`mailto:${contacts.emails[0].value}`} className={styles.channel}>
+            <span className={styles.iconCircleSmall}>
+              <Icon name="mail" size={18} />
+            </span>
+            <span>
+              <span className={styles.label}>E-mail</span>
+              <span className={styles.small}>{contacts.emails.map((c) => c.value).join(" · ")}</span>
+            </span>
+          </a>
+        )}
       </div>
     </section>
   );

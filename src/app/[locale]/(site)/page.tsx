@@ -9,6 +9,7 @@ import { CampaignBand } from "@/components/campaign/CampaignBand";
 import { SeasonBand } from "@/components/season/SeasonBand";
 import { SeasonFx } from "@/components/season/SeasonFx";
 import seasonStyles from "@/components/season/Season.module.css";
+import { contactsView } from "@/server/contacts";
 import { getFraming } from "@/server/framing";
 import { activeSeason } from "@/server/seasons";
 import { siteCampaign } from "@/server/campaigns";
@@ -28,7 +29,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const novidades = data("novidades");
   const colecao = data("colecao");
 
-  const [campaign, season, framing] = await Promise.all([siteCampaign(locale), activeSeason(locale), getFraming()]);
+  const [campaign, season, framing, contacts] = await Promise.all([siteCampaign(locale), activeSeason(locale), getFraming(), contactsView("contacts")]);
   // EN: Cover picked from a video frame in Gestão → Enquadrar. PT: Capa escolhida de um fotograma em Enquadrar.
   const posterOf = (video: string | undefined, fallback: string) => (video && framing[video]?.poster) || fallback;
   const [tiles, newProducts, stores, active, showPrice, seasonal, campaignProducts] = await Promise.all([
@@ -100,8 +101,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     noivas: (d) => <Noivas data={{ ...d, poster: posterOf(d.video, d.poster) }} locale={locale} />,
     acessorios: (d) => <Acessorios data={d} />,
     modeladores: (d) => <Modeladores data={d} locale={locale} />,
-    sobre: (d) => <Sobre data={d} />,
-    contactos: (d) => <Contactos data={d} stores={stores} locale={locale} />,
+    sobre: (d) => <Sobre data={d} social={contacts.social} />,
+    contactos: (d) => <Contactos data={d} stores={stores} contacts={contacts} locale={locale} />,
   };
   /* eslint-enable @typescript-eslint/no-explicit-any */
 

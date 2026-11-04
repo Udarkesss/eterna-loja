@@ -30,6 +30,7 @@ export const MENU: { group: NavItem["group"]; href: string; label: string; icon:
   { group: "Catálogo", href: "/gestao/categorias", label: "Categorias e filtros", icon: "filter", area: "products.publish" },
   { group: "Catálogo", href: "/gestao/produtos/importar", label: "Importar", icon: "upload", area: "products.publish" },
   { group: "Site", href: "/gestao/conteudo", label: "Conteúdo do site", icon: "monitor", area: "content" },
+  { group: "Site", href: "/gestao/contactos", label: "Contactos e redes sociais", icon: "phone", area: "content" },
   { group: "Sistema", href: "/gestao/pagamentos", label: "Pagamentos e avisos", icon: "card", area: "payments.toggle" },
   { group: "Sistema", href: "/gestao/definicoes", label: "Definições", icon: "sliders", area: "system" },
   { group: "Sistema", href: "/gestao/utilizadores", label: "Utilizadores internos", icon: "user", area: "users.staff" },
