@@ -951,3 +951,16 @@
 .grow {
   flex: 1;
 }
+
+/* EN: "Imprimir talão": only the page content. PT: Só o conteúdo da página. */
+@media print {
+  .aside,
+  .topbar,
+  .actions button {
+    display: none !important;
+  }
+
+  .shell {
+    display: block;
+  }
+}

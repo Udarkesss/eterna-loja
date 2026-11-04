@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { PrintButton } from "@/components/admin/PrintButton";
 import { notFound } from "next/navigation";
 import s from "@/components/admin/admin.module.css";
 import { OrderActions, OrderNotes, OrderRefunds } from "@/components/admin/OrderActions";
@@ -54,6 +55,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <Chip tone={pay.tone}>{pay.label}</Chip>
             {o.fulfillmentStatus !== "pending" && <Chip tone={o.fulfillmentStatus === "cancelled" ? "bad" : "ok"}>{FULFILLMENT_LABEL[o.fulfillmentStatus]}</Chip>}
             {o.isDemo && <Chip>Exemplo</Chip>}
+            <PrintButton />
           </>
         }
       />
@@ -192,6 +194,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 {d.customerIndex}.ª encomenda{d.account ? ` · conta desde ${d.account.createdAt.getFullYear()}` : " · sem conta"}
               </span>
             </div>
+            {o.fulfillmentType === "pickup" && o.deliveryCode && (
+              <span>
+                Código de levantamento: <strong style={{ fontWeight: 500, letterSpacing: "0.2em" }}>{o.deliveryCode}</strong>
+              </span>
+            )}
             {o.fulfillmentType === "delivery" && (
               <div className={s.two}>
                 <span className={s.muted}>Morada</span>
@@ -211,8 +218,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                   <Icon name="whatsapp" size={16} />
                   WhatsApp
                 </a>
-                <a href={`tel:+258${phone}`} className={s.btnOutline}>
-                  Ligar
+                <a href={`sms:+258${phone}`} className={s.btnOutline}>
+                  Enviar SMS
                 </a>
                 {o.fulfillmentType === "delivery" && o.deliveryCode && !["confirmed", "cancelled"].includes(o.fulfillmentStatus) && (
                   <a

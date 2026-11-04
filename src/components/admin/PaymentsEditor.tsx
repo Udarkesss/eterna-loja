@@ -80,7 +80,7 @@ export function PaymentsEditor(props: {
       <section className={s.cardFlush}>
         <div className={s.cardHead}>
           <h2 className={s.h2}>Métodos de pagamento</h2>
-          <span className={s.muted}>{methods.filter((m) => m.enabled).length} de 6 activos</span>
+          <span className={s.muted}>{methods.filter((m) => m.enabled).length} de {methods.length} activos</span>
         </div>
         <table className={s.table}>
           <thead>
