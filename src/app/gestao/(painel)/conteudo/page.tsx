@@ -4,6 +4,7 @@ import { listOccasionTargets, listSections, listTiles } from "@/server/admin/con
 import { siteCampaign } from "@/server/campaigns";
 import { getDb } from "@/server/db";
 import { categories } from "@/server/db/schema";
+import { listSeasons } from "@/server/seasons";
 import { requireStaffPage } from "@/server/staff/access";
 
 export const metadata = { title: "Conteúdo do site" };
@@ -14,7 +15,7 @@ export const metadata = { title: "Conteúdo do site" };
 export default async function ContentPage() {
   await requireStaffPage("content");
   const db = await getDb();
-  const [rows, tiles, targets, cats, campaign] = await Promise.all([listSections("home"), listTiles(), listOccasionTargets(), db.select().from(categories), siteCampaign("pt")]);
+  const [rows, tiles, targets, cats, campaign, seasons] = await Promise.all([listSections("home"), listTiles(), listOccasionTargets(), db.select().from(categories), siteCampaign("pt"), listSeasons()]);
   const active = cats.find((r) => r.kind === "collection" && !r.parentId && r.details?.active);
   return (
     <>
@@ -36,6 +37,7 @@ export default async function ContentPage() {
             : null
         }
         campaign={campaign ? { name: campaign.name, placement: campaign.homePlacement } : null}
+        seasons={seasons}
       />
     </>
   );

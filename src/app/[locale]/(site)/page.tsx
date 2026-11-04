@@ -6,6 +6,10 @@ import { ScrollEffects } from "@/components/layout/Effects";
 import { SiteFooter } from "@/components/layout/Footer";
 import { resolveLocale } from "@/i18n/params";
 import { CampaignBand } from "@/components/campaign/CampaignBand";
+import { SeasonBand } from "@/components/season/SeasonBand";
+import { SeasonFx } from "@/components/season/SeasonFx";
+import seasonStyles from "@/components/season/Season.module.css";
+import { activeSeason } from "@/server/seasons";
 import { siteCampaign } from "@/server/campaigns";
 import { activeCollection, findCategory, listProducts, seasonalSlugs } from "@/server/catalog";
 import { cardPriceVisible, getOccasionTiles, getPageSections, listStores } from "@/server/content";
@@ -23,7 +27,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const novidades = data("novidades");
   const colecao = data("colecao");
 
-  const campaign = await siteCampaign(locale);
+  const [campaign, season] = await Promise.all([siteCampaign(locale), activeSeason(locale)]);
   const [tiles, newProducts, stores, active, showPrice, seasonal, campaignProducts] = await Promise.all([
     getOccasionTiles(locale),
     listProducts({ sort: "newest", limit: Number(novidades?.count) || 8 }, locale),
@@ -33,6 +37,18 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     seasonalSlugs(),
     campaign && campaign.homePlacement !== "none" ? listProducts({ ids: campaign.productIds.slice(0, 40) }, locale) : Promise.resolve([]),
   ]);
+  // EN: Time of the year (Gestão → Conteúdo → Épocas do ano): section before or after the collection and the effect.
+  // PT: Época do ano: secção antes ou depois da colecção e o efeito.
+  // EN: Without chosen pieces, the newest of the button's category. PT: Sem peças escolhidas, as mais novas da categoria do botão.
+  const seasonCategory = season?.href.startsWith("category:") ? season.href.slice(9) : null;
+  const seasonProducts = !season
+    ? []
+    : season.codes.length
+      ? await listProducts({ slugs: season.codes.map((x) => x.toLowerCase()) }, locale)
+      : seasonCategory
+        ? await listProducts({ category: seasonCategory, limit: 12 }, locale)
+        : [];
+  const seasonBand = season && season.placement !== "none" && <SeasonBand season={season} products={seasonProducts.filter((p) => p.stock > 0)} showPrice={showPrice} locale={locale} />;
   // EN: Campaign band before or after the collection (Gestão → Nova campanha → Onde aparece). PT: Faixa antes ou depois da colecção.
   const band = campaign && campaign.homePlacement !== "none" && (
     <CampaignBand campaign={campaign} products={campaign.productIds.map((id) => campaignProducts.find((p) => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p && p.stock > 0)} showPrice locale={locale} />
@@ -70,7 +86,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     colecao: (d) => (
       <>
         {campaign?.homePlacement === "before" && band}
+        {season?.placement === "before" && seasonBand}
         <Colecao data={d} collection={collection} locale={locale} />
+        {season?.placement === "after" && seasonBand}
         {campaign?.homePlacement === "after" && band}
       </>
     ),
@@ -86,6 +104,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   return (
     <>
+      {season && <div className={seasonStyles.garland} aria-hidden="true" />}
+      {season && season.effect !== "none" && <SeasonFx effect={season.effect} />}
       <Parallax enabled={hero?.parallax ?? true} intensity={hero?.parallaxIntensity ?? 0.25} />
       <ScrollEffects progress={hero?.progress !== false} reveal={hero?.reveal !== false} />
       {sections.map((s, i) => (

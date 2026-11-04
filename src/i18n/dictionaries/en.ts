@@ -650,6 +650,7 @@ export const en: Dictionary = {
     flashBar: "Flash · −{percent}% only until {time}",
     left: "ends in",
     see: "See campaign",
+    discover: "Discover",
     seeThe: "See the campaign",
     days: "days",
     hours: "hours",

@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { publishPageAction, saveHeroAction, saveTilesAction, type ContentResult } from "@/app/gestao/actions/content";
+import { publishPageAction, saveHeroAction, saveSeasonsAction, saveTilesAction, type ContentResult } from "@/app/gestao/actions/content";
+import type { Season } from "@/data/seasons";
 import { Icon } from "@/components/ui/Icon";
 import type { Localized } from "@/types";
 import c from "./AdminV3.module.css";
 import k from "./Collections.module.css";
 import d3 from "./Dashboard.module.css";
 import { FieldEditor, MediaField } from "./FieldEditor";
+import { SeasonsPanel } from "./SeasonsPanel";
 
 /**
  * EN: "Gestão · Conteúdo do site" of design V3-G-Conteudo: the home sections (their order is the menu order; switching
@@ -90,9 +92,11 @@ export function HomeContentEditor(props: {
   targets: Target[];
   collection: { id: string; name: string; message: string | null; buttonText: string | null; imageUrl: string | null } | null;
   campaign: { name: string; placement: string } | null;
+  seasons: Season[];
 }) {
   const [sections, setSections] = useState(props.sections);
   const [tiles, setTiles] = useState(props.tiles);
+  const [seasons, setSeasons] = useState(props.seasons);
   const [dirty, setDirty] = useState(false);
   const [res, setRes] = useState<ContentResult | null>(null);
   const [pending, start] = useTransition();
@@ -160,8 +164,10 @@ export function HomeContentEditor(props: {
       });
       if (!b.ok) return setRes(b);
       const t = await saveTilesAction(tiles);
-      setRes(t.ok ? { ok: true, message: "Alterações publicadas." } : t);
-      if (t.ok) setDirty(false);
+      if (!t.ok) return setRes(t);
+      const e = await saveSeasonsAction(seasons);
+      setRes(e.ok ? { ok: true, message: "Alterações publicadas." } : e);
+      if (e.ok) setDirty(false);
     });
 
   const menu = movable.filter((x) => x.visible && INFO[x.key]?.menu && INFO[x.key].menu !== "—").map((x) => (x.key === "colecao" ? (props.collection?.name ?? "Colecção") : INFO[x.key].menu));
@@ -561,6 +567,14 @@ export function HomeContentEditor(props: {
               </div>
             </div>
           </section>
+
+          <SeasonsPanel
+            seasons={seasons}
+            onChange={(next) => {
+              setSeasons(next);
+              touch();
+            }}
+          />
 
           <section className={d3.panel}>
             <div className={d3.panelHead}>

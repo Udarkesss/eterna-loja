@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { publishPage, saveHero, saveTiles, type SectionSave, type TileSave } from "@/server/admin/content";
+import { publishPage, saveHero, saveSeasons, saveTiles, type SectionSave, type TileSave } from "@/server/admin/content";
 import { AppError } from "@/server/errors";
 import { requireStaffAction } from "@/server/staff/access";
 import { savePublicUpload } from "@/server/uploads";
@@ -41,6 +41,11 @@ export async function saveTilesAction(tiles: TileSave[]) {
 export async function saveHeroAction(patch: Record<string, unknown>) {
   const staff = await requireStaffAction("content");
   return run(() => saveHero(staff, patch), "Publicado.");
+}
+
+export async function saveSeasonsAction(seasons: unknown) {
+  const staff = await requireStaffAction("content");
+  return run(() => saveSeasons(staff, seasons), "Publicado.");
 }
 
 export async function uploadContentFileAction(form: FormData): Promise<ContentResult> {

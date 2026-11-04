@@ -656,6 +656,7 @@ export const pt = {
     flashBar: "Relâmpago · −{percent}% só até às {time}",
     left: "faltam",
     see: "Ver campanha",
+    discover: "Descobrir",
     seeThe: "Ver a campanha",
     days: "dias",
     hours: "horas",

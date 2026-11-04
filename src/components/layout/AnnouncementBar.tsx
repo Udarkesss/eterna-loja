@@ -3,7 +3,9 @@ import Link from "next/link";
 import { TimeLeft } from "@/components/campaign/Countdown";
 import { getDictionary, t } from "@/i18n";
 import { localizePath } from "@/i18n/config";
+import { resolveHref } from "@/lib/links";
 import { siteCampaign } from "@/server/campaigns";
+import { activeSeason } from "@/server/seasons";
 import { getSection } from "@/server/content";
 import type { Locale } from "@/types";
 import styles from "./AnnouncementBar.module.css";
@@ -45,6 +47,32 @@ export async function AnnouncementBar({ locale }: { locale: Locale }) {
             </Link>
           </>
         )}
+      </div>
+    );
+  }
+  // EN: A time of the year changes the bar too ("✦ Natal & Réveillon · … · Descobrir ✦"). PT: A época também muda a faixa.
+  const season = await activeSeason(locale);
+  if (season?.bar) {
+    const dict = getDictionary(locale);
+    return (
+      <div className={`on-privee ${styles.bar}`}>
+        <span style={{ color: "#D8B45A" }} aria-hidden="true">
+          ✦
+        </span>
+        <span>{season.bar}</span>
+        {season.href && (
+          <>
+            <span className={styles.dot} aria-hidden="true">
+              ·
+            </span>
+            <Link href={resolveHref(season.href, locale)} className={styles.link}>
+              {dict.campaign.discover}
+            </Link>
+          </>
+        )}
+        <span style={{ color: "#D8B45A" }} aria-hidden="true">
+          ✦
+        </span>
       </div>
     );
   }

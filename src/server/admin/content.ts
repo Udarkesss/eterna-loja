@@ -3,11 +3,13 @@ import { asc, eq, and } from "drizzle-orm";
 import { z } from "zod";
 import { HOME_KEYS } from "@/data/content";
 import { infoPages, legalPages } from "@/data/site";
+import type { Season } from "@/data/seasons";
 import type { Localized } from "@/types";
 import { audit } from "../audit";
 import { getDb } from "../db";
 import { categories, contentSections, occasionTiles } from "../db/schema";
 import { AppError } from "../errors";
+import { setSetting } from "../settings";
 import type { StaffContext } from "../staff/access";
 
 /**
@@ -185,4 +187,41 @@ export async function saveHero(staff: StaffContext, input: Record<string, unknow
     .set({ data: { ...row.data, ...patch }, publishedAt: new Date() })
     .where(eq(contentSections.id, row.id));
   await audit({ actor: actor(staff), action: "Imagem principal publicada", detail: String(patch.media ?? "") });
+}
+
+
+// ── Times of the year / Épocas do ano ─────────────────────────────────
+
+const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+const md = z.string().regex(/^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/);
+const seasonSchema = z.object({
+  id: z.string().trim().min(1).max(40),
+  on: z.boolean(),
+  name: text(80),
+  from: md,
+  to: md,
+  effect: z.enum(["sparkles", "snow", "hearts", "none"]),
+  placement: z.enum(["before", "after", "none"]),
+  textSide: z.enum(["right", "left", "top", "bottom"]),
+  media: z.enum(["photo", "slides", "video"]),
+  images: z.array(path).max(8),
+  video: path,
+  badge: text(80),
+  title: text(120),
+  text: text(600),
+  button: text(60),
+  href: path,
+  bar: text(160),
+  codes: z.array(z.string().trim().max(40)).max(8),
+  colors: z.object({ band: hex, desc: hex, title: hex, accent: hex, text: hex, button: hex, buttonText: hex }),
+});
+
+/** EN: Saves the times of the year (setting "seasons"). PT: Guarda as épocas do ano (definição "seasons"). */
+export async function saveSeasons(staff: StaffContext, input: unknown) {
+  const parsed = z.array(seasonSchema).max(20).safeParse(input);
+  if (!parsed.success) throw new AppError("VALIDATION_ERROR", "Verifique as épocas: datas (MM-DD), cores e textos.", 400);
+  const ids = parsed.data.map((x) => x.id);
+  if (new Set(ids).size !== ids.length) throw new AppError("VALIDATION_ERROR", "Há duas épocas com o mesmo identificador.", 400);
+  await setSetting("seasons", parsed.data satisfies Season[], staff.id);
+  await audit({ actor: actor(staff), action: "Épocas do ano publicadas", detail: parsed.data.map((x) => `${x.name.pt}${x.on ? "" : " (desligada)"}`).join(", ") });
 }

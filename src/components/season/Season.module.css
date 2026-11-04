@@ -1,0 +1,213 @@
+/* EN: Times of the year of design V3 (section, effect, garland). PT: Épocas do ano do V3 (secção, efeito, grinalda). */
+.band {
+  display: flex;
+  flex-direction: column;
+}
+.panel {
+  display: flex;
+  flex-direction: row;
+}
+.band[data-side="left"] .panel {
+  flex-direction: row-reverse;
+}
+.band[data-side="top"] .panel {
+  flex-direction: column-reverse;
+}
+.band[data-side="bottom"] .panel {
+  flex-direction: column;
+}
+.media {
+  position: relative;
+  width: 50%;
+  height: 560px;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: #2a2523;
+}
+.band[data-side="top"] .media,
+.band[data-side="bottom"] .media {
+  width: 100%;
+  height: 620px;
+}
+.video,
+.slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.7s ease;
+}
+.ctrl {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 22px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dot {
+  width: 28px;
+  height: 2px;
+  border: 0;
+  padding: 0;
+  background: rgba(250, 247, 242, 0.45);
+  cursor: pointer;
+}
+.dot[data-on] {
+  background: #faf7f2;
+}
+.arrow {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(250, 247, 242, 0.92);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.text {
+  width: 50%;
+  padding: 72px 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 18px;
+}
+.band[data-side="top"] .text,
+.band[data-side="bottom"] .text {
+  width: 100%;
+  padding: 56px 80px;
+  align-items: center;
+  text-align: center;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.title {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: clamp(40px, 5vw, 64px);
+  line-height: 1.06;
+}
+.title em {
+  color: var(--season-accent);
+}
+.body {
+  max-width: 560px;
+  font-size: 16px;
+  line-height: 26px;
+}
+.btn {
+  margin-top: 8px;
+  height: 52px;
+  padding: 0 28px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid;
+  border-radius: 2px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.cards {
+  padding-top: 56px;
+  padding-bottom: 80px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+}
+/* ── Efeito por cima da página ── */
+.fx {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 60;
+}
+.fx i {
+  position: absolute;
+  top: -20px;
+  display: block;
+  border-radius: 999px;
+  font-style: normal;
+  animation: fall linear infinite;
+}
+.fx[data-effect="sparkles"] i {
+  width: 7px;
+  height: 7px;
+  background: #d8b45a;
+  box-shadow: 0 0 8px 2px rgba(216, 180, 90, 0.55);
+}
+.fx[data-effect="snow"] i {
+  width: 7px;
+  height: 7px;
+  background: #fff;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.12);
+}
+.fx[data-effect="hearts"] i {
+  color: #c4485f;
+  font-size: 12px;
+  line-height: 1;
+  border-radius: 0;
+}
+@keyframes fall {
+  to {
+    transform: translateY(110vh) translateX(30px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fx {
+    display: none;
+  }
+  .slide {
+    transition: none;
+  }
+}
+.garland {
+  height: 3px;
+  background: linear-gradient(90deg, #8e1f2b, #d8b45a 25%, #8e1f2b 50%, #d8b45a 75%, #8e1f2b);
+}
+@media (max-width: 767px) {
+  .panel,
+  .band[data-side] .panel {
+    flex-direction: column;
+  }
+  .band[data-side="left"] .panel,
+  .band[data-side="top"] .panel {
+    flex-direction: column-reverse;
+  }
+  .media,
+  .band[data-side] .media {
+    width: 100%;
+    height: 440px;
+  }
+  .text,
+  .band[data-side] .text {
+    width: 100%;
+    padding: 36px 16px 40px;
+    align-items: flex-start;
+    text-align: left;
+  }
+  .cards {
+    padding-top: 8px;
+    padding-bottom: 48px;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px 12px;
+  }
+}
