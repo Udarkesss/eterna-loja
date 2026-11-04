@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 import { QuickCart } from "@/components/cart/QuickCart";
+import { ChatWidget } from "@/components/chat/ChatWidget";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { BrandScrollbar } from "@/components/layout/Effects";
 import { Header } from "@/components/layout/Header";
 import { resolveLocale } from "@/i18n/params";
+import { assistantSettings } from "@/server/assistant/engine";
 import { getSiteEffects } from "@/server/content";
 import { framingCss } from "@/server/framing";
 
@@ -15,7 +17,7 @@ import { framingCss } from "@/server/framing";
  */
 export default async function SiteLayout({ children, params }: { children: ReactNode; params: Promise<{ locale: string }> }) {
   const locale = await resolveLocale(params);
-  const [effects, framing] = await Promise.all([getSiteEffects(), framingCss()]);
+  const [effects, framing, assistant] = await Promise.all([getSiteEffects(), framingCss(), assistantSettings()]);
   return (
     <>
       {/* EN: Framing chosen in Gestão → Enquadrar. PT: Enquadramento escolhido na gestão. */}
@@ -25,6 +27,8 @@ export default async function SiteLayout({ children, params }: { children: React
       <Header locale={locale} />
       <main id="main">{children}</main>
       <QuickCart />
+      {/* EN: Store assistant (Gestão → Assistente · Chat no site). PT: Assistente da loja. */}
+      {assistant.site && <ChatWidget alwaysHuman={assistant.alwaysHuman} />}
     </>
   );
 }

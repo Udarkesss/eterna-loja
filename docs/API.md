@@ -90,6 +90,16 @@ Sessão: cookie `eterna_session` (site) ou `Authorization: Bearer <token>` (app)
 | POST | `/fittings` | `{ locale, name, phone, kind, storeCode, date, time, productSlugs?, notes? }` → `FittingPublicDTO` with `whatsappUrl` (409 `SLOT_TAKEN`) |
 | GET | `/fittings/:token?locale=` | Public request page data (no personal data) |
 
+## Assistant / Assistente (chat e WhatsApp)
+
+| Method | Path | What / O quê |
+| ------ | ---- | ------------ |
+| POST | `/chat` | `{ token?, text, locale }` → `{ token, messages, human, unsure, withTeam }` (the first message returns the conversation token) |
+| GET | `/chat?token=…&since=ISO` | New messages (team replies) → `{ messages, human, withTeam }` |
+| POST | `/chat/handoff` | `{ token, mode: "here" \| "whatsapp" }` → `{ messages, whatsappUrl? }` |
+| GET | `/whatsapp?text=…` | Redirect to the store WhatsApp chosen in Gestão → Contactos ("Botões") |
+| GET/POST | `/whatsapp/webhook` | Meta WhatsApp Cloud API webhook (verify token / `X-Hub-Signature-256`); needs `WHATSAPP_*` keys |
+
 The back-office (/gestao) uses server actions that call the same services in `src/server/` (permission-checked).
 A gestão (/gestao) usa acções de servidor que chamam os mesmos serviços em `src/server/` (com permissões).
 

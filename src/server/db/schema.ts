@@ -884,3 +884,48 @@ export const favoritesRelations = relations(favorites, ({ one }) => ({
   customer: one(customers, { fields: [favorites.customerId], references: [customers.id] }),
   product: one(products, { fields: [favorites.productId], references: [products.id] }),
 }));
+
+
+// ══ Assistant / Assistente (chat e WhatsApp) ════════════════════════════
+
+/**
+ * EN: Conversations of the store assistant (design V3-G-Assistente): the site chat and WhatsApp. `needsTeam` = waiting
+ *     for a person ("Para a equipa"); `handedOff` = it was passed to the team at some point (statistics).
+ * PT: Conversas do assistente (chat do site e WhatsApp). `needsTeam` = à espera de uma pessoa; `handedOff` = foi
+ *     passada à equipa nalgum momento (estatística).
+ */
+export const chatConversations = pgTable(
+  "chat_conversations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    channel: text("channel").$type<"site" | "whatsapp">().notNull(),
+    token: text("token").notNull().unique(), // EN: site: secret of the browser; WhatsApp: the number. PT: segredo / número.
+    phone: text("phone"),
+    name: text("name"),
+    customerId: uuid("customer_id").references(() => customers.id, { onDelete: "set null" }),
+    locale: text("locale").notNull().default("pt"),
+    misses: integer("misses").notNull().default(0),
+    needsTeam: boolean("needs_team").notNull().default(false),
+    handedOff: boolean("handed_off").notNull().default(false),
+    teamRepliedAt: timestamp("team_replied_at", { withTimezone: true }),
+    lastMessageAt: timestamp("last_message_at", { withTimezone: true }).defaultNow().notNull(),
+    ...timestamps,
+  },
+  (t) => [index("chat_conversations_last_idx").on(t.lastMessageAt)],
+);
+
+export const chatMessages = pgTable(
+  "chat_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    conversationId: uuid("conversation_id")
+      .notNull()
+      .references(() => chatConversations.id, { onDelete: "cascade" }),
+    sender: text("sender").$type<"customer" | "bot" | "team">().notNull(),
+    text: text("text").notNull(),
+    action: jsonb("action").$type<{ label: string; href: string } | null>(),
+    staffUserId: uuid("staff_user_id").references(() => staffUsers.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("chat_messages_conversation_idx").on(t.conversationId, t.createdAt)],
+);

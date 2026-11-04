@@ -1,0 +1,244 @@
+/* EN: Store assistant of design V3-Chat. PT: Assistente da loja do V3-Chat. */
+.fab {
+  position: fixed;
+  right: 32px;
+  bottom: 32px;
+  width: 60px;
+  height: 60px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--contrast);
+  color: var(--on-contrast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 26px rgba(28, 25, 23, 0.3);
+  cursor: pointer;
+  z-index: 49;
+}
+.window {
+  position: fixed;
+  right: 32px;
+  bottom: 32px;
+  width: 400px;
+  height: min(640px, calc(100dvh - 64px));
+  background: var(--surface);
+  box-shadow: 0 18px 48px rgba(28, 25, 23, 0.28);
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
+  z-index: 50;
+}
+.head {
+  background: var(--contrast);
+  color: var(--on-contrast);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.titles {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.titles b {
+  font-weight: 500;
+  font-size: 15px;
+}
+.status {
+  font-size: 12px;
+  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #5bc28c;
+}
+.close {
+  border: 0;
+  background: none;
+  color: var(--on-contrast);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+}
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bot,
+.me,
+.team {
+  max-width: 84%;
+  padding: 10px 13px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 20px;
+  white-space: pre-line;
+}
+.bot,
+.team {
+  background: var(--raised);
+  border: 1px solid var(--line);
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+}
+.team {
+  border-color: var(--accent-ink);
+}
+.me {
+  background: var(--contrast);
+  color: var(--on-contrast);
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+.who {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+}
+.actions {
+  display: flex;
+  gap: 6px;
+}
+.act {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  background: transparent;
+  margin-top: 2px;
+  align-self: flex-start;
+  cursor: pointer;
+}
+.wa {
+  background: #1f8a55;
+  border-color: #1f8a55;
+  color: #fff;
+}
+.note {
+  font-size: 12px;
+  color: var(--muted);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 16px 12px;
+}
+.chip {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--raised);
+  font-size: 12.5px;
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.hum {
+  border-color: var(--accent-ink);
+  color: var(--accent-ink);
+}
+.error {
+  padding: 0 16px 8px;
+  font-size: 12.5px;
+  color: var(--danger, #b42318);
+}
+.input {
+  border-top: 1px solid var(--line);
+  padding: 10px 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: var(--raised);
+}
+.input input {
+  flex: 1;
+  height: 40px;
+  border: 0;
+  background: transparent;
+  font-size: 14px;
+  outline: none;
+}
+.send {
+  border: 0;
+  background: var(--contrast);
+  color: var(--on-contrast);
+  border-radius: 999px;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.send:disabled {
+  opacity: 0.5;
+}
+.restart {
+  border: 0;
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 11.5px;
+  padding: 0 0 8px;
+  cursor: pointer;
+}
+@media (max-width: 767px) {
+  .fab {
+    right: 16px;
+    bottom: 16px;
+    width: 54px;
+    height: 54px;
+  }
+  .window {
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100dvh;
+    border-radius: 0;
+  }
+}

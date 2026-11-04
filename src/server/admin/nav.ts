@@ -4,6 +4,7 @@ import type { NavItem } from "@/components/admin/AdminNav";
 import { addDays, todayMaputo } from "@/lib/time";
 import { getDb } from "../db";
 import { fittings, reservations } from "../db/schema";
+import { pendingCount } from "../assistant/chat";
 import { reservationSettings } from "../reservations";
 import { deliveryEnabled } from "../content";
 import { can, storeScope, type StaffContext } from "../staff/access";
@@ -31,6 +32,7 @@ export const MENU: { group: NavItem["group"]; href: string; label: string; icon:
   { group: "Catálogo", href: "/gestao/produtos/importar", label: "Importar", icon: "upload", area: "products.publish" },
   { group: "Site", href: "/gestao/conteudo", label: "Conteúdo do site", icon: "monitor", area: "content" },
   { group: "Site", href: "/gestao/contactos", label: "Contactos e redes sociais", icon: "phone", area: "content" },
+  { group: "Site", href: "/gestao/assistente", label: "Assistente (chat)", icon: "whatsapp", area: "content" },
   { group: "Sistema", href: "/gestao/pagamentos", label: "Pagamentos e avisos", icon: "card", area: "payments.toggle" },
   { group: "Sistema", href: "/gestao/definicoes", label: "Definições", icon: "sliders", area: "system" },
   { group: "Sistema", href: "/gestao/utilizadores", label: "Utilizadores internos", icon: "user", area: "users.staff" },
@@ -89,6 +91,8 @@ export async function navFor(staff: StaffContext): Promise<NavItem[]> {
       );
     badges["/gestao/reservas"] = ending.n;
   }
+  // EN: Conversations waiting for a person (Assistente · "Para a equipa"). PT: Conversas à espera de uma pessoa.
+  if (can(staff, "content")) badges["/gestao/assistente"] = await pendingCount();
   const usersArea = ["users.staff", "users.managers", "users.admins"].some((a) => can(staff, a));
   // EN: "Entregas" only with the delivery module on. PT: "Entregas" só com o módulo de entregas ligado.
   const delivery = await deliveryEnabled();
