@@ -44,6 +44,8 @@ export interface CategoryDetails {
   season?: Localized; // "Agosto a dezembro · na Loja 2 e no site"
   lines?: string[]; // ["roupa-de-festa", "roupa-executiva"]
   active?: boolean; // EN: the active seasonal collection. PT: a colecção sazonal activa.
+  /** EN: Bridal accessory types: where they appear (Gestão · Tipos de peça). PT: Acessórios de noiva: onde aparecem. */
+  showIn?: "noivas" | "acessorios" | "both";
 }
 
 /** EN: A colour as stored (all languages). PT: Uma cor como está guardada (todos os idiomas). */

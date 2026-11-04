@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq, inArray, lte, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, lte, notInArray, or, sql, type SQL } from "drizzle-orm";
 import { cache } from "react";
 import { sizeParts } from "@/lib/sizes";
 import type { CategoryDTO, CategorySummary, ColorFamily, Locale, ProductDTO, SearchSuggestionsDTO } from "@/types";
@@ -62,9 +62,20 @@ export async function listOccasions(locale: Locale): Promise<CategorySummary[]> 
   return rows.filter((r) => r.kind === "occasion").map((r) => ({ slug: r.slug, name: r.name[locale] }));
 }
 
+/**
+ * EN: A category and everything under it. Bridal accessory types follow "onde aparecem" (Gestão · Tipos de peça):
+ *     only in Noivas (default), only in Acessórios, or in both.
+ * PT: Uma categoria e tudo o que está por baixo. Os acessórios de noiva seguem "onde aparecem": só Noivas (por
+ *     defeito), só Acessórios, ou nos dois.
+ */
 function withDescendants(rootId: string, rows: CategoryRow[]): string[] {
+  const root = rows.find((r) => r.id === rootId);
   const ids = [rootId];
-  for (let i = 0; i < ids.length; i++) for (const r of rows) if (r.parentId === ids[i]) ids.push(r.id);
+  for (let i = 0; i < ids.length; i++)
+    for (const r of rows) if (r.parentId === ids[i] && !(r.kind === "type" && r.details?.showIn === "acessorios" && root?.slug !== r.slug)) ids.push(r.id);
+  if (root?.slug === "acessorios") {
+    for (const r of rows) if (r.kind === "type" && (r.details?.showIn === "acessorios" || r.details?.showIn === "both") && !ids.includes(r.id)) ids.push(r.id);
+  }
   return ids;
 }
 
@@ -239,6 +250,14 @@ export async function listProducts(filter: ProductFilter, locale: Locale): Promi
     const root = rows.find((r) => r.slug === filter.category);
     if (!root) return [];
     conditions.push(inCategories(withDescendants(root.id, rows)));
+    // EN: Bridal accessory types set to "Só Acessórios" leave the bridal pages (also pieces linked there directly).
+    // PT: Acessórios de noiva em "Só Acessórios" saem das páginas de noivas (também peças ligadas lá directamente).
+    const under = (r: CategoryRow) => {
+      for (let p = r.parentId; p; p = rows.find((x) => x.id === p)?.parentId ?? null) if (p === root.id) return true;
+      return false;
+    };
+    const away = rows.filter((r) => r.kind === "type" && r.details?.showIn === "acessorios" && r.id !== root.id && under(r)).map((r) => r.id);
+    if (away.length) conditions.push(or(isNull(products.typeId), notInArray(products.typeId, away))!);
   }
   if (filter.fitting) conditions.push(eq(products.fitting, true));
   if (filter.types?.length) {

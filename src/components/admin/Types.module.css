@@ -1,0 +1,99 @@
+/* EN: "Gestão · Tipos de peça" of design V3. PT: Tipos de peça do V3. */
+.cols {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr) 300px;
+  gap: 24px;
+  align-items: start;
+}
+.groups {
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+}
+.groups a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border-left: 2px solid transparent;
+  font-size: 14px;
+  color: var(--ink);
+}
+.groups a[aria-current] {
+  border-left-color: var(--ink);
+  background: var(--raised);
+  font-weight: 600;
+}
+.mid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+.body {
+  padding: 8px 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.circle {
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--alt);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.grip {
+  color: var(--muted);
+  cursor: grab;
+  display: inline-flex;
+}
+.dragging td {
+  opacity: 0.5;
+}
+.form {
+  padding: 18px 22px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.drop {
+  width: 180px;
+  height: 180px;
+  align-self: center;
+  border-radius: 999px;
+  border: 1px dashed var(--border);
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+  overflow: hidden;
+  cursor: pointer;
+}
+.drop img {
+  width: 180px;
+  height: 180px;
+  object-fit: cover;
+}
+@media (max-width: 1279px) {
+  .cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .groups {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
