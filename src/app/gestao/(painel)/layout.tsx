@@ -26,6 +26,8 @@ export default async function PainelLayout({ children }: { children: ReactNode }
     .toUpperCase();
   const stores = staff.storeCodes.length ? ` · ${staff.storeCodes.map((c) => `Loja ${c}`).join(", ")}` : "";
 
+  const notices = items.reduce((n, i) => n + (i.badge ?? 0), 0);
+
   return (
     <div className={s.shell}>
       <aside className={s.aside}>
@@ -43,20 +45,37 @@ export default async function PainelLayout({ children }: { children: ReactNode }
               {staff.roleKey === "gestor" || staff.roleKey === "atendedor" ? stores : ""}
             </span>
           </span>
-        </div>
-        <div className={s.bottom}>
-          <Link href="/pt" target="_blank">
-            <Icon name="eye" size={16} />
-            Ver a loja
-          </Link>
-          <form action={signOutStaff}>
-            <button type="submit">Sair</button>
+          <form action={signOutStaff} className={s.meOut}>
+            <button type="submit" aria-label="Terminar sessão" title="Terminar sessão">
+              <Icon name="logout" size={18} />
+            </button>
           </form>
         </div>
       </aside>
-      <main id="main" className={s.main}>
-        {children}
-      </main>
+      <div className={s.mainCol}>
+        {/* EN: Top bar of design V3: search, notices, initials. PT: Barra de topo do V3: pesquisa, avisos, iniciais. */}
+        <div className={s.topbar}>
+          <form action="/gestao/encomendas" className={s.topSearch} role="search">
+            <Icon name="search" size={18} />
+            <input name="q" placeholder="Procurar encomendas, peças ou clientes" aria-label="Procurar encomendas, peças ou clientes" />
+          </form>
+          <span className={s.grow} />
+          <Link href="/pt" target="_blank" className={s.topLink}>
+            <Icon name="eye" size={16} />
+            Ver a loja
+          </Link>
+          <Link href="/gestao" className={s.bell} aria-label={`Avisos, ${notices} por tratar`}>
+            <Icon name="bell" size={22} />
+            {notices > 0 && <span className={s.bellCount}>{notices}</span>}
+          </Link>
+          <span className={s.topAvatar} aria-hidden="true">
+            {initials}
+          </span>
+        </div>
+        <main id="main" className={s.main}>
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

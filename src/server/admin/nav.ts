@@ -9,24 +9,27 @@ import { can, storeScope, type StaffContext } from "../staff/access";
 import { listOrdersFor } from "./orders";
 
 /**
- * EN: The side menu per role (design "Gestão · A3 O que cada papel vê") with the counters in gold.
- * PT: O menu lateral por papel, com os contadores a dourado.
+ * EN: The side menu per role of design V3, in its four groups (Loja · Catálogo · Site · Sistema), with the counters in
+ *     gold (design "Gestão · O que cada papel vê").
+ * PT: O menu lateral por papel do V3, nos seus quatro grupos (Loja · Catálogo · Site · Sistema), com os contadores a
+ *     dourado.
  */
 
-const MENU: { href: string; label: string; icon: NavItem["icon"]; area: string }[] = [
-  { href: "/gestao", label: "Painel", icon: "grid", area: "dashboard" },
-  { href: "/gestao/encomendas", label: "Encomendas", icon: "receipt", area: "orders.view" },
-  { href: "/gestao/entregas", label: "Entregas", icon: "truck", area: "deliveries.assign" },
-  { href: "/gestao/provas", label: "Provas", icon: "calendar", area: "fittings" },
-  { href: "/gestao/produtos", label: "Produtos", icon: "dress", area: "products.view" },
-  { href: "/gestao/coleccoes", label: "Colecções", icon: "layers", area: "products.publish" },
-  { href: "/gestao/conteudo", label: "Conteúdo do site", icon: "layout", area: "content" },
-  { href: "/gestao/clientes", label: "Clientes", icon: "users", area: "customers" },
-  { href: "/gestao/pagamentos", label: "Pagamentos e avisos", icon: "card", area: "payments.toggle" },
-  { href: "/gestao/utilizadores", label: "Utilizadores internos", icon: "userPlus", area: "users.staff" },
-  { href: "/gestao/papeis", label: "Papéis e permissões", icon: "shield", area: "roles" },
-  { href: "/gestao/auditoria", label: "Auditoria", icon: "list", area: "audit" },
-  { href: "/gestao/definicoes", label: "Definições", icon: "settings", area: "system" },
+const MENU: { group: NavItem["group"]; href: string; label: string; icon: NavItem["icon"]; area: string }[] = [
+  { group: "Loja", href: "/gestao", label: "Painel", icon: "grid", area: "dashboard" },
+  { group: "Loja", href: "/gestao/encomendas", label: "Encomendas", icon: "bag", area: "orders.view" },
+  { group: "Loja", href: "/gestao/entregas", label: "Entregas", icon: "truck", area: "deliveries.assign" },
+  { group: "Loja", href: "/gestao/provas", label: "Provas · Bridal", icon: "dress", area: "fittings" },
+  { group: "Loja", href: "/gestao/clientes", label: "Clientes", icon: "users", area: "customers" },
+  { group: "Catálogo", href: "/gestao/produtos", label: "Produtos", icon: "tag", area: "products.view" },
+  { group: "Catálogo", href: "/gestao/coleccoes", label: "Colecções", icon: "layers", area: "products.publish" },
+  { group: "Catálogo", href: "/gestao/produtos/importar", label: "Importar", icon: "upload", area: "products.edit" },
+  { group: "Site", href: "/gestao/conteudo", label: "Conteúdo do site", icon: "monitor", area: "content" },
+  { group: "Sistema", href: "/gestao/pagamentos", label: "Pagamentos e avisos", icon: "card", area: "payments.toggle" },
+  { group: "Sistema", href: "/gestao/definicoes", label: "Definições", icon: "sliders", area: "system" },
+  { group: "Sistema", href: "/gestao/utilizadores", label: "Utilizadores internos", icon: "user", area: "users.staff" },
+  { group: "Sistema", href: "/gestao/papeis", label: "Papéis e permissões", icon: "shield", area: "roles" },
+  { group: "Sistema", href: "/gestao/auditoria", label: "Auditoria", icon: "list", area: "audit" },
 ];
 
 export async function navFor(staff: StaffContext): Promise<NavItem[]> {

@@ -16,9 +16,11 @@
   position: sticky;
   top: 0;
   height: 100vh;
-  width: 248px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  width: 256px;
   flex-shrink: 0;
-  padding: 28px 16px;
+  padding: 26px 14px 22px;
   background: var(--privee);
   color: var(--on-privee);
   display: flex;
@@ -28,7 +30,7 @@
 }
 
 .brand {
-  padding: 0 14px;
+  padding: 0 12px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -55,9 +57,26 @@
   gap: 2px;
 }
 
+/* EN: Menu groups of design V3. PT: Grupos do menu do V3. */
+.navGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.groupLabel {
+  padding: 0 12px;
+  margin: 10px 0 4px;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
 .navLink {
-  min-height: 42px;
-  padding: 0 14px;
+  min-height: 38px;
+  padding: 0 12px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -74,7 +93,12 @@
 .navLink[aria-current="page"] {
   background: var(--ivory);
   color: var(--privee);
-  font-weight: 400;
+  font-weight: 500;
+}
+
+.navLink[aria-current="page"] .badge {
+  background: var(--contrast);
+  color: var(--on-contrast);
 }
 
 .badge {
@@ -93,7 +117,7 @@
 
 .me {
   margin-top: auto;
-  padding: 16px 14px 0;
+  padding: 14px 12px 0;
   border-top: 1px solid #3a3431;
   display: flex;
   align-items: center;
@@ -146,10 +170,114 @@
   font-size: 13px;
 }
 
+.meOut button {
+  display: flex;
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: var(--on-privee);
+}
+
+.meOut {
+  margin-left: auto;
+}
+
+/* ── Top bar / Barra de topo (V3) ── */
+.mainCol {
+  flex-grow: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: 68px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 36px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.topSearch {
+  flex: 1;
+  max-width: 460px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+  color: var(--muted);
+}
+
+.topSearch input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font-size: 14px;
+  color: var(--ink);
+  outline: none;
+}
+
+.topLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.bell {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+}
+
+.bellCount {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--contrast);
+  color: var(--on-contrast);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 18px;
+  text-align: center;
+}
+
+.topAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+}
+
 .main {
   flex-grow: 1;
   min-width: 0;
-  padding: 40px 48px 64px;
+  padding: 32px 36px 40px;
   display: flex;
   flex-direction: column;
   gap: 32px;
@@ -826,4 +954,8 @@
   .row3 {
     grid-template-columns: 1fr;
   }
+}
+
+.grow {
+  flex: 1;
 }
