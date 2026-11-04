@@ -232,10 +232,42 @@ export const customers = pgTable("customers", {
   passwordHash: text("password_hash"),
   locale: text("locale").$type<Locale>().notNull().default("pt"),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+  // EN: "site" (signed up online) or "import" (Excel of the old store). PT: "site" (conta online) ou "import" (loja antiga).
+  origin: text("origin").$type<"site" | "import">().notNull().default("site"),
+  // EN: Level set by hand in Gestão · Clientes for one year (else it comes from last year's points).
+  // PT: Nível definido à mão em Gestão · Clientes para um ano (senão vem dos pontos do ano anterior).
+  levelOverride: text("level_override"),
+  levelOverrideYear: integer("level_override_year"),
+  levelReason: text("level_reason"),
   // EN: Demo rows (npm run db:demo) — removed with npm run db:demo -- --clear. PT: Dados de demonstração.
   isDemo: boolean("is_demo").notNull().default(false),
   ...timestamps,
 });
+
+/**
+ * EN: Loyalty points that do not come from online orders: purchases in the store, hand adjustments and the points
+ *     imported from the old store. Online orders count by themselves (1 000 MT paid = 1 point).
+ * PT: Pontos que não vêm das encomendas online: compras na loja, ajustes à mão e os pontos importados da loja antiga.
+ *     As encomendas online contam sozinhas (1 000 MT pagos = 1 ponto).
+ */
+export const loyaltyEntries = pgTable(
+  "loyalty_entries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    customerId: uuid("customer_id")
+      .notNull()
+      .references(() => customers.id, { onDelete: "cascade" }),
+    year: integer("year").notNull(),
+    kind: text("kind").$type<"store" | "adjust" | "import">().notNull(),
+    points: integer("points").notNull(), // EN: may be negative (adjust). PT: pode ser negativo (ajuste).
+    amount: integer("amount"), // EN: MT of a store purchase. PT: MT de uma compra na loja.
+    storeId: uuid("store_id").references(() => stores.id),
+    reason: text("reason"),
+    actorName: text("actor_name"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("loyalty_entries_customer_idx").on(t.customerId, t.year)],
+);
 
 export const customerIdentities = pgTable(
   "customer_identities",

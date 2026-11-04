@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import s from "@/components/admin/admin.module.css";
 import d3 from "@/components/admin/Dashboard.module.css";
+import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
 import { MarkReadyButton } from "@/components/admin/MarkReadyButton";
 import { DeliveryOffNote } from "@/components/admin/ModuleOffNote";
 import { Chip, mzn, PageTop, when } from "@/components/admin/ui";
@@ -84,25 +85,22 @@ export default async function OrdersPage({ searchParams }: Props) {
               <Icon name="search" size={16} />
               <input type="search" name="q" defaultValue={p.q} placeholder="N.º de encomenda, nome ou telefone" aria-label="Procurar" />
             </label>
-            <select className={s.select} name="loja" defaultValue={p.loja ?? ""} aria-label="Loja">
+            <AutoSubmitSelect className={s.select} name="loja" defaultValue={p.loja ?? ""} aria-label="Loja">
               <option value="">Todas as lojas</option>
               {storeRows.map((x) => (
                 <option key={x.id} value={x.code}>
                   Loja {x.code}
                 </option>
               ))}
-            </select>
-            <select className={s.select} name="metodo" defaultValue={method ?? ""} aria-label="Pagamento">
+            </AutoSubmitSelect>
+            <AutoSubmitSelect className={s.select} name="metodo" defaultValue={method ?? ""} aria-label="Pagamento">
               <option value="">Qualquer pagamento</option>
               {PAYMENT_METHODS.map((m) => (
                 <option key={m} value={m}>
                   {METHOD_LABEL[m]}
                 </option>
               ))}
-            </select>
-            <button type="submit" className={`${s.btnOutline} ${s.small}`}>
-              Filtrar
-            </button>
+            </AutoSubmitSelect>
           </form>
 
           {visible.length === 0 ? (

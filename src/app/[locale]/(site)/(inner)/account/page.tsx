@@ -5,6 +5,7 @@ import { getDictionary } from "@/i18n";
 import { resolveLocale } from "@/i18n/params";
 import { currentCustomer, toCustomerDTO } from "@/server/accounts";
 import { listCustomerFittings } from "@/server/fittings";
+import { customerLoyalty } from "@/server/loyalty";
 import { listCustomerOrders } from "@/server/orders";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -24,10 +25,11 @@ export default async function AccountPage({ params }: Props) {
   const row = await currentCustomer();
   if (!row) redirect(`/${locale}/sign-in?next=/${locale}/account`);
 
-  const [customer, orders, fittings] = await Promise.all([
+  const [customer, orders, fittings, loyalty] = await Promise.all([
     toCustomerDTO(row),
     listCustomerOrders(row.id),
     listCustomerFittings(row.id, locale),
+    customerLoyalty(row.id),
   ]);
-  return <AccountDashboard customer={customer} orders={orders} fittings={fittings} />;
+  return <AccountDashboard customer={customer} orders={orders} fittings={fittings} loyalty={loyalty} />;
 }

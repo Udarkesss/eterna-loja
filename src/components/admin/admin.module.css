@@ -227,14 +227,6 @@
   outline: none;
 }
 
-.topLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--muted);
-}
-
 .bell {
   position: relative;
   width: 40px;

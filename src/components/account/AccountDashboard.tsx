@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { FavoritesList } from "@/components/favorites/FavoritesList";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import form from "@/components/ui/Form.module.css";
@@ -14,7 +14,7 @@ import { plural, t, type Dictionary } from "@/i18n";
 import { useI18n } from "@/i18n/I18nProvider";
 import { api } from "@/lib/api-client";
 import { formatMZN } from "@/lib/format";
-import { BAR_POINTS, loyaltyOf, MT_PER_POINT, type Loyalty } from "@/lib/loyalty";
+import { BAR_POINTS, MT_PER_POINT, type Loyalty } from "@/lib/loyalty";
 import { formatMsisdn } from "@/lib/payments/msisdn";
 import { formatLongDate, toMaputo } from "@/lib/time";
 import type { CustomerDTO, FittingPublicDTO, IdentityProvider, MyOrderDTO } from "@/types";
@@ -44,7 +44,7 @@ const HASH: Record<Section, string> = {
   details: "dados",
 };
 
-export function AccountDashboard(props: { customer: CustomerDTO; orders: MyOrderDTO[]; fittings: FittingPublicDTO[] }) {
+export function AccountDashboard(props: { customer: CustomerDTO; orders: MyOrderDTO[]; fittings: FittingPublicDTO[]; loyalty: Loyalty }) {
   const { dict, locale, href } = useI18n();
   const a = dict.account;
   const router = useRouter();
@@ -52,7 +52,7 @@ export function AccountDashboard(props: { customer: CustomerDTO; orders: MyOrder
   const [customer, setLocal] = useState(props.customer);
   const [section, setSection] = useState<Section>("level");
   const tabs = useRef<HTMLElement>(null);
-  const loyalty = useMemo(() => loyaltyOf(props.orders), [props.orders]);
+  const loyalty = props.loyalty;
   const first = customer.name.split(" ")[0];
   const level = loyalty.level;
 

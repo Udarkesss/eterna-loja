@@ -1,7 +1,8 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { AdminNav } from "@/components/admin/AdminNav";
 import s from "@/components/admin/admin.module.css";
+import { TopSearch } from "@/components/admin/TopSearch";
 import { Icon } from "@/components/ui/Icon";
 import { navFor } from "@/server/admin/nav";
 import { requireStaffPage } from "@/server/staff/access";
@@ -55,15 +56,10 @@ export default async function PainelLayout({ children }: { children: ReactNode }
       <div className={s.mainCol}>
         {/* EN: Top bar of design V3: search, notices, initials. PT: Barra de topo do V3: pesquisa, avisos, iniciais. */}
         <div className={s.topbar}>
-          <form action="/gestao/encomendas" className={s.topSearch} role="search">
-            <Icon name="search" size={18} />
-            <input name="q" placeholder="Procurar encomendas, peças ou clientes" aria-label="Procurar encomendas, peças ou clientes" />
-          </form>
+          <Suspense fallback={<span className={s.topSearch} />}>
+            <TopSearch />
+          </Suspense>
           <span className={s.grow} />
-          <Link href="/pt" target="_blank" className={s.topLink}>
-            <Icon name="eye" size={16} />
-            Ver a loja
-          </Link>
           <Link href="/gestao" className={s.bell} aria-label={`Avisos, ${notices} por tratar`}>
             <Icon name="bell" size={22} />
             {notices > 0 && <span className={s.bellCount}>{notices}</span>}

@@ -1,196 +1,265 @@
 import Link from "next/link";
-import s from "@/components/admin/admin.module.css";
-import { Chip, DemoTag, mzn, PageTop, when } from "@/components/admin/ui";
+import { asc } from "drizzle-orm";
+import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
+import c from "@/components/admin/Clients.module.css";
+import { ClientCardForms, ImportClientsButton, NotifyUpsButton } from "@/components/admin/ClientsForms";
+import d3 from "@/components/admin/Dashboard.module.css";
+import { DemoTag, PageTop } from "@/components/admin/ui";
+import { Icon } from "@/components/ui/Icon";
+import { LOYALTY_LEVELS, type LoyaltyLevel } from "@/data/help";
+import { BAR_POINTS } from "@/lib/loyalty";
 import { formatMsisdn, maskMsisdn } from "@/lib/payments/msisdn";
-import { addDays, todayMaputo } from "@/lib/time";
-import { listCustomersFor } from "@/server/admin/customers";
-import { FULFILLMENT_LABEL, METHOD_LABEL, PAYMENT_LABEL } from "@/server/admin/orders";
-import { accessOf, requireStaffPage } from "@/server/staff/access";
-import { PAYMENT_STATUSES, type PaymentStatus } from "@/types";
+import { toMaputo } from "@/lib/time";
+import { clientHistory, listClients, originText, reviewForecast } from "@/server/admin/customers";
+import { getDb } from "@/server/db";
+import { stores } from "@/server/db/schema";
+import { currentYear } from "@/server/loyalty";
+import { accessOf, canEdit, requireStaffPage } from "@/server/staff/access";
 
 export const metadata = { title: "Clientes" };
 
-type Props = { searchParams: Promise<{ q?: string; c?: string; estado?: string; periodo?: string; de?: string; ate?: string }> };
+type Props = { searchParams: Promise<{ q?: string; nivel?: string; c?: string }> };
 
-const PERIODS: Record<string, { label: string; days: number | null }> = {
-  "30": { label: "Últimos 30 dias", days: 30 },
-  hoje: { label: "Hoje", days: 0 },
-  "7": { label: "Últimos 7 dias", days: 7 },
-  ano: { label: "Este ano", days: 365 },
-  tudo: { label: "Desde sempre", days: null },
+const MONTHS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const day = (d: Date) => {
+  const [y, m, dd] = toMaputo(d).date.split("-");
+  return `${Number(dd)} ${MONTHS[Number(m) - 1]} ${y}`;
 };
+const initials = (name: string) =>
+  name
+    .replace(/\[[^\]]*\]\s*/g, "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+function LevelBadge({ level, children, size = 14 }: { level: LoyaltyLevel; children?: React.ReactNode; size?: number }) {
+  return (
+    <span className={c.badge}>
+      <span style={{ color: level.color, display: "inline-flex" }}>
+        <Icon name={level.icon} size={size} />
+      </span>
+      {children ?? level.name.pt}
+    </span>
+  );
+}
 
 /**
- * EN: "Gestão · 2 Encomendas por cliente". Staff with "E" access (drivers) would only see delivery data — they have
- *     no menu entry here. Phone numbers are masked except for the selected customer.
- * PT: "Encomendas por cliente". Os números aparecem mascarados, excepto o da cliente seleccionada.
+ * EN: "Gestão · Clientes" of design V3: loyalty programme — the yearly review, the old store's import, the list (level
+ *     and points of this year, origin, last purchase) and the customer's card (history, level by hand, store purchase,
+ *     points adjustment).
+ * PT: Clientes do V3: programa de fidelidade — revisão anual, importação da loja antiga, a lista (nível e pontos deste
+ *     ano, origem, última compra) e a ficha da cliente (histórico, nível à mão, compra na loja, ajuste de pontos).
  */
-export default async function CustomersPage({ searchParams }: Props) {
+export default async function ClientsPage({ searchParams }: Props) {
   const staff = await requireStaffPage("customers");
   const p = await searchParams;
-  const period = PERIODS[p.periodo ?? "tudo"] ? (p.periodo ?? "tudo") : "tudo";
-  const days = PERIODS[period].days;
-  const from = p.de || (days === null ? undefined : addDays(todayMaputo(), -days));
-  const list = await listCustomersFor(staff, { q: p.q, from, to: p.ate });
-  const current = list.find((c) => c.key === p.c) ?? list[0];
-  const status = PAYMENT_STATUSES.includes(p.estado as PaymentStatus) ? (p.estado as PaymentStatus) : null;
-  const orders = current ? current.orders.filter((o) => !status || o.order.paymentStatus === status) : [];
-  const orderCount = list.reduce((n, c) => n + c.orders.length, 0);
-  const link = (key: string) => `?${new URLSearchParams({ ...(p.q ? { q: p.q } : {}), ...(p.estado ? { estado: p.estado } : {}), periodo: period, c: key })}`;
+  const level = LOYALTY_LEVELS.some((l) => l.key === p.nivel) ? p.nivel : undefined;
+  const db = await getDb();
+  const [all, storeRows] = await Promise.all([listClients(), db.select({ code: stores.code, name: stores.name }).from(stores).orderBy(asc(stores.position))]);
+  const list = await listClients({ q: p.q, level });
+  const current = list.find((x) => x.id === p.c) ?? list[0];
+  const history = current ? await clientHistory(current) : [];
+  const year = currentYear();
+  const forecast = reviewForecast(all);
+  const edit = canEdit(staff, "customers");
+  const canExport = accessOf(staff, "customers.export") !== "—";
+  const link = (patch: Record<string, string | undefined>) =>
+    `?${new URLSearchParams(Object.entries({ q: p.q, nivel: level, c: current?.id, ...patch }).filter((e): e is [string, string] => !!e[1]))}`;
 
   return (
     <>
       <PageTop
-        eyebrow={`${list.length} ${list.length === 1 ? "cliente" : "clientes"} · ${orderCount} ${orderCount === 1 ? "encomenda" : "encomendas"}`}
-        title={
+        eyebrow="Programa de fidelidade · Rubi, Safira, Pérola, Diamante"
+        title="Clientes"
+        actions={
           <>
-            Encomendas <em>por cliente</em>
+            {canExport && (
+              <Link prefetch={false} href="/gestao/clientes/exportar" className={`${c.btn} ${c.sm}`}>
+                <Icon name="download" size={15} />
+                Exportar CSV
+              </Link>
+            )}
+            <ImportClientsButton size="sm" disabled={!edit} />
           </>
         }
-        actions={
-          accessOf(staff, "customers.export") !== "—" && (
-            <a href={`/gestao/clientes/exportar?periodo=${period}`} className={s.btnOutline}>
-              Exportar CSV
-            </a>
-          )
-        }
       />
-      <DemoTag show={list.some((c) => c.isDemo)} />
+      <DemoTag show={all.some((x) => x.isDemo)} />
 
-      <form className={s.filters}>
-        <label className={s.label} style={{ flex: "1 1 260px" }}>
-          Procurar cliente
-          <input className={s.input} type="search" name="q" defaultValue={p.q} placeholder="Nome, telefone ou nº de encomenda" />
-        </label>
-        <label className={s.label}>
-          Estado
-          <select className={s.select} name="estado" defaultValue={status ?? "todos"}>
-            <option value="todos">Todos</option>
-            {PAYMENT_STATUSES.map((st) => (
-              <option key={st} value={st}>
-                {PAYMENT_LABEL[st].label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className={s.label}>
-          Data
-          <select className={s.select} name="periodo" defaultValue={period}>
-            {Object.entries(PERIODS).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button type="submit" className={s.btn}>
-          Filtrar
-        </button>
-      </form>
-
-      <div className={s.splitNarrow}>
-        <section className={s.cardFlush}>
-          {list.length === 0 ? (
-            <p className={s.empty}>Nenhum cliente encontrado. Tente o número sem espaços.</p>
-          ) : (
-            <table className={s.table}>
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Encom.</th>
-                  <th>Total gasto</th>
-                </tr>
-              </thead>
-              <tbody>
-                {list.map((c) => {
-                  const on = c.key === current?.key;
-                  return (
-                    <tr key={c.key} style={on ? { background: "var(--blush-light)" } : undefined}>
-                      <td>
-                        <Link href={link(c.key)} className={s.two} aria-current={on ? "true" : undefined}>
-                          <span className={on ? s.strong : undefined}>{c.name}</span>
-                          <span className={s.muted}>{c.phone ? `+258 ${maskMsisdn(c.phone)}` : c.email ?? "—"}</span>
-                        </Link>
-                      </td>
-                      <td>{c.orders.length}</td>
-                      <td className={s.num}>{mzn(c.totalPaid)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+      <div className={c.note}>
+        <Icon name="calendar" size={18} />
+        <span>
+          <b>Revisão anual a 1 de janeiro de {year + 1}</b> · previsão com as compras de {year}: {forecast.up.length} {forecast.up.length === 1 ? "sobe" : "sobem"},{" "}
+          {forecast.keep} {forecast.keep === 1 ? "mantém" : "mantêm"}, {forecast.down.length} {forecast.down.length === 1 ? "desce" : "descem"}.
+        </span>
+        <span className={c.noteActions}>
+          {canExport && (
+            <Link prefetch={false} href="/gestao/clientes/exportar?revisao=1" className={`${c.btn} ${c.xs}`}>
+              Ver relatório
+            </Link>
           )}
-        </section>
+          <NotifyUpsButton disabled={!edit || forecast.up.length === 0} />
+        </span>
+      </div>
 
-        {current && (
-          <section className={s.cardFlush}>
-            <div className={s.cardHead}>
-              <div className={s.two}>
-                <span className={s.muted}>
-                  Cliente desde {current.since.getFullYear()} · {current.hasAccount ? "com conta" : "sem conta"}
-                </span>
-                <h2 className={s.h2}>{current.name}</h2>
-                <span className={s.muted}>
-                  {[current.phone ? `+258 ${formatMsisdn(current.phone)}` : null, current.email].filter(Boolean).join(" · ") || "—"}
-                </span>
-              </div>
-              <div style={{ display: "flex", gap: 24 }}>
-                <span className={s.two}>
-                  <span className={s.statLabel}>Encomendas</span>
-                  <span className={s.statValue} style={{ fontSize: 28 }}>
-                    {current.orders.length}
-                  </span>
-                </span>
-                <span className={s.two}>
-                  <span className={s.statLabel}>Total gasto</span>
-                  <span className={s.statValue} style={{ fontSize: 28 }}>
-                    {mzn(current.totalPaid)}
-                  </span>
-                </span>
-              </div>
-            </div>
-            {orders.length === 0 ? (
-              <p className={s.empty}>Este cliente não tem encomendas com este estado.</p>
+      <div className={c.note}>
+        <Icon name="upload" size={18} />
+        <span>
+          <b>Clientes da loja antiga</b> · importe um Excel com nome, telefone, e-mail, nível e pontos do ano. Telefones repetidos juntam-se à mesma ficha.
+        </span>
+        <span className={c.noteActions}>
+          <Link prefetch={false} href="/gestao/clientes/modelo" className={`${c.btn} ${c.xs}`}>
+            <Icon name="download" size={13} />
+            Modelo Excel
+          </Link>
+          <ImportClientsButton primary size="xs" disabled={!edit} />
+        </span>
+      </div>
+
+      <div className={c.cols}>
+        <section className={d3.panel}>
+          <div className={d3.panelHead}>
+            <h2>Clientes</h2>
+          </div>
+          <div className={d3.panelBody}>
+            <form className={c.filters} role="search">
+              <label className={d3.search}>
+                <Icon name="search" size={16} />
+                <input type="search" name="q" defaultValue={p.q} placeholder="Nome, telefone ou e-mail" aria-label="Nome, telefone ou e-mail" />
+              </label>
+              <AutoSubmitSelect className={c.select} name="nivel" defaultValue={level ?? ""} aria-label="Nível">
+                <option value="">Todos os níveis</option>
+                {LOYALTY_LEVELS.map((l) => (
+                  <option key={l.key} value={l.key}>
+                    {l.name.pt}
+                  </option>
+                ))}
+              </AutoSubmitSelect>
+            </form>
+            {list.length === 0 ? (
+              <p className={d3.empty}>{all.length === 0 ? "Ainda não há clientes. Importe as clientes da loja antiga ou espere pelas primeiras contas do site." : "Nenhuma cliente encontrada."}</p>
             ) : (
-              <table className={s.table}>
+              <table className={`${d3.table} ${c.table}`}>
                 <thead>
                   <tr>
-                    <th>Encomenda</th>
-                    <th>Peças</th>
-                    <th>Total</th>
-                    <th>Pagamento</th>
-                    <th>Entrega</th>
+                    <th>Cliente</th>
+                    <th>Nível {year}</th>
+                    <th>Pontos {year}</th>
+                    <th>Origem</th>
+                    <th>Última compra</th>
                     <th />
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map(({ order: o, lines }) => (
-                    <tr key={o.id}>
-                      <td>
-                        <span className={s.two}>
-                          <span className={s.strong}>{o.number}</span>
-                          <span className={s.muted}>{when(o.createdAt)}</span>
-                        </span>
-                      </td>
-                      <td className={s.muted}>{lines.map((l) => l.code).join(", ")}</td>
-                      <td className={s.num}>{mzn(o.total)}</td>
-                      <td>
-                        <span className={s.two}>
-                          <Chip tone={PAYMENT_LABEL[o.paymentStatus].tone}>{PAYMENT_LABEL[o.paymentStatus].label}</Chip>
-                          <span className={s.muted}>{METHOD_LABEL[o.paymentMethod]}</span>
-                        </span>
-                      </td>
-                      <td className={s.muted}>{FULFILLMENT_LABEL[o.fulfillmentStatus]}</td>
-                      <td>
-                        <Link href={`/gestao/encomendas/${o.id}`} className={s.a}>
-                          Detalhes
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
+                  {list.map((x) => {
+                    const on = x.id === current?.id;
+                    return (
+                      <tr key={x.id} className={on ? c.hl : undefined}>
+                        <td>
+                          <span className={c.who}>
+                            <b>{x.name}</b>
+                            <span className={c.xsMuted}>{x.phone ? `+258 ${on ? formatMsisdn(x.phone) : maskMsisdn(x.phone)}` : (x.email ?? "—")}</span>
+                          </span>
+                        </td>
+                        <td>
+                          <LevelBadge level={x.level} />
+                        </td>
+                        <td>
+                          <b className={`${d3.strong} ${c.num}`}>{x.year.points}</b>
+                        </td>
+                        <td>
+                          <span className={c.xsMuted}>{originText(x)}</span>
+                        </td>
+                        <td>{x.lastPurchase ? day(x.lastPurchase) : "—"}</td>
+                        <td>
+                          <Link href={link({ c: x.id })} className={d3.textBtn} aria-current={on ? "true" : undefined}>
+                            Ver ficha
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}
+          </div>
+        </section>
+
+        {current && (
+          <section className={d3.panel}>
+            <div className={d3.panelHead}>
+              <h2>Ficha da cliente</h2>
+            </div>
+            <div className={c.ficha}>
+              <div className={c.person}>
+                <span className={c.av}>{initials(current.name)}</span>
+                <span>
+                  <span className={c.name}>{current.name}</span>
+                  <br />
+                  <span className={c.xsMuted}>
+                    {[`Cliente desde ${toMaputo(current.since).date.slice(0, 4)}`, current.email, current.phone ? `+258 ${formatMsisdn(current.phone)}` : null].filter(Boolean).join(" · ")}
+                  </span>
+                </span>
+              </div>
+
+              <div className={c.levelBox}>
+                <div className={c.levelLine}>
+                  <LevelBadge level={current.level}>
+                    {current.level.name.pt} · {current.level.pct}% em {year}
+                  </LevelBadge>
+                  <span className={c.num}>
+                    <b>{current.year.points}</b> pontos em {year}
+                  </span>
+                </div>
+                <div className={c.bar} aria-hidden="true">
+                  <i style={{ width: `${Math.min(100, Math.round((current.year.points / BAR_POINTS) * 100))}%` }} />
+                </div>
+                <span className={c.xsMuted}>
+                  {(() => {
+                    const up = LOYALTY_LEVELS.find((l) => l.min > current.year.points);
+                    const head = up ? `Faltam ${up.min - current.year.points} pontos para ${up.name.pt} em ${year + 1}` : `Diamante em ${year + 1}`;
+                    return [head, `${current.year.online} online`, `${current.year.store} na loja`, current.year.other ? `${current.year.other > 0 ? "+" : ""}${current.year.other} outros` : null]
+                      .filter(Boolean)
+                      .join(" · ");
+                  })()}
+                </span>
+                {current.levelSetByHand && current.levelReason && <span className={c.xsMuted}>Nível definido à mão · {current.levelReason}</span>}
+              </div>
+
+              <div>
+                <span className={c.label}>Histórico</span>
+                <table className={c.hist}>
+                  <thead>
+                    <tr>
+                      <th>Ano</th>
+                      <th className={c.r}>Pontos</th>
+                      <th>Nível no ano seguinte</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {history.map((h) => (
+                      <tr key={h.year}>
+                        <td>{h.year}</td>
+                        <td className={`${c.r} ${c.num}`}>{h.current ? `${h.points} (até hoje)` : h.points}</td>
+                        <td>{h.current ? `${h.next.name.pt} (se mantiver)` : `${h.next.name.pt} · ${h.year + 1}`}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <ClientCardForms
+                key={current.id}
+                id={current.id}
+                level={current.level.key}
+                reason={current.levelReason}
+                levels={LOYALTY_LEVELS.map((l) => ({ key: l.key, label: `${l.name.pt} · ${l.pct}%` }))}
+                stores={storeRows.map((x) => ({ code: x.code, name: `Loja ${Number(x.code)}` }))}
+                canEdit={edit}
+              />
+            </div>
           </section>
         )}
       </div>
