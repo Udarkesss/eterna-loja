@@ -3,9 +3,11 @@ import { ProductGrid } from "@/components/product/ProductGrid";
 import { ButtonLink } from "@/components/ui/Button";
 import { getDictionary, t } from "@/i18n";
 import { PRICE_RANGES, SIZE_LETTERS, type PriceRange } from "@/lib/filters";
-import { findCategory, listProducts, type ProductFilter, type ProductSort } from "@/server/catalog";
+import { sortSizes } from "@/lib/sizes";
+import { bestsellerCounts, findCategory, listProducts, type ProductFilter, type ProductSort } from "@/server/catalog";
+import { reservedProductIds } from "@/server/reservations";
 import { cardPriceVisible } from "@/server/content";
-import { COLOR_FAMILIES, type ColorFamily, type Locale, type ProductDTO } from "@/types";
+import { COLOR_FAMILIES, type CategoryListing, type ColorFamily, type Locale, type ProductDTO } from "@/types";
 import { CategoryEmpty } from "./CategoryControls";
 import type { TypeTile } from "./TypeBar";
 import styles from "./Category.module.css";
@@ -18,12 +20,32 @@ export interface ListingSource {
   path: string; // EN: page address without parameters. PT: endereço da página sem parâmetros.
   keep?: string[]; // EN: parameters the type links keep (?linha=, ?q=). PT: parâmetros mantidos nas ligações dos tipos.
   types?: string[]; // EN: only these types (one line of a collection). PT: só estes tipos (linha de uma colecção).
+  settings?: CategoryListing | null; // EN: Gestão · Categorias e filtros. PT: Gestão · Categorias e filtros.
 }
 
 const PAGE_SIZE = 12;
 const SORTS: ProductSort[] = ["recommended", "newest", "price_asc", "price_desc"];
 
 const list = (v: string | string[] | undefined) => (typeof v === "string" ? v.split(",").filter(Boolean) : []);
+
+/**
+ * EN: Orders the database cannot give directly (Gestão · Categorias e filtros): featured pieces first (manual order),
+ *     best sellers, name, size, piece type.
+ * PT: Ordens que a base de dados não dá directamente: peças em destaque primeiro (ordem manual), mais vendidos, nome,
+ *     tamanho, tipo de peça.
+ */
+function arrange(list: ProductDTO[], sort: CategoryListing["sort"], featured: string[], sold: Map<string, number> | null): ProductDTO[] {
+  let out = [...list];
+  if (sort === "bestsellers" && sold) out.sort((a, b) => (sold.get(b.id) ?? 0) - (sold.get(a.id) ?? 0));
+  else if (sort === "name") out.sort((a, b) => a.name.localeCompare(b.name, "pt"));
+  else if (sort === "size") out.sort((a, b) => (sortSizes(a.variants.map((v) => v.size))[0] ?? "").localeCompare(sortSizes(b.variants.map((v) => v.size))[0] ?? ""));
+  else if (sort === "type") out.sort((a, b) => (a.type?.name ?? "").localeCompare(b.type?.name ?? "", "pt"));
+  if (featured.length && (!sort || sort === "featured")) {
+    const rank = (id: string) => (featured.indexOf(id) + 1 || 9999);
+    out = out.map((p, i) => ({ p, i })).sort((a, b) => rank(a.p.id) - rank(b.p.id) || a.i - b.i).map((x) => x.p);
+  }
+  return out;
+}
 
 /** EN: Price checkboxes are OR-ed together. PT: As caixas de preço combinam-se com "ou". */
 function inPriceRanges(product: ProductDTO, ranges: PriceRange[]): boolean {
@@ -46,15 +68,26 @@ export async function loadListing(source: ListingSource, query: Query, locale: L
   const prices = list(query.price).filter((p): p is PriceRange => (PRICE_RANGES as readonly string[]).includes(p));
   const onSale = query.sale === "1";
   const type = typeof query.type === "string" && (!allowedTypes || allowedTypes.includes(query.type)) ? query.type : undefined;
-  const sort = SORTS.find((s) => s === query.sort) ?? "recommended";
+  // EN: The category's default order (Gestão · Categorias e filtros) when the customer did not choose one.
+  // PT: A ordem por defeito da categoria quando a cliente não escolheu outra.
+  const chosen = SORTS.find((s) => s === query.sort);
+  const own = !chosen ? source.settings?.sort : undefined;
+  const sort: ProductSort = chosen ?? (own === "newest" || own === "price_asc" || own === "price_desc" ? own : "recommended");
   const shown = Math.max(PAGE_SIZE, Number(query.n) || PAGE_SIZE);
   const types = type ? [type] : allowedTypes;
 
   const [all, showPrice] = await Promise.all([listProducts({ ...source.filter, types: allowedTypes }, locale), cardPriceVisible()]);
   // EN: Without filters the list is the same: no second read. PT: Sem filtros a lista é a mesma: sem segunda leitura.
   const plain = !type && !sizeLetters.length && !colors.length && !onSale && sort === "recommended";
-  const filtered = (plain ? all : await listProducts({ ...source.filter, types, sizeLetters, colors, onSale, sort }, locale)).filter((p) =>
-    inPriceRanges(p, prices),
+  const hideReserved = source.settings?.filters?.reserved === false;
+  const reserved = hideReserved ? await reservedProductIds() : new Set<string>();
+  const filtered = arrange(
+    (plain ? all : await listProducts({ ...source.filter, types, sizeLetters, colors, onSale, sort }, locale)).filter(
+      (p) => inPriceRanges(p, prices) && !(hideReserved && p.stock === 0 && reserved.has(p.id)),
+    ),
+    chosen ? undefined : own,
+    source.settings?.featured ?? [],
+    own === "bestsellers" && !chosen ? await bestsellerCounts() : null,
   );
 
   const link = (q: URLSearchParams) => `${source.path}${q.size ? `?${q}` : ""}`;

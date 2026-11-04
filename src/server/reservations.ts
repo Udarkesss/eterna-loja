@@ -267,3 +267,10 @@ export async function addReservationPoints(r: ReservationRow) {
     reason: `Reserva ${r.number}`,
   });
 }
+
+/** EN: Pieces with an active reservation ("Reservada"). PT: Peças com reserva activa. */
+export async function reservedProductIds(): Promise<Set<string>> {
+  const db = await getDb();
+  const rows = await db.select({ id: reservations.productId }).from(reservations).where(eq(reservations.status, "active"));
+  return new Set(rows.map((r) => r.id).filter((x): x is string => !!x));
+}

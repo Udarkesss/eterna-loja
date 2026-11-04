@@ -6,7 +6,7 @@ import type { CategoryDTO, CategorySummary, ColorFamily, Locale, ProductDTO, Sea
 import { getDb } from "./db";
 import { campaignPercents, campaignPrice } from "./campaigns";
 import { discountSettings } from "./discounts";
-import { categories, productCategories, productImages, products, productVariants } from "./db/schema";
+import { categories, orderLines, orders, productCategories, productImages, products, productVariants } from "./db/schema";
 
 /**
  * EN: Catalog reads. Pages and the API only use the functions here, never the tables directly,
@@ -41,6 +41,7 @@ function toCategoryDTO(row: CategoryRow, rows: CategoryRow[], locale: Locale): C
           active: row.details.active ?? false,
         }
       : null,
+    listing: row.details?.listing ?? null,
     parent: parent ? { slug: parent.slug, name: parent.name[locale] } : null,
     children: rows.filter((r) => r.parentId === row.id).map((child) => toCategoryDTO(child, rows, locale)),
   };
@@ -452,4 +453,16 @@ export async function activeCollection(locale: Locale): Promise<(CategoryDTO & {
 export async function seasonalSlugs(): Promise<string[]> {
   const rows = await loadCategories();
   return rows.filter((r) => r.kind === "collection" && (!r.parentId || rows.find((x) => x.id === r.parentId)?.kind === "collection")).map((r) => r.slug);
+}
+
+/** EN: Units sold per product (paid, not cancelled orders). PT: Unidades vendidas por peça. */
+export async function bestsellerCounts(): Promise<Map<string, number>> {
+  const db = await getDb();
+  const rows = await db
+    .select({ id: orderLines.productId, n: sql<number>`sum(${orderLines.quantity})` })
+    .from(orderLines)
+    .innerJoin(orders, eq(orders.id, orderLines.orderId))
+    .where(and(eq(orders.paymentStatus, "paid"), eq(orders.kind, "purchase")))
+    .groupBy(orderLines.productId);
+  return new Map(rows.filter((r) => r.id).map((r) => [r.id!, Number(r.n)]));
 }

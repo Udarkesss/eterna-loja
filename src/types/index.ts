@@ -30,6 +30,8 @@ export interface CategoryDTO extends CategorySummary {
   description: string | null;
   imageUrl: string | null; // EN: type circle / collection cover. PT: círculo do tipo / capa da colecção.
   details: { edition: string | null; season: string | null; lines: string[]; active: boolean } | null;
+  /** EN: Order and filters (Gestão · Categorias e filtros). PT: Ordem e filtros. */
+  listing: CategoryListing | null;
   parent: CategorySummary | null;
   children: CategoryDTO[];
 }
@@ -57,6 +59,15 @@ export interface CategoryDetails {
   message?: Localized; // EN: home "entrada" text while active. PT: texto da entrada enquanto activa.
   buttonText?: Localized;
   buttonLink?: string; // EN: "auto" = this collection. PT: "auto" = esta colecção.
+  // EN: Gestão · Categorias e filtros (design V3). PT: Gestão · Categorias e filtros (V3).
+  listing?: CategoryListing;
+}
+
+/** EN: Order and filters of a category page (Gestão · Categorias e filtros). PT: Ordem e filtros de uma categoria. */
+export interface CategoryListing {
+  sort?: "featured" | "newest" | "bestsellers" | "price_asc" | "price_desc" | "name" | "size" | "type";
+  featured?: string[]; // EN: product ids, in order. PT: ids das peças, por ordem.
+  filters?: { size?: boolean; color?: boolean; price?: boolean; types?: boolean; reserved?: boolean };
 }
 
 /** EN: A colour as stored (all languages). PT: Uma cor como está guardada (todos os idiomas). */

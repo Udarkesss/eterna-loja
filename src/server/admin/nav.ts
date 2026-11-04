@@ -27,6 +27,7 @@ export const MENU: { group: NavItem["group"]; href: string; label: string; icon:
   { group: "Catálogo", href: "/gestao/produtos", label: "Produtos", icon: "tag", area: "products.view" },
   { group: "Catálogo", href: "/gestao/tipos", label: "Tipos de peça", icon: "grid", area: "products.publish" },
   { group: "Catálogo", href: "/gestao/coleccoes", label: "Colecções", icon: "layers", area: "products.publish" },
+  { group: "Catálogo", href: "/gestao/categorias", label: "Categorias e filtros", icon: "filter", area: "products.publish" },
   { group: "Catálogo", href: "/gestao/produtos/importar", label: "Importar", icon: "upload", area: "products.publish" },
   { group: "Site", href: "/gestao/conteudo", label: "Conteúdo do site", icon: "monitor", area: "content" },
   { group: "Sistema", href: "/gestao/pagamentos", label: "Pagamentos e avisos", icon: "card", area: "payments.toggle" },

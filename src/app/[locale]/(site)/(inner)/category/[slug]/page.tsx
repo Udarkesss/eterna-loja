@@ -38,7 +38,8 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   if (!category) notFound();
   if (category.kind === "collection" && category.details?.lines.length) return <CollectionPage category={category} query={query} locale={locale} />;
   const dict = getDictionary(locale);
-  const listing = await loadListing({ filter: { category: slug }, path: categoryHref(slug, locale) }, query, locale);
+  const listing = await loadListing({ filter: { category: slug }, path: categoryHref(slug, locale), settings: category.listing }, query, locale);
+  const shown = { color: true, price: true, types: true, ...(category.listing?.filters ?? {}) };
 
   return (
     <>
@@ -59,13 +60,13 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           <h1 className={styles.title}>{category.name}</h1>
           {category.description && <p className={styles.description}>{category.description}</p>}
         </div>
-        <TypeBar tiles={listing.tiles} label={dict.catalog.types} />
+        {shown.types && <TypeBar tiles={listing.tiles} label={dict.catalog.types} />}
       </section>
 
       <CategoryToolbar total={listing.filtered.length} />
 
       <section className={`page-x ${styles.body}`}>
-        <CategoryFilters />
+        <CategoryFilters color={shown.color} price={shown.price} />
         <div className={styles.results}>
           <Results listing={listing} locale={locale} columns={3} />
           <div className={styles.phoneHelp}>
@@ -89,7 +90,7 @@ async function CollectionPage({ category, query, locale }: { category: CategoryD
   const current = lines.find((l) => l.slug === query.linha) ?? lines[0];
   const lineTypes = current ? current.children.filter((c) => c.kind === "type").map((c) => c.slug) : undefined;
   const listing = await loadListing(
-    { filter: { category: category.slug }, path: categoryHref(category.slug, locale), keep: ["linha"], types: lineTypes },
+    { filter: { category: category.slug }, path: categoryHref(category.slug, locale), keep: ["linha"], types: lineTypes, settings: category.listing },
     query,
     locale,
   );

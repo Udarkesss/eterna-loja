@@ -153,13 +153,13 @@ export function CategoryToolbar({ total, inline = false }: { total: number; inli
  * PT: Filtros laterais do V3: Tamanho (letras + guia) · Cor (8 amostras com nome) · Preço · Disponibilidade · "Não
  *     encontra o que procura?" com WhatsApp.
  */
-export function CategoryFilters({ inSheet = false }: { inSheet?: boolean }) {
+export function CategoryFilters({ inSheet = false, color = true, price = true }: { inSheet?: boolean; color?: boolean; price?: boolean }) {
   const { dict } = useI18n();
   return (
     <aside aria-label={dict.catalog.filters} className={inSheet ? styles.sheetBody : styles.aside}>
       <SizeFilter />
-      <ColorFilter />
-      <PriceFilter />
+      {color && <ColorFilter />}
+      {price && <PriceFilter />}
       <SaleFilter />
       {!inSheet && <HelpBox />}
     </aside>
