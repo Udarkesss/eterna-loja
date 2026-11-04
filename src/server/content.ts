@@ -2,11 +2,11 @@ import "server-only";
 import { DEFAULT_PRICING, type DeliveryPricing } from "@/lib/delivery";
 import { currentCustomer } from "./accounts";
 import { customerVouchers, discountSettings } from "./discounts";
-import { customerLevel } from "./loyalty";
+import { customerLevel, loyaltySettings } from "./loyalty";
 import { getSetting } from "./settings";
 import { and, asc, eq } from "drizzle-orm";
 import { cache } from "react";
-import type { CheckoutOptionsDTO, DeliveryZoneDTO, Locale, OccasionTileDTO, StoreDTO } from "@/types";
+import type { CardPrice, CheckoutOptionsDTO, DeliveryZoneDTO, Locale, OccasionTileDTO, StoreDTO } from "@/types";
 import { getDb } from "./db";
 import { contentSections, deliveryZones, occasionTiles, paymentMethodSettings, stores } from "./db/schema";
 
@@ -107,11 +107,19 @@ export const deliveryEnabled = () => getSetting<boolean>("delivery.enabled", fal
  * EN: "Preço nos cartões" (Gestão → Definições): off by default in design V3; pieces on sale always show the price.
  * PT: "Preço nos cartões": desligado por defeito no V3; as peças em saldo mostram sempre o preço.
  */
-export const cardPriceVisible = () => getSetting<boolean>("catalog.cardPrice", false);
+/**
+ * EN: "Preço nos cartões" (Definições): true = every card; "sale" = only pieces on sale or in a campaign (the exception
+ *     "as campanhas mostram sempre o preço"); false = none.
+ * PT: true = todos os cartões; "sale" = só peças em saldo ou campanha (a excepção); false = nenhum.
+ */
+export async function cardPriceVisible(): Promise<CardPrice> {
+  const [on, campaigns] = await Promise.all([getSetting<boolean>("catalog.cardPrice", false), getSetting<boolean>("catalog.cardPriceCampaigns", true)]);
+  return on ? true : campaigns ? "sale" : false;
+}
 
 export async function getCheckoutOptions(locale: Locale): Promise<CheckoutOptionsDTO> {
   const customer = await currentCustomer();
-  const [methods, allStores, zones, pricing, delivery, level, discounts] = await Promise.all([
+  const [methods, allStores, zones, pricing, delivery, level, discounts, loyalty] = await Promise.all([
     enabledPaymentMethods(),
     listStores(locale),
     listDeliveryZones(locale),
@@ -119,6 +127,7 @@ export async function getCheckoutOptions(locale: Locale): Promise<CheckoutOption
     deliveryEnabled(),
     customer ? customerLevel(customer.id) : null,
     discountSettings(),
+    loyaltySettings(),
   ]);
   return {
     methods,
@@ -128,6 +137,7 @@ export async function getCheckoutOptions(locale: Locale): Promise<CheckoutOption
     delivery,
     level: level && discounts.level ? { key: level.key, name: level.name[locale], pct: level.pct } : null,
     levelDisplay: discounts.display,
+    loyalty: { on: loyalty.on, mtPerPoint: loyalty.mtPerPoint, stack: loyalty.withSales === "stack", onReservations: loyalty.onReservations },
     vouchers: discounts.vouchers,
     myVouchers: customer && discounts.vouchers ? (await customerVouchers(customer.id, level?.key ?? null)).filter((v) => v.state === "unused") : [],
   };

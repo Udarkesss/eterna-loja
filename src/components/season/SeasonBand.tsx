@@ -5,7 +5,7 @@ import { ProductCard } from "@/components/product/ProductCard";
 import { RichText } from "@/components/ui/RichText";
 import { resolveHref } from "@/lib/links";
 import type { SeasonView } from "@/server/seasons";
-import type { Locale, ProductDTO } from "@/types";
+import type { CardPrice, Locale, ProductDTO } from "@/types";
 import { SeasonSlides } from "./SeasonSlides";
 import styles from "./Season.module.css";
 
@@ -28,7 +28,7 @@ function longDates(s: SeasonView, locale: Locale) {
  * PT: A secção da época no Início (V3-Inicio-Epoca): faixa de ponta a ponta nas suas cores, a imagem (foto, slides ou
  *     vídeo) e o texto à direita, à esquerda, em cima ou em baixo, e por baixo quatro peças.
  */
-export function SeasonBand({ season, products, showPrice, locale }: { season: SeasonView; products: ProductDTO[]; showPrice: boolean; locale: Locale }) {
+export function SeasonBand({ season, products, showPrice, locale }: { season: SeasonView; products: ProductDTO[]; showPrice: CardPrice; locale: Locale }) {
   const k = season.colors;
   const titleStyle = { color: k.title, "--season-accent": k.accent } as CSSProperties;
   return (

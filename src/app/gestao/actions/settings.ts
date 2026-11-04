@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { savePaymentsPage, type PaymentsSave } from "@/server/admin/settings";
-import { saveSystemSettings, type SystemSave } from "@/server/admin/system";
+import { saveSystemSettings, type SystemSettings } from "@/server/admin/system";
 import { AppError } from "@/server/errors";
 import { requireStaffAction } from "@/server/staff/access";
 
@@ -28,7 +28,7 @@ export async function savePaymentsAction(input: PaymentsSave) {
   return run(() => savePaymentsPage(staff, input));
 }
 
-export async function saveSystemAction(input: SystemSave) {
+export async function saveSystemAction(input: SystemSettings) {
   const staff = await requireStaffAction("system");
   return run(() => saveSystemSettings(staff, input));
 }

@@ -121,6 +121,8 @@ export interface ProductDTO {
   price: number; // MT
   salePrice: number | null;
   isNew: boolean;
+  /** EN: Wedding dress ("Pode ir a prova"). PT: Vestido de noiva. */
+  bridal: boolean;
   type: CategorySummary | null; // "Vestido midi"
   collection: CategorySummary | null; // "Beyond Time"
   occasions: CategorySummary[]; // "Convidada", "Gala"
@@ -294,6 +296,8 @@ export interface CheckoutOptionsDTO {
   level: { key: string; name: string; pct: number } | null;
   /** EN: Level discount shown without (plain) or with its name (Gestão · Descontos). PT: Desconto sem ou com o nome do nível. */
   levelDisplay: "plain" | "named";
+  /** EN: Programme rules (Gestão → Definições). PT: Regras do programa de fidelidade. */
+  loyalty: { on: boolean; mtPerPoint: number; stack: boolean; onReservations: boolean };
   /** EN: Vouchers switched on. PT: Vouchers ligados. */
   vouchers: boolean;
   /** EN: The signed-in customer's vouchers she can still use ("Na sua conta"). PT: Vouchers da cliente por usar. */
@@ -397,3 +401,6 @@ export interface ApiSuccess<T> {
 export interface ApiError {
   error: { code: ApiErrorCode; message: string; details?: unknown };
 }
+
+/** EN: Price on product cards (Definições). PT: Preço nos cartões. */
+export type CardPrice = boolean | "sale";

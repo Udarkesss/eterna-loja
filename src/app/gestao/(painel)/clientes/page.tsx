@@ -6,7 +6,7 @@ import { ClientCardForms, ImportClientsButton, NotifyUpsButton } from "@/compone
 import d3 from "@/components/admin/Dashboard.module.css";
 import { DemoTag, PageTop } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
-import { LOYALTY_LEVELS, type LoyaltyLevel } from "@/data/help";
+import type { LoyaltyLevel } from "@/data/help";
 import { BAR_POINTS } from "@/lib/loyalty";
 import { formatMsisdn, maskMsisdn } from "@/lib/payments/msisdn";
 import { toMaputo } from "@/lib/time";
@@ -15,6 +15,7 @@ import { getDb } from "@/server/db";
 import { stores } from "@/server/db/schema";
 import { currentYear } from "@/server/loyalty";
 import { accessOf, canEdit, requireStaffPage } from "@/server/staff/access";
+import { loyaltyLevels } from "@/server/loyalty";
 
 export const metadata = { title: "Clientes" };
 
@@ -56,7 +57,8 @@ function LevelBadge({ level, children, size = 14 }: { level: LoyaltyLevel; child
 export default async function ClientsPage({ searchParams }: Props) {
   const staff = await requireStaffPage("customers");
   const p = await searchParams;
-  const level = LOYALTY_LEVELS.some((l) => l.key === p.nivel) ? p.nivel : undefined;
+  const levels = await loyaltyLevels();
+  const level = levels.some((l) => l.key === p.nivel) ? p.nivel : undefined;
   const db = await getDb();
   const [all, storeRows] = await Promise.all([listClients(), db.select({ code: stores.code, name: stores.name }).from(stores).orderBy(asc(stores.position))]);
   const list = await listClients({ q: p.q, level });
@@ -131,7 +133,7 @@ export default async function ClientsPage({ searchParams }: Props) {
               </label>
               <AutoSubmitSelect className={c.select} name="nivel" defaultValue={level ?? ""} aria-label="Nível">
                 <option value="">Todos os níveis</option>
-                {LOYALTY_LEVELS.map((l) => (
+                {levels.map((l) => (
                   <option key={l.key} value={l.key}>
                     {l.name.pt}
                   </option>
@@ -218,7 +220,7 @@ export default async function ClientsPage({ searchParams }: Props) {
                 </div>
                 <span className={c.xsMuted}>
                   {(() => {
-                    const up = LOYALTY_LEVELS.find((l) => l.min > current.year.points);
+                    const up = levels.find((l) => l.min > current.year.points);
                     const head = up ? `Faltam ${up.min - current.year.points} pontos para ${up.name.pt} em ${year + 1}` : `Diamante em ${year + 1}`;
                     return [head, `${current.year.online} online`, `${current.year.store} na loja`, current.year.other ? `${current.year.other > 0 ? "+" : ""}${current.year.other} outros` : null]
                       .filter(Boolean)
@@ -255,7 +257,7 @@ export default async function ClientsPage({ searchParams }: Props) {
                 id={current.id}
                 level={current.level.key}
                 reason={current.levelReason}
-                levels={LOYALTY_LEVELS.map((l) => ({ key: l.key, label: `${l.name.pt} · ${l.pct}%` }))}
+                levels={levels.map((l) => ({ key: l.key, label: `${l.name.pt} · ${l.pct}%` }))}
                 stores={storeRows.map((x) => ({ code: x.code, name: `Loja ${Number(x.code)}` }))}
                 canEdit={edit}
               />

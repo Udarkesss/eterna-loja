@@ -16,7 +16,9 @@ export function combineDiscounts(levelAmount: number, voucher: { amount: number;
  * PT: Desconto de cliente (nível) de um carrinho: nas peças em saldo ou campanha só conta a parte acima do desconto já
  *     feito, para se aplicar o maior dos dois (V3: "aplica-se o maior dos dois").
  */
-export function levelDiscount(lines: { price: number; unit: number; quantity: number }[], pct: number): number {
+export function levelDiscount(lines: { price: number; unit: number; quantity: number }[], pct: number, stack = false): number {
   if (!pct) return 0;
+  // EN: "Juntam-se" (Definições): the level's % on top of the sale price. PT: O % do nível sobre o preço de saldo.
+  if (stack) return lines.reduce((sum, l) => sum + Math.round((l.unit * pct) / 100) * l.quantity, 0);
   return lines.reduce((sum, l) => sum + Math.max(0, Math.round((l.price * pct) / 100) - (l.price - l.unit)) * l.quantity, 0);
 }

@@ -6,7 +6,7 @@ import { RichText } from "@/components/ui/RichText";
 import { whatsappLink } from "@/data/site";
 import { getDictionary } from "@/i18n";
 import { resolveHref } from "@/lib/links";
-import type { CategoryDTO, Locale, OccasionTileDTO, ProductDTO, StoreDTO } from "@/types";
+import type { CardPrice, CategoryDTO, Locale, OccasionTileDTO, ProductDTO, StoreDTO } from "@/types";
 import { AccessoriesTabs, Carousel, MoreOccasions, VideoBand, type AccessoryTab } from "./HomeInteractive";
 import styles from "./HomeV3.module.css";
 import type { ContactsView, SocialLink } from "@/data/contacts";
@@ -170,7 +170,7 @@ export function Novidades({
 }: {
   data: { title: string; subtitle: string; linkLabel: string; href: string };
   products: ProductDTO[];
-  showPrice: boolean;
+  showPrice: CardPrice;
   locale: Locale;
 }) {
   if (!products.length) return null;

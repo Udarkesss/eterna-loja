@@ -14,18 +14,8 @@ export const site = {
   name: "Eterna",
   foundedYear: 2011,
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
-  email: "apoio@eterna.co.mz",
-  supportPhone: "+258 82 487 6300",
-  phonesLine: "+258 82 487 6300 · 6330", // EN: store phones as shown in the design. PT: telefones das lojas, como no design.
-  // EN: Main WhatsApp of the old eterna.co.mz. PT: WhatsApp principal do eterna.co.mz antigo.
+  // EN: Fallback WhatsApp (the real one is chosen in Gestão → Contactos). PT: WhatsApp de recurso (o real escolhe-se na gestão).
   whatsapp: process.env.NEXT_PUBLIC_WHATSAPP || "258840733688",
-  social: [
-    { key: "instagram", label: "Instagram", handle: "@eterna.dresses", url: "https://www.instagram.com/eterna.dresses/" },
-    { key: "instagram", label: "Bridal", handle: "@eterna.bridal", url: "https://www.instagram.com/eterna.bridal/" },
-    { key: "facebook", label: "Facebook", handle: "Eterna Dresses", url: "https://www.facebook.com/share/1A3tHGxafB/" },
-    { key: "tiktok", label: "TikTok", handle: "@eterna.dresses", url: "https://www.tiktok.com/@eterna.dresses" },
-    { key: "whatsapp", label: "WhatsApp", handle: "+258 84 073 3688", url: "https://wa.me/258840733688" },
-  ] as const,
 };
 
 /**

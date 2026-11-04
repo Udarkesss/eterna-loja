@@ -117,7 +117,7 @@ export default async function DiscountsPage({ searchParams }: Props) {
           <div className={d3.panelHead}>
             <h2>Novo voucher</h2>
           </div>
-          <NewVoucherForm people={people} levels={levelOptions()} disabled={!edit} defaultEnd={addDays(todayMaputo(), 30)} />
+          <NewVoucherForm people={people} levels={await levelOptions()} disabled={!edit} defaultEnd={addDays(todayMaputo(), 30)} />
         </section>
       </div>
 

@@ -10,8 +10,8 @@ export const MT_PER_POINT = 1000;
 /** EN: Points shown at the end of the progress bar. PT: Pontos no fim da barra de progresso. */
 export const BAR_POINTS = 140;
 
-export function levelFor(points: number): LoyaltyLevel {
-  return [...LOYALTY_LEVELS].reverse().find((l) => points >= l.min) ?? LOYALTY_LEVELS[0];
+export function levelFor(points: number, levels: LoyaltyLevel[] = LOYALTY_LEVELS): LoyaltyLevel {
+  return [...levels].reverse().find((l) => points >= l.min) ?? levels[0];
 }
 
 export interface Loyalty {
@@ -22,9 +22,11 @@ export interface Loyalty {
   nextLevel: LoyaltyLevel; // EN: next year's level with today's points. PT: nível do próximo ano com os pontos de hoje.
   upcoming: LoyaltyLevel | null; // EN: the next level up, if any. PT: o nível seguinte, se houver.
   missing: number; // EN: points still missing for it. PT: pontos que faltam.
+  levels: LoyaltyLevel[]; // EN: the levels set in Definições. PT: os níveis definidos.
+  mtPerPoint: number;
 }
 
-export function loyaltyFrom(year: number, level: LoyaltyLevel, spent: number, points: number): Loyalty {
-  const upcoming = LOYALTY_LEVELS.find((l) => l.min > points) ?? null;
-  return { year, level, spent, points, nextLevel: levelFor(points), upcoming, missing: upcoming ? upcoming.min - points : 0 };
+export function loyaltyFrom(year: number, level: LoyaltyLevel, spent: number, points: number, levels: LoyaltyLevel[] = LOYALTY_LEVELS): Loyalty {
+  const upcoming = levels.find((l) => l.min > points) ?? null;
+  return { year, level, spent, points, nextLevel: levelFor(points, levels), upcoming, missing: upcoming ? upcoming.min - points : 0, levels, mtPerPoint: MT_PER_POINT };
 }

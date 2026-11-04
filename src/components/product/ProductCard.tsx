@@ -5,7 +5,7 @@ import { getDictionary } from "@/i18n";
 import { formatMZN } from "@/lib/format";
 import { productHref } from "@/lib/links";
 import { sizeParts, sortSizes } from "@/lib/sizes";
-import type { Locale, ProductDTO } from "@/types";
+import type { CardPrice, Locale, ProductDTO } from "@/types";
 import styles from "./ProductCard.module.css";
 
 /**
@@ -19,13 +19,13 @@ import styles from "./ProductCard.module.css";
 export function ProductCard({
   product,
   locale,
-  showPrice = false,
+  showPrice = "sale",
   sizes = "(min-width: 1024px) 25vw, 50vw",
   priority = false,
 }: {
   product: ProductDTO;
   locale: Locale;
-  showPrice?: boolean;
+  showPrice?: CardPrice;
   sizes?: string;
   priority?: boolean;
 }) {
@@ -51,7 +51,7 @@ export function ProductCard({
         </span>
         <span className={styles.body}>
           <span className={styles.code}>{product.code}</span>
-          {(showPrice || sale) && (
+          {(showPrice === true || (sale && showPrice === "sale")) && (
             <span className={styles.prices}>
               {sale ? (
                 <>

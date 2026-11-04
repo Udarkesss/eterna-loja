@@ -1,10 +1,17 @@
 import "server-only";
 import { and, eq, inArray, ne } from "drizzle-orm";
 import { LOYALTY_LEVELS, type LoyaltyLevel } from "@/data/help";
-import { levelFor, loyaltyFrom, MT_PER_POINT, type Loyalty } from "@/lib/loyalty";
+import { levelsFrom, LOYALTY_SETTINGS_DEFAULT, type LoyaltySettings } from "@/data/loyalty";
+import { levelFor, loyaltyFrom, type Loyalty } from "@/lib/loyalty";
 import { toMaputo } from "@/lib/time";
 import { getDb } from "./db";
 import { customers, loyaltyEntries, orders } from "./db/schema";
+import { getSetting } from "./settings";
+
+/** EN: Programme settings (Gestão → Definições). PT: Definições do programa. */
+export const loyaltySettings = () => getSetting<LoyaltySettings>("loyalty", LOYALTY_SETTINGS_DEFAULT);
+/** EN: The levels with the points and discounts set in Definições. PT: Os níveis definidos. */
+export const loyaltyLevels = async () => levelsFrom(await loyaltySettings());
 
 /**
  * EN: Loyalty programme of design V3 (Gestão · Clientes and the account page). 1 000 MT paid = 1 point; the points of
@@ -33,6 +40,7 @@ export const currentYear = (now = new Date()) => yearOf(now);
 export async function loyaltyYears(customerIds: string[]): Promise<Map<string, Map<number, YearPoints>>> {
   const out = new Map<string, Map<number, YearPoints>>();
   if (customerIds.length === 0) return out;
+  const settings = await loyaltySettings();
   const db = await getDb();
   const [orderRows, entryRows] = await Promise.all([
     db
@@ -52,13 +60,14 @@ export async function loyaltyYears(customerIds: string[]): Promise<Map<string, M
   for (const e of entryRows) {
     const y = slot(e.customerId, e.year);
     if (e.kind === "store") {
-      y.store += e.points;
+      // EN: "Compras na loja dão pontos" off: they stop counting. PT: Desligado, deixam de contar.
+      if (settings.storePoints) y.store += e.points;
       y.storeSpent += e.amount ?? 0;
     } else y.other += e.points;
   }
   for (const years of out.values())
     for (const y of years.values()) {
-      y.online = Math.floor(y.onlineSpent / MT_PER_POINT);
+      y.online = Math.floor(y.onlineSpent / Math.max(1, settings.mtPerPoint));
       y.points = Math.max(0, y.online + y.store + y.other);
     }
   return out;
@@ -67,12 +76,12 @@ export async function loyaltyYears(customerIds: string[]): Promise<Map<string, M
 type LevelSource = { levelOverride: string | null; levelOverrideYear: number | null };
 
 /** EN: The level of a year: set by hand, else from last year's points. PT: O nível de um ano: à mão, ou pelos pontos do ano anterior. */
-export function levelInYear(c: LevelSource, years: Map<number, YearPoints> | undefined, year: number): LoyaltyLevel {
+export function levelInYear(c: LevelSource, years: Map<number, YearPoints> | undefined, year: number, levels: LoyaltyLevel[] = LOYALTY_LEVELS): LoyaltyLevel {
   if (c.levelOverrideYear === year) {
-    const set = LOYALTY_LEVELS.find((l) => l.key === c.levelOverride);
+    const set = levels.find((l) => l.key === c.levelOverride);
     if (set) return set;
   }
-  return levelFor(years?.get(year - 1)?.points ?? 0);
+  return levelFor(years?.get(year - 1)?.points ?? 0, levels);
 }
 
 /** EN: The account page's "O meu nível". PT: "O meu nível" da página da conta. */
@@ -82,10 +91,12 @@ export async function customerLoyalty(customerId: string, now = new Date()): Pro
     .select({ levelOverride: customers.levelOverride, levelOverrideYear: customers.levelOverrideYear })
     .from(customers)
     .where(eq(customers.id, customerId));
-  const years = (await loyaltyYears([customerId])).get(customerId);
+  const [all, settings] = await Promise.all([loyaltyYears([customerId]), loyaltySettings()]);
+  const levels = levelsFrom(settings);
+  const years = all.get(customerId);
   const year = currentYear(now);
   const y = years?.get(year) ?? empty();
-  return loyaltyFrom(year, levelInYear(row ?? { levelOverride: null, levelOverrideYear: null }, years, year), y.onlineSpent + y.storeSpent, y.points);
+  return { ...loyaltyFrom(year, levelInYear(row ?? { levelOverride: null, levelOverrideYear: null }, years, year, levels), y.onlineSpent + y.storeSpent, y.points, levels), mtPerPoint: settings.mtPerPoint };
 }
 
 /** EN: This year's level; the checkout applies its discount. PT: O nível deste ano; o checkout aplica o desconto. */

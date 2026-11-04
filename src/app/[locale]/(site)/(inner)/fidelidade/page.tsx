@@ -3,10 +3,13 @@ import Link from "next/link";
 import styles from "@/components/help/Help.module.css";
 import { Icon } from "@/components/ui/Icon";
 import { RichText } from "@/components/ui/RichText";
-import { LOYALTY_LEVELS, LOYALTY_RULES, LOYALTY_STEPS } from "@/data/help";
+import { LOYALTY_RULES, LOYALTY_STEPS } from "@/data/help";
+import { levelsFrom } from "@/data/loyalty";
+import { formatMZN } from "@/lib/format";
 import { getDictionary, t } from "@/i18n";
 import { localizePath } from "@/i18n/config";
 import { resolveLocale } from "@/i18n/params";
+import { loyaltySettings } from "@/server/loyalty";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -25,6 +28,16 @@ export default async function LoyaltyPage({ params }: Props) {
   const locale = await resolveLocale(params);
   const dict = getDictionary(locale);
   const l = dict.loyalty;
+  // EN: Levels, points and rules from Gestão → Definições. PT: Níveis, pontos e regras das Definições.
+  const s = await loyaltySettings();
+  const levels = levelsFrom(s);
+  const per = formatMZN(s.mtPerPoint, locale).replace(/[.,]00 MT$/, " MT");
+  const steps = LOYALTY_STEPS.map((x) => ({ ...x, body: { pt: x.body.pt.replace("1 000 MT", per), en: x.body.en.replace("1,000 MT", per) } }));
+  const rules = LOYALTY_RULES.filter((_, i) => i !== 1 || s.onReservations).map((r) =>
+    s.withSales === "stack" && r.pt.startsWith("Não se junta")
+      ? { pt: "Junta-se aos saldos e às campanhas: o desconto do nível aplica-se sobre o preço já reduzido.", en: "It adds to sales and campaigns: the level discount applies on the reduced price." }
+      : r,
+  );
   return (
     <>
       <section className={`page-x ${styles.hero}`}>
@@ -49,7 +62,7 @@ export default async function LoyaltyPage({ params }: Props) {
 
       <section className="page-x" aria-label={l.levels}>
         <div className={styles.levels}>
-          {LOYALTY_LEVELS.map((level) => (
+          {levels.map((level) => (
             <div key={level.key} className={styles.level}>
               <span style={{ color: level.color, display: "flex" }}>
                 <Icon name={level.icon} size={36} />
@@ -66,7 +79,7 @@ export default async function LoyaltyPage({ params }: Props) {
       </section>
 
       <section className={`page-x ${styles.steps}`}>
-        {LOYALTY_STEPS.map((s) => (
+        {steps.map((s) => (
           <div key={s.icon} className={styles.step}>
             <span className={styles.iconCircle}>
               <Icon name={s.icon} size={22} />
@@ -83,7 +96,7 @@ export default async function LoyaltyPage({ params }: Props) {
             <RichText text={l.rulesTitle} />
           </h2>
           <ul className={styles.rulesList}>
-            {LOYALTY_RULES.map((r) => (
+            {rules.map((r) => (
               <li key={r.pt}>
                 <Icon name="check" size={18} />
                 <span>{r[locale]}</span>

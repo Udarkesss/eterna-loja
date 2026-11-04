@@ -9,13 +9,12 @@ import { Button, ButtonLink } from "@/components/ui/Button";
 import form from "@/components/ui/Form.module.css";
 import { Icon } from "@/components/ui/Icon";
 import { RichText } from "@/components/ui/RichText";
-import { LOYALTY_LEVELS } from "@/data/help";
 import { FITTING_KIND_LABELS } from "@/data/fittings";
 import { plural, t, type Dictionary } from "@/i18n";
 import { useI18n } from "@/i18n/I18nProvider";
 import { api } from "@/lib/api-client";
 import { formatMZN } from "@/lib/format";
-import { BAR_POINTS, MT_PER_POINT, type Loyalty } from "@/lib/loyalty";
+import { BAR_POINTS, type Loyalty } from "@/lib/loyalty";
 import { formatMsisdn } from "@/lib/payments/msisdn";
 import { formatLongDate, toMaputo } from "@/lib/time";
 import type { CustomerDTO, CustomerVoucherDTO, FittingPublicDTO, IdentityProvider, MyOrderDTO, ReservationDTO } from "@/types";
@@ -188,7 +187,7 @@ function LevelPanel({ loyalty }: { loyalty: Loyalty }) {
           <span className={styles.small}>{t(a.spent, { amount: formatMZN(spent, locale) })}</span>
           <div className={styles.bar}>
             <span className={styles.barFill} style={{ width: pos(points) }} />
-            {LOYALTY_LEVELS.slice(1).map((l) => (
+            {loyalty.levels.slice(1).map((l) => (
               <Fragment key={l.key}>
                 <span className={styles.mark} style={{ left: pos(l.min) }} />
                 <span className={styles.markLabel} style={{ left: pos(l.min) }}>
@@ -206,7 +205,7 @@ function LevelPanel({ loyalty }: { loyalty: Loyalty }) {
                 upcoming
                   ? t(a.missing, {
                       points: plural(a.points, missing),
-                      amount: formatMZN(missing * MT_PER_POINT, locale),
+                      amount: formatMZN(missing * loyalty.mtPerPoint, locale),
                       level: upcoming.name[locale],
                       next: year + 1,
                     })
@@ -219,7 +218,7 @@ function LevelPanel({ loyalty }: { loyalty: Loyalty }) {
       </div>
 
       <div className={styles.levels}>
-        {LOYALTY_LEVELS.map((l) => (
+        {loyalty.levels.map((l) => (
           <div key={l.key} className={styles.level} aria-current={l.key === level.key ? "true" : undefined}>
             <span className={styles.levelTitle}>
               <span style={{ color: l.color, display: "flex" }}>

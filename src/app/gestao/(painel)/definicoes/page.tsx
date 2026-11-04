@@ -1,18 +1,18 @@
 import { SystemEditor } from "@/components/admin/SystemEditor";
 import { PageTop } from "@/components/admin/ui";
 import { loadSystemSettings } from "@/server/admin/system";
-import { requireStaffPage } from "@/server/staff/access";
+import { canEdit, requireStaffPage } from "@/server/staff/access";
 
 export const metadata = { title: "Definições" };
 
-/** EN: "Definições" (Superadministrador). PT: Módulo de entregas, lojas e horário das provas. */
+/** EN: "Gestão · Definições" of design V3-G-Definicoes. PT: Definições do V3 (só o Superadministrador altera). */
 export default async function SystemPage() {
-  await requireStaffPage("system");
-  const d = await loadSystemSettings();
+  const staff = await requireStaffPage("system");
+  const settings = await loadSystemSettings();
   return (
     <>
-      <PageTop eyebrow="Só o Superadministrador" title="Definições" />
-      <SystemEditor stores={d.stores} schedule={d.schedule} delivery={d.delivery} cardPrice={d.cardPrice} />
+      <PageTop eyebrow="Só o Superadministrador altera" title="Definições" />
+      <SystemEditor settings={settings} editable={canEdit(staff, "system")} />
     </>
   );
 }

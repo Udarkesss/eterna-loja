@@ -1,7 +1,6 @@
 import "server-only";
 import { randomInt } from "node:crypto";
 import { asc, desc, eq } from "drizzle-orm";
-import { LOYALTY_LEVELS } from "@/data/help";
 import { formatMZN } from "@/lib/format";
 import { toMaputo } from "@/lib/time";
 import { audit } from "../audit";
@@ -12,6 +11,7 @@ import { AppError } from "../errors";
 import { sendMessage } from "../messaging";
 import { setSetting } from "../settings";
 import type { StaffContext } from "../staff/access";
+import { loyaltyLevels } from "../loyalty";
 
 /**
  * EN: "Gestão · Descontos e vouchers" of design V3: the four kinds of discount (each switched on and off), how the
@@ -218,4 +218,4 @@ export async function setDiscountDisplay(staff: StaffContext, display: DiscountS
   await audit({ actor: staffActor(staff), action: "Forma de mostrar o desconto alterada", detail: display === "plain" ? "Sem o nome do nível" : "Com o nome do nível" });
 }
 
-export const levelOptions = () => LOYALTY_LEVELS.map((l) => ({ key: l.key, name: l.name.pt, pct: l.pct }));
+export const levelOptions = async () => (await loyaltyLevels()).map((l) => ({ key: l.key, name: l.name.pt, pct: l.pct }));

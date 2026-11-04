@@ -38,11 +38,16 @@ export function ProductDetail({ product, eyebrow, badge, reserve, children }: { 
   // EN: Signed-in customer's discount for the deposit shown on "Reservar". PT: Desconto da cliente para o sinal em "Reservar".
   const { customer } = useCustomer();
   const [levelPct, setLevelPct] = useState(0);
+  const [stack, setStack] = useState(false);
   useEffect(() => {
     if (!customer) return setLevelPct(0);
     api
       .checkoutOptions(locale)
-      .then((o) => setLevelPct(o.level?.pct ?? 0))
+      .then((o) => {
+        // EN: Reservations (and wedding dresses) may be left out of the level discount (Definições). PT: Podem ficar de fora.
+        setLevelPct(o.loyalty?.onReservations === false ? 0 : (o.level?.pct ?? 0));
+        setStack(!!o.loyalty?.stack);
+      })
       .catch(() => setLevelPct(0));
   }, [customer, locale]);
 
@@ -83,7 +88,7 @@ export function ProductDetail({ product, eyebrow, badge, reserve, children }: { 
   const canAdd = !soldOut && !!selected && selected.stock > 0;
   // EN: "Reservar · 6 412,50 MT" (design V3): deposit of the final price; 60 days for Bridal pieces (Loja 22).
   // PT: "Reservar · 6 412,50 MT" (V3): sinal do preço final; 60 dias nas peças da Bridal (Loja 22).
-  const final = price - levelDiscount([{ price: product.price, unit: price, quantity: 1 }], levelPct);
+  const final = price - levelDiscount([{ price: product.price, unit: price, quantity: 1 }], levelPct, stack);
   const deposit = Math.round((final * reserve.depositPct) / 100);
   const reserveDays = (selected ?? product.variants[0])?.store?.code === "22" ? reserve.bridalDays : reserve.days;
 

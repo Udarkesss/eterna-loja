@@ -6,7 +6,7 @@ import type { OrderStatusDTO, PaymentMethod, PaymentStatus, ProductDTO } from "@
 import { currentCustomer } from "./accounts";
 import { levelDiscount } from "@/lib/discounts";
 import { assertVoucherOk, checkVoucher, combineDiscounts, discountSettings } from "./discounts";
-import { customerLevel } from "./loyalty";
+import { customerLevel, loyaltySettings } from "./loyalty";
 import { effectivePrice, listProducts } from "./catalog";
 import { deliveryEnabled, enabledPaymentMethods, listDeliveryZones } from "./content";
 import { getDb } from "./db";
@@ -77,8 +77,14 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderStatusD
   const customer = await currentCustomer();
   const level = customer ? await customerLevel(customer.id) : null;
   const settings = await discountSettings();
+  const loyalty = await loyaltySettings();
+  // EN: "Desconto aplica-se a reservas e a vestidos de noiva" off: wedding dresses leave the level discount.
+  // PT: Desligado, os vestidos de noiva ficam fora do desconto do nível.
+  const levelLines = lines.filter((l) => loyalty.onReservations || !catalog.get(l.slug)?.bridal);
   const levelAmount =
-    level && settings.level ? levelDiscount(lines.map((l) => ({ price: catalog.get(l.slug)?.price ?? l.unitPrice, unit: l.unitPrice, quantity: l.quantity })), level.pct) : 0;
+    level && settings.level
+      ? levelDiscount(levelLines.map((l) => ({ price: catalog.get(l.slug)?.price ?? l.unitPrice, unit: l.unitPrice, quantity: l.quantity })), level.pct, loyalty.withSales === "stack")
+      : 0;
 
   // ── Fulfilment / Entrega ──
   let shippingFee = 0;
@@ -202,8 +208,9 @@ async function createReservationOrder(input: CreateOrderInput): Promise<OrderSta
   const store = storeRows.find((s) => s.code === variant.store?.code) ?? storeRows.find((s) => input.fulfillment.type === "pickup" && s.code === input.fulfillment.storeCode);
   if (!store) throw new AppError("VALIDATION_ERROR", "Unknown store", 400, { field: "storeCode" });
   const customer = await currentCustomer();
-  const [level, discounts, settings] = await Promise.all([customer ? customerLevel(customer.id) : null, discountSettings(), reservationSettings()]);
-  const amounts = reservationAmounts(product, discounts.level ? level : null, settings);
+  const [level, discounts, settings, loyalty] = await Promise.all([customer ? customerLevel(customer.id) : null, discountSettings(), reservationSettings(), loyaltySettings()]);
+  // EN: "Desconto aplica-se a reservas…" off: reservations without the level discount. PT: Reservas sem desconto do nível.
+  const amounts = reservationAmounts(product, discounts.level && loyalty.onReservations ? level : null, settings, loyalty.withSales === "stack");
   const msisdn = "msisdn" in payment ? normalizeMsisdn(payment.msisdn) : null;
   const image = product.images.find((i) => i.color === variant.color) ?? product.images[0];
   const color = product.colors.find((c) => c.key === variant.color)?.name ?? null;

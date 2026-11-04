@@ -66,9 +66,9 @@ export type ReservationRow = typeof reservations.$inferSelect;
  * EN: The amounts of a reservation: the level discount applies to pieces not on sale (the larger discount wins).
  * PT: Os valores de uma reserva: o desconto de nível aplica-se a peças fora de saldo (aplica-se o maior desconto).
  */
-export function reservationAmounts(piece: { price: number; salePrice: number | null }, level: LoyaltyLevel | null, s: ReservationSettings) {
+export function reservationAmounts(piece: { price: number; salePrice: number | null }, level: LoyaltyLevel | null, s: ReservationSettings, stack = false) {
   const base = piece.salePrice ?? piece.price;
-  const discount = level ? levelDiscount([{ price: piece.price, unit: base, quantity: 1 }], level.pct) : 0;
+  const discount = level ? levelDiscount([{ price: piece.price, unit: base, quantity: 1 }], level.pct, stack) : 0;
   const total = base - discount;
   const deposit = Math.round((total * s.depositPct) / 100);
   return { price: base, discount, total, deposit, rest: total - deposit };

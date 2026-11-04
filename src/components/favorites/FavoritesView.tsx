@@ -12,7 +12,7 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { api } from "@/lib/api-client";
 import { formatMZN } from "@/lib/format";
 import { productHref } from "@/lib/links";
-import type { ProductDTO } from "@/types";
+import type { CardPrice, ProductDTO } from "@/types";
 import { useFavorites } from "./FavoritesProvider";
 import styles from "./Favorites.module.css";
 
@@ -29,7 +29,7 @@ const FITTING_MAX = 6;
  *     com essas peças) e a fila `companions` (madrinhas e mães da noiva); depois as outras peças, cada uma com "Mover
  *     para o carrinho" (directo quando só resta um tamanho; senão abre a peça para escolher o tamanho).
  */
-export function FavoritesView({ showPrice, companions, exploreHref }: { showPrice: boolean; companions: ReactNode; exploreHref: string }) {
+export function FavoritesView({ showPrice, companions, exploreHref }: { showPrice: CardPrice; companions: ReactNode; exploreHref: string }) {
   const { locale, dict, href } = useI18n();
   const f = dict.favorites;
   const { slugs } = useFavorites();

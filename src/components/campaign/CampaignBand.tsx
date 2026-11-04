@@ -3,7 +3,7 @@ import { ProductCard } from "@/components/product/ProductCard";
 import { getDictionary, t } from "@/i18n";
 import { localizePath } from "@/i18n/config";
 import type { CampaignView } from "@/server/campaigns";
-import type { Locale, ProductDTO } from "@/types";
+import type { CardPrice, Locale, ProductDTO } from "@/types";
 import { Countdown } from "./Countdown";
 import styles from "./Campaign.module.css";
 
@@ -29,7 +29,7 @@ export function campaignEyebrow(c: CampaignView, locale: Locale) {
  *     phrase, countdown, "Ver a campanha" and four pieces, in the campaign's colours.
  * PT: A faixa da campanha no Início (V3-Inicio-Campanha), antes ou depois da colecção, nas cores da campanha.
  */
-export function CampaignBand({ campaign, products, showPrice, locale }: { campaign: CampaignView; products: ProductDTO[]; showPrice: boolean; locale: Locale }) {
+export function CampaignBand({ campaign, products, showPrice, locale }: { campaign: CampaignView; products: ProductDTO[]; showPrice: CardPrice; locale: Locale }) {
   const dict = getDictionary(locale);
   const k = campaign.colors;
   return (

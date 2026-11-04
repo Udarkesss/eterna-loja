@@ -148,7 +148,7 @@ export function CheckoutView({ reserve }: { reserve?: ReserveInfo } = {}) {
   const [secondsLeft, setSecondsLeft] = useState(0);
 
   useEffect(() => {
-    api.checkoutOptions(locale).then(setOptions).catch(() => setOptions({ methods: [], pickupStores: [], zones: [], pricing: DEFAULT_PRICING, delivery: false, level: null, levelDisplay: "plain", vouchers: false, myVouchers: [] }));
+    api.checkoutOptions(locale).then(setOptions).catch(() => setOptions({ methods: [], pickupStores: [], zones: [], pricing: DEFAULT_PRICING, delivery: false, level: null, levelDisplay: "plain", vouchers: false, myVouchers: [], loyalty: { on: true, mtPerPoint: MT_PER_POINT, stack: false, onReservations: true } }));
   }, [locale]);
 
   // ── Totals / Totais ──
@@ -167,12 +167,19 @@ export function CheckoutView({ reserve }: { reserve?: ReserveInfo } = {}) {
   const fee = feeValue ?? 0;
   const level = options?.level ?? null;
   // EN: Same rule as the server: the larger of sale/campaign and level. PT: A mesma regra do servidor.
-  const levelAmount = level
-    ? levelDiscount(
-        lines.filter((l) => products[l.slug]).map((l) => ({ price: products[l.slug].price, unit: priceOf(l.slug) ?? 0, quantity: l.quantity })),
-        level.pct,
-      )
-    : 0;
+  const rules = options?.loyalty;
+  // EN: Same rules as the server (Definições · Programa de fidelidade). PT: As mesmas regras do servidor.
+  const levelAmount =
+    level && (!reserve || rules?.onReservations !== false)
+      ? levelDiscount(
+          lines
+            .filter((l) => products[l.slug] && (rules?.onReservations !== false || !products[l.slug].bridal))
+            .map((l) => ({ price: products[l.slug].price, unit: priceOf(l.slug) ?? 0, quantity: l.quantity })),
+          level.pct,
+          !!rules?.stack,
+        )
+      : 0;
+  const mtPerPoint = rules ? (rules.on ? rules.mtPerPoint : 0) : MT_PER_POINT;
   const discounts = combineDiscounts(levelAmount, voucher);
   const total = subtotal - Math.min(subtotal, discounts.total) + fee;
   const pieces = lines.reduce((n, l) => n + l.quantity, 0);
@@ -1055,10 +1062,10 @@ export function CheckoutView({ reserve }: { reserve?: ReserveInfo } = {}) {
               <dd>{totalLabel}</dd>
             </div>
           </dl>
-          {total >= MT_PER_POINT && (
+          {mtPerPoint > 0 && total >= mtPerPoint && (
             <span className={styles.points}>
               <Icon name="sparkle" size={16} />
-              {plural(c.summary.points, Math.floor((order?.total ?? total) / MT_PER_POINT))}
+              {plural(c.summary.points, Math.floor((order?.total ?? total) / mtPerPoint))}
             </span>
           )}
           </>

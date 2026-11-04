@@ -227,6 +227,7 @@ export function toProductDTO(row: ProductRow, locale: Locale): ProductDTO {
     price: row.price,
     salePrice: row.salePrice,
     isNew: row.isNew,
+    bridal: !!row.fitting,
     type: row.type ? { slug: row.type.slug, name: (row.type.singular ?? row.type.name)[locale] } : null,
     collection: row.collection ? { slug: row.collection.slug, name: row.collection.name[locale] } : null,
     occasions: row.categories

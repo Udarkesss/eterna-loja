@@ -1,13 +1,13 @@
 import "server-only";
 import { and, asc, eq, inArray, max } from "drizzle-orm";
 import { LOYALTY_LEVELS, type LoyaltyLevel } from "@/data/help";
-import { levelFor, MT_PER_POINT } from "@/lib/loyalty";
+import { levelFor } from "@/lib/loyalty";
 import { normalizeMsisdn } from "@/lib/payments/msisdn";
 import { audit } from "../audit";
 import { getDb } from "../db";
 import { customers, loyaltyEntries, orders, stores } from "../db/schema";
 import { AppError } from "../errors";
-import { currentYear, levelInYear, loyaltyYears, type YearPoints } from "../loyalty";
+import { currentYear, levelInYear, loyaltyLevels, loyaltySettings, loyaltyYears, type YearPoints } from "../loyalty";
 import { sendMessage } from "../messaging";
 import type { StaffContext } from "../staff/access";
 import { readXlsx, writeXlsx } from "../xlsx";
@@ -69,6 +69,7 @@ export async function listClients(filter: { q?: string; level?: string } = {}): 
       : [],
   ]);
   const year = currentYear();
+  const levels = await loyaltyLevels();
   const latest = new Map<string, Date>();
   for (const r of [...lastOrders, ...lastStore]) {
     if (!r.id || !r.at) continue;
@@ -86,11 +87,11 @@ export async function listClients(filter: { q?: string; level?: string } = {}): 
         email: c.email,
         since: c.createdAt,
         origin: c.origin,
-        level: levelInYear(c, years.get(c.id), year),
+        level: levelInYear(c, years.get(c.id), year, levels),
         levelSetByHand: c.levelOverrideYear === year && !!c.levelOverride,
         levelReason: c.levelOverrideYear === year ? c.levelReason : null,
         year: y,
-        nextLevel: levelFor(y.points),
+        nextLevel: levelFor(y.points, levels),
         lastPurchase: latest.get(c.id) ?? null,
         isDemo: c.isDemo,
       };
@@ -130,8 +131,8 @@ export function reviewForecast(list: ClientRow[]) {
 }
 
 const staffActor = (staff: StaffContext) => ({ type: "staff" as const, id: staff.id, name: staff.name, role: staff.roleName });
-const levelByKey = (key: string) => {
-  const l = LOYALTY_LEVELS.find((x) => x.key === key);
+const levelByKey = async (key: string) => {
+  const l = (await loyaltyLevels()).find((x) => x.key === key);
   if (!l) throw new AppError("VALIDATION_ERROR", "Nível desconhecido.", 400);
   return l;
 };
@@ -146,7 +147,7 @@ async function clientOrThrow(id: string) {
 /** EN: "Guardar nível": this year's level by hand, with a reason. PT: Nível deste ano à mão, com motivo. */
 export async function setClientLevel(staff: StaffContext, id: string, levelKey: string, reason: string) {
   const c = await clientOrThrow(id);
-  const level = levelByKey(levelKey);
+  const level = await levelByKey(levelKey);
   const db = await getDb();
   await db.update(customers).set({ levelOverride: level.key, levelOverrideYear: currentYear(), levelReason: reason, updatedAt: new Date() }).where(eq(customers.id, id));
   await audit({ actor: staffActor(staff), action: "Nível de cliente alterado", detail: `${c.name} → ${level.name.pt} (${level.pct}%) · ${reason}` });
@@ -158,7 +159,7 @@ export async function registerStorePurchase(staff: StaffContext, id: string, amo
   const db = await getDb();
   const [store] = await db.select().from(stores).where(eq(stores.code, storeCode));
   if (!store) throw new AppError("VALIDATION_ERROR", "Loja desconhecida.", 400);
-  const points = Math.floor(amount / MT_PER_POINT);
+  const points = Math.floor(amount / Math.max(1, (await loyaltySettings()).mtPerPoint));
   await db.insert(loyaltyEntries).values({ customerId: id, year: currentYear(), kind: "store", points, amount, storeId: store.id, actorName: staff.name });
   await audit({ actor: staffActor(staff), action: "Compra na loja associada", detail: `${c.name} · ${amount} MT · ${store.name} · +${points} pontos` });
   return points;

@@ -23,7 +23,7 @@ import styles from "./CartView.module.css";
  *     peças escolhidas, subtotal, levantamento grátis, total, pontos ganhos e a nota de venda final. Uma peça sem
  *     stock não se pode escolher.
  */
-export function CartView() {
+export function CartView({ mtPerPoint = MT_PER_POINT }: { mtPerPoint?: number }) {
   const { locale, dict, href } = useI18n();
   const c = dict.cart;
   const { remove, toggleLater } = useCart();
@@ -140,10 +140,10 @@ export function CartView() {
             <dd>{formatMZN(total, locale)}</dd>
           </div>
         </dl>
-        {total >= MT_PER_POINT && (
+        {mtPerPoint > 0 && total >= mtPerPoint && (
           <span className={styles.points}>
             <Icon name="sparkle" size={16} />
-            {plural(c.points, Math.floor(total / MT_PER_POINT))}
+            {plural(c.points, Math.floor(total / mtPerPoint))}
           </span>
         )}
         {chosen.length ? (

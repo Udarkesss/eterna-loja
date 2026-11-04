@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import { ProductCard } from "@/components/product/ProductCard";
 import { useI18n } from "@/i18n/I18nProvider";
 import { api } from "@/lib/api-client";
-import type { ProductDTO } from "@/types";
+import type { CardPrice, ProductDTO } from "@/types";
 import grid from "@/components/product/ProductGrid.module.css";
 import { useFavorites } from "./FavoritesProvider";
 
 /** EN: Loads the saved pieces through the API and shows them as product cards. PT: Carrega as peças guardadas. */
-export function FavoritesList({ showPrice = false }: { showPrice?: boolean }) {
+export function FavoritesList({ showPrice = "sale" }: { showPrice?: CardPrice }) {
   const { locale, dict } = useI18n();
   const { slugs } = useFavorites();
   const [products, setProducts] = useState<ProductDTO[] | null>(null);

@@ -1,4 +1,4 @@
-import type { Locale, ProductDTO } from "@/types";
+import type { CardPrice, Locale, ProductDTO } from "@/types";
 import { ProductCard } from "./ProductCard";
 import styles from "./ProductGrid.module.css";
 
@@ -16,7 +16,7 @@ export function ProductGrid({
   products: ProductDTO[];
   locale: Locale;
   columns?: 3 | 4;
-  showPrice?: boolean;
+  showPrice?: CardPrice;
 }) {
   return (
     <div className={`${styles.grid} ${columns === 3 ? styles.three : styles.four}`}>
