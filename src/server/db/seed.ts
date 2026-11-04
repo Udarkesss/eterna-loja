@@ -280,6 +280,11 @@ const DATA_MIGRATIONS: { name: string; run: (db: Database) => Promise<void> }[] 
     name: "areas-descontos",
     run: seedRoles,
   },
+  {
+    // EN: Access matrix area "Reservas" (design V3). PT: Área "Reservas" da matriz de acesso (V3).
+    name: "areas-reservas",
+    run: seedRoles,
+  },
 ];
 
 /** EN: How many data versions exist (development re-checks it on each request). PT: Quantas versões de dados existem. */

@@ -28,6 +28,7 @@ export const AREA_LABELS: Record<string, string> = {
   "commissions.view": "Comissões e relatório de ganhos",
   "commissions.pay": "Marcar comissões como pagas",
   fittings: "Provas: ver, marcar, aceitar pedidos do site",
+  reservations: "Reservas: ver, registar, prolongar, concluir",
   "products.view": "Produtos e stock: ver",
   "products.edit": "Produtos: editar, stock, preço de saldo",
   "products.publish": "Produtos: publicar / apagar",

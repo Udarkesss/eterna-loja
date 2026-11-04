@@ -97,6 +97,11 @@ export function CartView() {
                 )}
                 {ok && line.later && <span className={styles.badge}>{c.later}</span>}
                 <div className={styles.actions}>
+                  {ok && (
+                    <Link href={href(`/checkout?reservar=${encodeURIComponent(line.slug)}&v=${line.variantId}`)} className={styles.reserveLink}>
+                      {c.reserveInstead}
+                    </Link>
+                  )}
                   {product && !isFavorite(line.slug) && (
                     <button
                       type="button"

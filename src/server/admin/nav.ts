@@ -1,9 +1,10 @@
 import "server-only";
-import { and, count, eq, inArray } from "drizzle-orm";
+import { and, count, eq, inArray, lt } from "drizzle-orm";
 import type { NavItem } from "@/components/admin/AdminNav";
 import { addDays, todayMaputo } from "@/lib/time";
 import { getDb } from "../db";
-import { fittings } from "../db/schema";
+import { fittings, reservations } from "../db/schema";
+import { reservationSettings } from "../reservations";
 import { deliveryEnabled } from "../content";
 import { can, storeScope, type StaffContext } from "../staff/access";
 import { listOrdersFor } from "./orders";
@@ -19,6 +20,7 @@ const MENU: { group: NavItem["group"]; href: string; label: string; icon: NavIte
   { group: "Loja", href: "/gestao", label: "Painel", icon: "grid", area: "dashboard" },
   { group: "Loja", href: "/gestao/encomendas", label: "Encomendas", icon: "bag", area: "orders.view" },
   { group: "Loja", href: "/gestao/entregas", label: "Entregas", icon: "truck", area: "deliveries.assign" },
+  { group: "Loja", href: "/gestao/reservas", label: "Reservas", icon: "hourglass", area: "reservations" },
   { group: "Loja", href: "/gestao/provas", label: "Provas · Bridal", icon: "dress", area: "fittings" },
   { group: "Loja", href: "/gestao/clientes", label: "Clientes", icon: "users", area: "customers" },
   { group: "Loja", href: "/gestao/descontos", label: "Descontos e vouchers", icon: "ticket", area: "discounts" },
@@ -55,6 +57,23 @@ export async function navFor(staff: StaffContext): Promise<NavItem[]> {
       .from(fittings)
       .where(and(eq(fittings.status, "requested"), scope ? inArray(fittings.storeId, scope.length ? scope : ["00000000-0000-0000-0000-000000000000"]) : undefined));
     badges["/gestao/provas"] = requests.n;
+  }
+  if (can(staff, "reservations")) {
+    // EN: Reservations ending soon (Definições → avisar antes do fim). PT: Reservas a terminar.
+    const db = await getDb();
+    const s = await reservationSettings();
+    const scope = storeScope(staff, "reservations");
+    const [ending] = await db
+      .select({ n: count() })
+      .from(reservations)
+      .where(
+        and(
+          eq(reservations.status, "active"),
+          lt(reservations.expiresAt, new Date(Date.now() + s.remindDays * 86_400_000)),
+          scope ? inArray(reservations.storeId, scope.length ? scope : ["00000000-0000-0000-0000-000000000000"]) : undefined,
+        ),
+      );
+    badges["/gestao/reservas"] = ending.n;
   }
   const usersArea = ["users.staff", "users.managers", "users.admins"].some((a) => can(staff, a));
   // EN: "Entregas" only with the delivery module on. PT: "Entregas" só com o módulo de entregas ligado.

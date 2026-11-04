@@ -408,3 +408,126 @@
   align-items: center;
   gap: 10px;
 }
+/* ── Windows (V3 .modal) and small bars / Janelas e barras ── */
+.modalBack {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(28, 25, 23, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal {
+  background: var(--raised);
+  width: 720px;
+  max-width: 100%;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  box-shadow: var(--lift, 0 24px 60px rgba(28, 25, 23, 0.25));
+}
+.modalNarrow {
+  width: 560px;
+}
+.panelH {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--line);
+}
+.panelH h3 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 28px;
+}
+.icoBtn {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.panelB {
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.three {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.help {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--muted);
+}
+.kv {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 22px;
+}
+.kv b {
+  font-weight: 500;
+}
+.end {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.miniBar {
+  display: block;
+  height: 6px;
+  background: var(--alt);
+  position: relative;
+  min-width: 90px;
+}
+.miniBar > span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--accent-ink);
+}
+.miniBar[data-tone="warn"] > span {
+  background: var(--warning);
+}
+.miniBar[data-tone="bad"] > span {
+  background: var(--danger);
+}
+.textBtn {
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  background: none;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.textBtn[data-tone="bad"] {
+  color: var(--danger);
+}
+.textBtn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+@media (max-width: 767px) {
+  .three {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

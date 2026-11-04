@@ -169,6 +169,7 @@ export const en: Dictionary = {
     added: "Added to the bag",
     inCart: { one: "In the bag · 1 piece", other: "In the bag · {count} pieces" },
     quickNote: "Discount and collection are worked out at checkout.",
+    reserveInstead: "Reserve instead of buying",
     quickNoteNamed: "{level} discount worked out at checkout.",
     viewCart: "View bag",
   },

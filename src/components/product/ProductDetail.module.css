@@ -429,7 +429,10 @@
     padding-bottom: 18px;
   }
 
-  .actions {
+  /* EN: Phones (design V3-M-Produto): "Reservar" stays in the page; adding goes in the fixed bar.
+     PT: Telemóvel: "Reservar" fica na página; adicionar vai na barra fixa. */
+  .actions > .add,
+  .actionRow > :not(.reserve) {
     display: none;
   }
 

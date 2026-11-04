@@ -130,6 +130,7 @@ export const permissionMatrix: [area: string, access: [string, string, string, s
   ["commissions.view", ["T", "T", "V", "—", "P"]],
   ["commissions.pay", ["T", "T", "—", "—", "—"]],
   ["fittings", ["T", "T", "L", "L", "—"]],
+  ["reservations", ["T", "T", "L", "L", "—"]],
   ["products.view", ["T", "T", "L", "L", "—"]],
   ["products.edit", ["T", "T", "L", "—", "—"]],
   ["products.publish", ["T", "T", "—", "—", "—"]],

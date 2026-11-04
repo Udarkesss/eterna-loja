@@ -172,6 +172,7 @@ export const pt = {
     added: "Adicionado ao carrinho",
     inCart: { one: "No carrinho · 1 peça", other: "No carrinho · {count} peças" },
     quickNote: "Desconto e levantamento calculados no checkout.",
+    reserveInstead: "Reservar em vez de comprar",
     quickNoteNamed: "Desconto {level} calculado no checkout.",
     viewCart: "Ver carrinho",
   },

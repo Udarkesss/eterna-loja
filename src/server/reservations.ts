@@ -3,6 +3,7 @@ import { and, desc, eq, inArray, isNull, lt, sql } from "drizzle-orm";
 import type { LoyaltyLevel } from "@/data/help";
 import { whatsappLink } from "@/data/site";
 import { formatMZN } from "@/lib/format";
+import { sizeParts } from "@/lib/sizes";
 import { addDays, fromMaputo, toMaputo, todayMaputo } from "@/lib/time";
 import type { ReservationDTO } from "@/types";
 import { audit } from "./audit";
@@ -179,15 +180,15 @@ async function notifyStaffNew(r: ReservationRow) {
 // ── Customer side / Lado da cliente ─────────────────────────────────────
 
 export function toReservationDTO(r: ReservationRow, storeCode: string | null, s: ReservationSettings): ReservationDTO {
-  const now = Date.now();
-  const daysLeft = r.expiresAt ? Math.max(0, Math.ceil((r.expiresAt.getTime() - now) / 86_400_000)) : r.days;
+  // EN: Calendar days in Maputo (today → last day). PT: Dias de calendário em Maputo (hoje → último dia).
+  const daysLeft = r.expiresAt ? Math.max(0, Math.round((Date.parse(toMaputo(r.expiresAt).date) - Date.parse(todayMaputo())) / 86_400_000)) : r.days;
   return {
     number: r.number,
     token: r.token,
     code: r.code,
     name: r.name,
     color: r.color,
-    size: r.size,
+    size: r.size ? [sizeParts(r.size).detail, sizeParts(r.size).letter].filter(Boolean).join(" · ") : null,
     imageUrl: r.imageUrl,
     storeCode,
     price: r.price,

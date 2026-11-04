@@ -136,6 +136,13 @@
   color: var(--ink);
 }
 
+.reserveLink {
+  font-size: 13px;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* ── Resumo ── */
 .summary {
   position: sticky;
