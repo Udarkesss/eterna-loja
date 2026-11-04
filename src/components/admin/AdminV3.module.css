@@ -531,3 +531,25 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+.dropBox {
+  height: 120px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 20px;
+  border: 1px dashed var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+.pre {
+  margin: 0;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font: 13px/22px ui-monospace, Consolas, monospace;
+  color: var(--ink);
+  white-space: pre;
+  overflow-x: auto;
+}
