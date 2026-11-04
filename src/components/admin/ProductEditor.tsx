@@ -11,6 +11,7 @@ import type { ColorFamily, Localized, ProductStatus } from "@/types";
 import c from "./AdminV3.module.css";
 import d3 from "./Dashboard.module.css";
 import e from "./ProductEditor.module.css";
+import { FrameButton } from "./FrameDialog";
 
 /**
  * EN: "Gestão · Editar produto" of design V3-G-Produto-Editar: Informação (code, name, type, price · sale, description),
@@ -433,6 +434,7 @@ export function ProductEditor(props: {
                       {imgs.map(({ img, i }) => (
                         <div key={img.url} className={e.photo}>
                           <Image src={img.url} alt={img.alt.pt} width={96} height={128} />
+                          {!ro && <FrameButton url={img.url} kind="photo" title={`foto de ${p.name.pt || "peça"}`} className={e.frame} iconOnly />}
                           {!ro && (
                             <button type="button" className={e.remove} aria-label="Tirar fotografia" onClick={() => set({ images: p.images.filter((_, j) => j !== i) })}>
                               <Icon name="close" size={12} />

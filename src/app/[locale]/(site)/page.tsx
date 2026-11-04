@@ -9,6 +9,7 @@ import { CampaignBand } from "@/components/campaign/CampaignBand";
 import { SeasonBand } from "@/components/season/SeasonBand";
 import { SeasonFx } from "@/components/season/SeasonFx";
 import seasonStyles from "@/components/season/Season.module.css";
+import { getFraming } from "@/server/framing";
 import { activeSeason } from "@/server/seasons";
 import { siteCampaign } from "@/server/campaigns";
 import { activeCollection, findCategory, listProducts, seasonalSlugs } from "@/server/catalog";
@@ -27,7 +28,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const novidades = data("novidades");
   const colecao = data("colecao");
 
-  const [campaign, season] = await Promise.all([siteCampaign(locale), activeSeason(locale)]);
+  const [campaign, season, framing] = await Promise.all([siteCampaign(locale), activeSeason(locale), getFraming()]);
+  // EN: Cover picked from a video frame in Gestão → Enquadrar. PT: Capa escolhida de um fotograma em Enquadrar.
+  const posterOf = (video: string | undefined, fallback: string) => (video && framing[video]?.poster) || fallback;
   const [tiles, newProducts, stores, active, showPrice, seasonal, campaignProducts] = await Promise.all([
     getOccasionTiles(locale),
     listProducts({ sort: "newest", limit: Number(novidades?.count) || 8 }, locale),
@@ -48,7 +51,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       : seasonCategory
         ? await listProducts({ category: seasonCategory, limit: 12 }, locale)
         : [];
-  const seasonBand = season && season.placement !== "none" && <SeasonBand season={season} products={seasonProducts.filter((p) => p.stock > 0)} showPrice={showPrice} locale={locale} />;
+  const seasonBand = season && season.placement !== "none" && <SeasonBand season={{ ...season, images: season.media === "video" ? [posterOf(season.video, season.images[0] ?? ""), ...season.images.slice(1)] : season.images }} products={seasonProducts.filter((p) => p.stock > 0)} showPrice={showPrice} locale={locale} />;
   // EN: Campaign band before or after the collection (Gestão → Nova campanha → Onde aparece). PT: Faixa antes ou depois da colecção.
   const band = campaign && campaign.homePlacement !== "none" && (
     <CampaignBand campaign={campaign} products={campaign.productIds.map((id) => campaignProducts.find((p) => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p && p.stock > 0)} showPrice locale={locale} />
@@ -73,7 +76,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   /* eslint-disable @typescript-eslint/no-explicit-any -- EN: section data comes from the content editor. PT: dados vindos do editor. */
   const render: Record<string, (d: any) => ReactNode> = {
-    hero: (d) => heroView({ ...d, cta: follow(d.cta) }),
+    hero: (d) => heroView({ ...d, poster: posterOf(d.videoDesktop, d.poster), cta: follow(d.cta) }),
     entrada: (d) =>
       active?.message ? (
         <Entrada
@@ -94,7 +97,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     ),
     ocasioes: (d) => <Ocasioes data={d} tiles={tiles} locale={locale} />,
     novidades: (d) => <Novidades data={d} products={newProducts} showPrice={showPrice} locale={locale} />,
-    noivas: (d) => <Noivas data={d} locale={locale} />,
+    noivas: (d) => <Noivas data={{ ...d, poster: posterOf(d.video, d.poster) }} locale={locale} />,
     acessorios: (d) => <Acessorios data={d} />,
     modeladores: (d) => <Modeladores data={d} locale={locale} />,
     sobre: (d) => <Sobre data={d} />,

@@ -16,6 +16,7 @@ import { Icon } from "@/components/ui/Icon";
 import c from "./AdminV3.module.css";
 import d3 from "./Dashboard.module.css";
 import k from "./Collections.module.css";
+import { FrameButton } from "./FrameDialog";
 
 /**
  * EN: Interactive parts of "Gestão · Colecções" and "Editar colecção" (design V3).
@@ -317,16 +318,23 @@ export function CollectionEditor(props: {
               />
               <div className={c.field} style={{ maxWidth: 640 }}>
                 <span className={c.lbl}>{d.history ? "Capa · 3:4" : "Capa horizontal · 16:9"}</span>
-                <button type="button" className={d.history ? k.coverTall : k.cover} onClick={() => cover.current?.click()}>
-                  {d.imageUrl ? (
-                    <Image src={d.imageUrl} alt="" fill sizes="640px" style={{ objectFit: "cover", objectPosition: "center 40%" }} />
-                  ) : (
-                    <>
-                      <Icon name="image" size={26} />
-                      <span className={c.xsMuted}>Arraste a imagem ou escolha um ficheiro</span>
-                    </>
+                <div style={{ position: "relative" }}>
+                  <button type="button" className={d.history ? k.coverTall : k.cover} onClick={() => cover.current?.click()}>
+                    {d.imageUrl ? (
+                      <Image src={d.imageUrl} alt="" fill sizes="640px" style={{ objectFit: "cover", objectPosition: "center 40%" }} />
+                    ) : (
+                      <>
+                        <Icon name="image" size={26} />
+                        <span className={c.xsMuted}>Arraste a imagem ou escolha um ficheiro</span>
+                      </>
+                    )}
+                  </button>
+                  {d.imageUrl && (
+                    <span style={{ position: "absolute", right: 10, bottom: 10 }}>
+                      <FrameButton url={d.imageUrl} kind={d.history ? "photo" : "cover"} title={`capa ${d.history ? "do arquivo" : "horizontal"}`} />
+                    </span>
                   )}
-                </button>
+                </div>
                 <div className={c.note}>
                   <Icon name="info" size={16} />
                   <span className={c.xsMuted} style={{ color: "var(--ink)" }}>

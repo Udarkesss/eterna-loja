@@ -239,3 +239,18 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+/* EN: "Enquadrar" on each photo. PT: Enquadrar em cada foto. */
+.frame {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(250, 247, 242, 0.92);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}

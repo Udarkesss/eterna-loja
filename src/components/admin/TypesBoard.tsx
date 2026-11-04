@@ -15,6 +15,7 @@ import { Icon } from "@/components/ui/Icon";
 import c from "./AdminV3.module.css";
 import d3 from "./Dashboard.module.css";
 import t from "./Types.module.css";
+import { FrameButton } from "./FrameDialog";
 
 /**
  * EN: Interactive parts of "Gestão · Tipos de peça" (design V3): drag to order, rename, change the circular image,
@@ -109,7 +110,10 @@ export function TypesTable({ types, disabled }: { types: TypeRow[]; disabled: bo
                 </span>
               </td>
               <td>
-                <Circle url={x.imageUrl} size={64} />
+                <span className={c.row} style={{ gap: 6 }}>
+                  <Circle url={x.imageUrl} size={64} />
+                  {!disabled && x.imageUrl && <FrameButton url={x.imageUrl} kind="circle" title={`imagem de ${x.name} (moldura circular)`} label={x.name} iconOnly />}
+                </span>
               </td>
               <td>
                 <input

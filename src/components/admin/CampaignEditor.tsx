@@ -16,6 +16,7 @@ import { Icon } from "@/components/ui/Icon";
 import c from "./AdminV3.module.css";
 import k from "./Collections.module.css";
 import d3 from "./Dashboard.module.css";
+import { FrameButton } from "./FrameDialog";
 
 /**
  * EN: "Gestão · Nova campanha" of design V3-G-Campanha-Editar. PT: Nova campanha do V3.
@@ -403,6 +404,7 @@ export function CampaignEditor(props: { data: CampaignFormData; pieces: Piece[];
                   <br />
                   <span className={c.xsMuted}>16:9 · mínimo 2400 × 1350 px</span>
                 </span>
+                {d.imageUrl && <FrameButton url={d.imageUrl} kind="cover" title="imagem da campanha" />}
                 <button type="button" className={`${c.btn} ${c.xs}`} onClick={() => image.current?.click()}>
                   <Icon name="upload" size={13} />
                   {d.imageUrl ? "Trocar" : "Carregar"}

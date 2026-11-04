@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { uploadContentFileAction } from "@/app/gestao/actions/content";
 import { Icon } from "@/components/ui/Icon";
 import s from "./admin.module.css";
+import type { FrameKind } from "@/data/framing";
+import { FrameButton } from "./FrameDialog";
 
 /**
  * EN: Generic editor for a section's fields (stored as JSON). Texts { pt, en } get two boxes; image/video paths get
@@ -139,7 +141,7 @@ function Upload({ onDone, accept }: { onDone: (url: string) => void; accept: str
   );
 }
 
-export function MediaField({ name, value, onChange }: { name: string; value: string; onChange: (v: string) => void }) {
+export function MediaField({ name, value, onChange, frame }: { name: string; value: string; onChange: (v: string) => void; frame?: FrameKind }) {
   const video = /\.mp4$/.test(value) || /video/i.test(name);
   const pdf = /\.pdf$/i.test(value) || /pdf/i.test(name);
   return (
@@ -159,6 +161,7 @@ export function MediaField({ name, value, onChange }: { name: string; value: str
           ))}
         <input className={s.input} style={{ flex: "1 1 200px" }} value={value} onChange={(e) => onChange(e.target.value)} />
         <Upload onDone={onChange} accept={video ? "video/mp4" : pdf ? "application/pdf" : "image/jpeg,image/png,image/webp"} />
+        {value && !pdf && <FrameButton url={value} kind={video ? "video" : (frame ?? "cover")} title={label(name)} className={`${s.btnOutline} ${s.small}`} />}
       </div>
     </div>
   );

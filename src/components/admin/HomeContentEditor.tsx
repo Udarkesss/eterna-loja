@@ -10,6 +10,7 @@ import c from "./AdminV3.module.css";
 import k from "./Collections.module.css";
 import d3 from "./Dashboard.module.css";
 import { FieldEditor, MediaField } from "./FieldEditor";
+import { FrameButton } from "./FrameDialog";
 import { SeasonsPanel } from "./SeasonsPanel";
 
 /**
@@ -513,23 +514,30 @@ export function HomeContentEditor(props: {
             <div className={k.body}>
               {(
                 [
-                  ["colecao", "Colecção activa · capa", "De ponta a ponta · ao clicar ou descer, sobe e revela Festa / Executiva", props.collection?.imageUrl ?? null],
-                  ["colecao", "Roupa de Festa e Roupa Executiva · painéis revelados", "Metade do ecrã · mínimo 1600 × 1700 px · etiqueta, frase e dois botões editáveis", null],
-                  ["noivas", "Eterna Bridal · faixa (vídeo ou foto)", "Faixa 1440 × 520 · só a etiqueta “Eterna Bridal · The White Collection”", null],
-                  ["acessorios", "Acessórios · de festa / executivos", "Slides Festa e Executivos · trocam sozinhos · mínimo 1600 × 1600 px", null],
-                  ["modeladores", "Modeladores · imagem", "Faixa simples: texto e uma imagem", null],
+                  ["colecao", "Colecção activa · capa", "De ponta a ponta · ao clicar ou descer, sobe e revela Festa / Executiva", props.collection?.imageUrl ?? null, "cover"],
+                  ["colecao", "Roupa de Festa e Roupa Executiva · painéis revelados", "Metade do ecrã · mínimo 1600 × 1700 px · etiqueta, frase e dois botões editáveis", null, "cover"],
+                  ["noivas", "Eterna Bridal · faixa (vídeo ou foto)", "Faixa 1440 × 520 · só a etiqueta “Eterna Bridal · The White Collection”", str(sec("noivas")?.data.video) || null, "video"],
+                  ["acessorios", "Acessórios · de festa / executivos", "Slides Festa e Executivos · trocam sozinhos · mínimo 1600 × 1600 px", null, "cover"],
+                  ["modeladores", "Modeladores · imagem", "Faixa simples: texto e uma imagem", str(sec("modeladores")?.data.image) || null, "cover"],
                 ] as const
-              ).map(([key, title, note, image], i) => (
+              ).map(([key, title, note, image, kind], i) => (
                 <div key={i} className={c.row} style={{ gap: 14, padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
                   <span className={k.coverCell} style={{ width: 112, height: 63 }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element -- EN: small preview. PT: pré-visualização. */}
-                    {image ? <img src={image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Icon name="image" size={18} />}
+                    {image && kind === "video" ? (
+                      <video src={image} muted preload="metadata" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : image ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- EN: small preview. PT: pré-visualização.
+                      <img src={image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      <Icon name="image" size={18} />
+                    )}
                   </span>
                   <span className={c.small} style={{ flex: 1 }}>
                     <b style={{ fontWeight: 500 }}>{title}</b>
                     <br />
                     <span className={c.xsMuted}>{note}</span>
                   </span>
+                  {image && <FrameButton url={image} kind={kind} title={title.toLowerCase()} />}
                   {i === 0 && props.collection ? (
                     <Link href={`/gestao/coleccoes/${props.collection.id}`} className={`${c.btn} ${c.xs}`}>
                       Editar capa
