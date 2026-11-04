@@ -6,6 +6,7 @@ import type { MyOrderDTO, OrderStatusDTO, PaymentStatus } from "@/types";
 import { getDb } from "./db";
 import { orderEvents, orderLines, orders, productVariants, reservations, settings } from "./db/schema";
 import { AppError } from "./errors";
+import { customerLoyalty } from "./loyalty";
 
 /**
  * EN: Order storage with stock reservation. The piece is reserved while the payment is pending
@@ -140,7 +141,13 @@ export async function toOrderStatusDTO(order: OrderRow): Promise<OrderStatusDTO>
     fulfillmentType: order.fulfillmentType,
     fulfillmentStatus: order.fulfillmentStatus,
     pickupStore: store ? { code: store.code, name: store.name } : null,
-    deliveryCode: order.fulfillmentType === "delivery" ? order.deliveryCode : null,
+    deliveryCode: order.deliveryCode,
+    points:
+      order.customerId && order.paymentStatus === "paid" && order.kind === "purchase"
+        ? await customerLoyalty(order.customerId).then((l) => ({ earned: Math.floor(order.total / 1000), year: l.points, level: l.level.name[order.locale] }))
+        : null,
+    firstName: order.contact.name.replace(/\[[^\]]*\]\s*/g, "").split(" ")[0],
+    createdAt: order.createdAt.toISOString(),
     reservationToken: reservation?.token ?? null,
   };
 }

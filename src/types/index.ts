@@ -210,7 +210,12 @@ export interface OrderStatusDTO {
   fulfillmentType: FulfillmentType;
   fulfillmentStatus: FulfillmentStatus;
   pickupStore: StoreSummary | null;
-  deliveryCode: string | null; // EN: reception code, deliveries only. PT: código de recepção (só entregas).
+  deliveryCode: string | null; // EN: collection code (pickup) or reception code (delivery). PT: código de levantamento ou de recepção.
+  /** EN: Signed-in customer: points of this order and of the year (paid orders). PT: Pontos desta encomenda e do ano. */
+  points: { earned: number; year: number; level: string } | null;
+  /** EN: First name, for "Obrigada, Ana." PT: Primeiro nome. */
+  firstName: string;
+  createdAt: string;
   /** EN: Set when this is a reservation deposit. PT: Preenchido quando é o sinal de uma reserva. */
   reservationToken: string | null;
 }

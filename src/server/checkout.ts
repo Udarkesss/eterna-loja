@@ -85,7 +85,8 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderStatusD
   if (fulfillment.type === "pickup") {
     const store = storeRows.find((s) => s.code === fulfillment.storeCode);
     if (!store) throw new AppError("VALIDATION_ERROR", "Unknown store", 400, { field: "storeCode" });
-    fulfillmentFields = { pickupStoreId: store.id };
+    // EN: Collection code (design V3 confirmation). PT: Código de levantamento (confirmação do V3).
+    fulfillmentFields = { pickupStoreId: store.id, deliveryCode: newDeliveryCode() };
   } else {
     if (!(await deliveryEnabled())) throw new AppError("METHOD_UNAVAILABLE", "Home delivery is switched off", 400, { field: "fulfillment" });
     const zones = await listDeliveryZones(locale);

@@ -26,6 +26,7 @@ import type { CheckoutOptionsDTO, MobileMethod, OrderStatusDTO, PaymentMethod, P
 import type { MapAddress, MapPoint } from "./DeliveryMap";
 import { DEFAULT_PRICING, deliveryFee } from "@/lib/delivery";
 import styles from "./Checkout.module.css";
+import confirm from "./Confirmation.module.css";
 
 const DeliveryMap = dynamic(() => import("./DeliveryMap").then((m) => m.DeliveryMap), { ssr: false });
 
@@ -402,7 +403,10 @@ export function CheckoutView({ reserve }: { reserve?: ReserveInfo } = {}) {
     );
   }
 
-  const stepIndex = phase === "success" ? 4 : 3;
+  // EN: "Confirmação" of design V3 takes the whole page. PT: A confirmação do V3 ocupa a página toda.
+  if (phase === "success" && order) return <SuccessState order={order} totalLabel={totalLabel} hasProof={!!file} />;
+
+  const stepIndex = 3;
   const methodName = order ? c.methods[order.paymentMethod].name : method ? c.methods[method].name : "";
 
   return (
@@ -860,7 +864,6 @@ export function CheckoutView({ reserve }: { reserve?: ReserveInfo } = {}) {
             </div>
           )}
 
-          {phase === "success" && order && <SuccessState order={order} totalLabel={totalLabel} hasProof={!!file} />}
 
           {phase === "failed" && order && (
             <div role="alert" className={styles.stateStack}>
@@ -1136,65 +1139,64 @@ function MethodLogo({ method }: { method: PaymentMethod }) {
 
 /** EN: "Obrigada. A sua encomenda foi registada." with the design's three variants. PT: Três variantes do design. */
 function SuccessState({ order, totalLabel, hasProof }: { order: OrderStatusDTO; totalLabel: string; hasProof: boolean }) {
-  const { dict, href } = useI18n();
-  const s = dict.checkout.success;
+  const { dict, locale, href } = useI18n();
+  const k = dict.checkout.confirmation;
+  const { customer } = useCustomer();
   const m = order.paymentMethod;
-  const methodName = dict.checkout.methods[m].name;
-
-  const [tone, tag, body, refLabel, refValue] =
-    m === "transfer"
-      ? ["warning", hasProof ? s.transferTag : s.transferWaiting, hasProof ? s.transferBody : s.transferWaitingBody, s.proof, hasProof ? "✓" : "—"]
-      : m === "cod"
-        ? ["success", s.codTag, t(s.codBody, { total: totalLabel }), s.payment, s.cash]
-        : m === "card"
-          ? ["success", s.paidTag, t(s.cardBody, { total: totalLabel }), s.authorisation, "[Código de autorização]"]
-          : ["success", s.paidTag, t(s.paidBody, { total: totalLabel, method: methodName }), t(s.reference, { method: methodName }), "[ID da transacção]"];
-
-  const isPickup = order.fulfillmentType === "pickup";
+  const transfer = m === "transfer";
+  const date = new Intl.DateTimeFormat(locale === "pt" ? "pt-PT" : "en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Maputo" }).format(new Date(order.createdAt));
+  const store = Number(order.pickupStore?.code ?? "2");
+  const rows: [IconName, string][] = [];
+  if (transfer) rows.push(["clock", hasProof ? k.transferProof : k.transferMissing]);
+  rows.push(["whatsapp", order.msisdnMasked ? t(k.receiptPhone, { phone: order.msisdnMasked }) : k.receipt]);
+  if (order.fulfillmentType === "pickup") rows.push(["store", t(k.pickup, { store, code: order.deliveryCode ?? "—" })]);
+  else rows.push(["truck", t(k.delivery, { code: order.deliveryCode ?? "—" })]);
+  if (m === "cod") rows.push(["cash", t(k.cod, { total: totalLabel })]);
+  if (order.points && order.points.earned > 0) rows.push(["sparkle", t(k.points, { earned: order.points.earned, year: order.points.year, level: order.points.level })]);
+  rows.push(["return", dict.product.finalSale]);
+  const tone = transfer ? "warn" : undefined;
 
   return (
-    <div role="status" className={styles.stateStack}>
-      <div className={`${styles.stateBox} ${tone === "warning" ? styles.stateWarning : styles.stateSuccess}`}>
-        <span className={styles.stateTag}>
-          <Icon name={tone === "warning" ? "clock" : "check"} size={18} />
-          {tag}
+    <div className={`page-x`}>
+      <div role="status" className={confirm.wrap}>
+        <span className={confirm.state} data-tone={tone}>
+          <Icon name={tone ? "clock" : "check"} size={16} />
+          {transfer ? (hasProof ? k.validating : k.proofMissing) : k.confirmed}
         </span>
-        <h1 className={styles.successTitle}>
-          <RichText text={s.title} />
+        <h1 className={confirm.title}>
+          {t(k.title, { name: order.firstName })}
+          <br />
+          <em>{transfer ? k.subRegistered : k.sub}</em>
         </h1>
-        <p className={styles.stateBody}>{body}</p>
-      </div>
-      <dl className={styles.facts}>
-        <div>
-          <dt>{s.order}</dt>
-          <dd className={styles.factSerif}>{order.number}</dd>
+        <span className={confirm.meta}>
+          <RichText text={t(dict.reservation.number, { number: order.number, date })} />
+        </span>
+        <ul className={confirm.list}>
+          {rows.map(([icon, text]) => (
+            <li key={text}>
+              <span className={confirm.circle}>
+                <Icon name={icon} size={18} />
+              </span>
+              <span>
+                <RichText text={text} />
+              </span>
+            </li>
+          ))}
+        </ul>
+        <div className={confirm.actions}>
+          {customer ? (
+            <Link href={`${href("/account")}#encomendas`} className={confirm.btnPrimary}>
+              {k.seeOrders}
+            </Link>
+          ) : (
+            <Link href={href(`/order/${order.id}`)} className={confirm.btnPrimary}>
+              {k.track}
+            </Link>
+          )}
+          <Link href={href("/")} className={confirm.btn}>
+            {k.continue}
+          </Link>
         </div>
-        <div>
-          <dt>{refLabel}</dt>
-          <dd className={styles.factSerif}>{refValue}</dd>
-        </div>
-        <div>
-          <dt>{isPickup ? s.pickupTitle : s.deliveryTitle}</dt>
-          <dd>{isPickup ? t(s.pickupNext, { store: order.pickupStore?.code ?? "02" }) : s.deliveryNext}</dd>
-        </div>
-        {order.deliveryCode && (
-          <div>
-            <dt>{dict.order.receptionCode}</dt>
-            <dd className={styles.factSerif} style={{ letterSpacing: "0.3em" }}>
-              {order.deliveryCode}
-            </dd>
-            <dd>{dict.order.receptionHint}</dd>
-          </div>
-        )}
-      </dl>
-      <div className={styles.row}>
-        <ButtonLink href={href("/")}>{s.continue}</ButtonLink>
-        <ButtonLink href={href(`/order/${order.id}`)} variant="outline">
-          {s.track}
-        </ButtonLink>
-        <ButtonLink href={whatsappLink(`${dict.checkout.success.order} ${order.number}`)} variant="outline">
-          {dict.common.whatsapp}
-        </ButtonLink>
       </div>
     </div>
   );
