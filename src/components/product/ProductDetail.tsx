@@ -2,13 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCustomer } from "@/components/account/CustomerProvider";
 import { useCart } from "@/components/cart/CartProvider";
 import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 import { Icon } from "@/components/ui/Icon";
 import { whatsappLink } from "@/data/site";
 import { t } from "@/i18n";
 import { useI18n } from "@/i18n/I18nProvider";
+import { api } from "@/lib/api-client";
 import { formatMZN } from "@/lib/format";
 import { sizeParts, sortSizes } from "@/lib/sizes";
 import type { ProductDTO } from "@/types";
@@ -23,9 +25,25 @@ import styles from "./ProductDetail.module.css";
  *     na cor ficam riscados), "Adicionar ao carrinho", favorito e barra fixa no telemóvel. Os blocos do servidor entram
  *     como `children`.
  */
-export function ProductDetail({ product, eyebrow, badge, children }: { product: ProductDTO; eyebrow: string; badge: string | null; children: ReactNode }) {
+export interface ReserveRules {
+  depositPct: number;
+  days: number;
+  bridalDays: number;
+}
+
+export function ProductDetail({ product, eyebrow, badge, reserve, children }: { product: ProductDTO; eyebrow: string; badge: string | null; reserve: ReserveRules; children: ReactNode }) {
   const { dict, locale, href } = useI18n();
   const { add } = useCart();
+  // EN: Signed-in customer's discount for the deposit shown on "Reservar". PT: Desconto da cliente para o sinal em "Reservar".
+  const { customer } = useCustomer();
+  const [levelPct, setLevelPct] = useState(0);
+  useEffect(() => {
+    if (!customer) return setLevelPct(0);
+    api
+      .checkoutOptions(locale)
+      .then((o) => setLevelPct(o.level?.pct ?? 0))
+      .catch(() => setLevelPct(0));
+  }, [customer, locale]);
 
   const firstInStock = product.colors.find((c) => product.variants.some((v) => v.color === c.key && v.stock > 0))?.key;
   const [color, setColor] = useState<string | null>(firstInStock ?? product.colors[0]?.key ?? null);
@@ -62,6 +80,11 @@ export function ProductDetail({ product, eyebrow, badge, children }: { product: 
 
   const addLabel = soldOut ? dict.product.soldOut : added ? t(dict.product.addedButton, { price: formatMZN(price, locale) }) : selected ? dict.product.addToCart : dict.product.chooseSize;
   const canAdd = !soldOut && !!selected && selected.stock > 0;
+  // EN: "Reservar · 6 412,50 MT" (design V3): deposit of the final price; 60 days for Bridal pieces (Loja 22).
+  // PT: "Reservar · 6 412,50 MT" (V3): sinal do preço final; 60 dias nas peças da Bridal (Loja 22).
+  const final = price - (product.salePrice == null ? Math.round((product.price * levelPct) / 100) : 0);
+  const deposit = Math.round((final * reserve.depositPct) / 100);
+  const reserveDays = (selected ?? product.variants[0])?.store?.code === "22" ? reserve.bridalDays : reserve.days;
 
   return (
     <section className={`page-x ${styles.layout}`}>
@@ -179,10 +202,21 @@ export function ProductDetail({ product, eyebrow, badge, children }: { product: 
         </div>
 
         <div className={styles.actions}>
+          <button type="button" className={styles.add} onClick={handleAdd} disabled={!canAdd}>
+            {addLabel}
+          </button>
           <div className={styles.actionRow}>
-            <button type="button" className={styles.add} onClick={handleAdd} disabled={!canAdd}>
-              {addLabel}
-            </button>
+            {canAdd && selected ? (
+              <Link href={href(`/checkout?reservar=${encodeURIComponent(product.slug)}&v=${selected.id}`)} className={styles.reserve}>
+                <span>{t(dict.product.reserve, { price: formatMZN(deposit, locale) })}</span>
+                <small>{t(dict.product.reserveSub, { pct: reserve.depositPct, days: reserveDays })}</small>
+              </Link>
+            ) : (
+              <button type="button" className={styles.reserve} disabled>
+                <span>{dict.product.reserveShort}</span>
+                <small>{t(dict.product.reserveSub, { pct: reserve.depositPct, days: reserveDays })}</small>
+              </button>
+            )}
             <FavoriteButton slug={product.slug} code={product.code} variant="square" />
           </div>
           {added && (

@@ -2,6 +2,7 @@ import type {
   ApiError,
   ApiErrorCode,
   ApiSuccess,
+  ReservationDTO,
   VoucherCheckDTO,
   CategoryDTO,
   CheckoutOptionsDTO,
@@ -93,6 +94,12 @@ export function createApiClient(baseUrl = "") {
     },
     createOrder(input: CreateOrderInput) {
       return request<OrderStatusDTO>("/orders", { method: "POST", body: JSON.stringify(input) });
+    },
+    getReservation(token: string) {
+      return request<ReservationDTO>(`/reservations/${encodeURIComponent(token)}`);
+    },
+    askMoreTime(token: string) {
+      return request<ReservationDTO>(`/reservations/${encodeURIComponent(token)}/more-time`, { method: "POST" });
     },
     getOrder(id: string) {
       return request<OrderStatusDTO>(`/orders/${encodeURIComponent(id)}`);

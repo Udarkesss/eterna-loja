@@ -211,6 +211,33 @@ export interface OrderStatusDTO {
   fulfillmentStatus: FulfillmentStatus;
   pickupStore: StoreSummary | null;
   deliveryCode: string | null; // EN: reception code, deliveries only. PT: código de recepção (só entregas).
+  /** EN: Set when this is a reservation deposit. PT: Preenchido quando é o sinal de uma reserva. */
+  reservationToken: string | null;
+}
+
+/** EN: A reservation for the customer (confirmation and account). PT: Uma reserva para a cliente (confirmação e conta). */
+export interface ReservationDTO {
+  number: string; // "RS-2026-0012"
+  token: string;
+  code: string;
+  name: string;
+  color: string | null;
+  size: string | null;
+  imageUrl: string | null;
+  storeCode: string | null;
+  price: number;
+  discount: number;
+  total: number;
+  deposit: number;
+  rest: number;
+  status: "pending" | "active" | "completed" | "expired" | "cancelled";
+  days: number;
+  expiresAt: string | null;
+  daysLeft: number;
+  ending: boolean;
+  moreTimeAsked: boolean;
+  canAskMore: boolean;
+  orderId: string | null;
 }
 
 /** EN: One line of "As minhas encomendas". PT: Uma linha de "As minhas encomendas". */

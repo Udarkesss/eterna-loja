@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { reservationSettings } from "@/server/reservations";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProductDetail, ProductPanels } from "@/components/product/ProductDetail";
@@ -41,10 +42,11 @@ export default async function ProductPage({ params }: Props) {
   if (!product) notFound();
 
   const dict = getDictionary(locale);
-  const [related, showPrice, typeCategory] = await Promise.all([
+  const [related, showPrice, typeCategory, rules] = await Promise.all([
     relatedProducts(product, locale),
     cardPriceVisible(),
     product.type ? findCategory(product.type.slug, locale) : Promise.resolve(null),
+    reservationSettings(),
   ]);
   // EN: The line is the type's group (Roupa Executiva, Acessórios de Festa…). PT: A linha é o grupo do tipo.
   const line = typeCategory?.parent ?? null;
@@ -80,7 +82,7 @@ export default async function ProductPage({ params }: Props) {
         <span aria-current="page">{product.code}</span>
       </nav>
 
-      <ProductDetail product={product} eyebrow={eyebrow} badge={badge}>
+      <ProductDetail product={product} eyebrow={eyebrow} badge={badge} reserve={{ depositPct: rules.depositPct, days: rules.days, bridalDays: rules.bridalDays }}>
         <ul className={detail.trust}>
           <li className={detail.trustItem}>
             <span className={detail.trustIcon}>

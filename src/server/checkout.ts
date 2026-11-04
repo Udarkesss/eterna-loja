@@ -2,14 +2,14 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { normalizeMsisdn } from "@/lib/payments/msisdn";
 import type { CreateOrderInput } from "@/lib/validation";
-import type { OrderStatusDTO, PaymentStatus, ProductDTO } from "@/types";
+import type { OrderStatusDTO, PaymentMethod, PaymentStatus, ProductDTO } from "@/types";
 import { currentCustomer } from "./accounts";
 import { assertVoucherOk, checkVoucher, combineDiscounts, discountSettings } from "./discounts";
 import { customerLevel } from "./loyalty";
 import { effectivePrice, listProducts } from "./catalog";
 import { deliveryEnabled, enabledPaymentMethods, listDeliveryZones } from "./content";
 import { getDb } from "./db";
-import { stores } from "./db/schema";
+import { reservations, stores } from "./db/schema";
 import { AppError } from "./errors";
 import {
   createOrderWithReservation,
@@ -21,6 +21,7 @@ import {
   type NewOrderLine,
 } from "./orders";
 import { getPaymentGateway, type GatewayMethod } from "./payments";
+import { isBridalStore, nextReservationNumber, reservationAmounts, reservationSettings } from "./reservations";
 import { getSetting } from "./settings";
 import { DEFAULT_PRICING, deliveryFee, type DeliveryPricing } from "@/lib/delivery";
 
@@ -42,6 +43,7 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderStatusD
   if (!(await enabledPaymentMethods()).includes(payment.method)) {
     throw new AppError("METHOD_UNAVAILABLE", `Payment method ${payment.method} is switched off`, 400);
   }
+  if (input.reserve) return createReservationOrder(input);
 
   // ── Lines: prices and stock from the catalog / Linhas: preços e stock do catálogo ──
   const catalog = new Map<string, ProductDTO>(
@@ -117,13 +119,7 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderStatusD
 
   // ── Payment / Pagamento ──
   const msisdn = "msisdn" in payment ? normalizeMsisdn(payment.msisdn) : null;
-  const isMobile = payment.method === "mpesa" || payment.method === "emola" || payment.method === "mkesh";
-  const timeout = await getSetting("payments.mobileTimeoutSeconds", MOBILE_TIMEOUT_DEFAULT);
-  const expiresAt = isMobile
-    ? new Date(Date.now() + timeout * 1000)
-    : payment.method === "transfer"
-      ? new Date(Date.now() + TRANSFER_HOLD_HOURS * 3600 * 1000)
-      : null;
+  const expiresAt = await paymentExpiry(payment.method);
 
   // EN: Signed-in customers see the order in "As minhas encomendas". PT: Com sessão, aparece na conta.
   const order = await createOrderWithReservation(
@@ -148,20 +144,29 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderStatusD
     ["created"],
   );
 
-  // EN: Card and mobile money go to their gateway. PT: Cartão e dinheiro móvel vão ao seu gateway.
-  // EN: Demo method: paid at once (switch it off in Gestão · Pagamentos before opening). PT: Método de demonstração.
-  if (payment.method === "test") {
+  await startPayment(order, payment.method, msisdn);
+  return toOrderStatusDTO((await findOrder(order.id))!);
+}
+
+/**
+ * EN: Starts the payment of a new order: card and mobile money go to their gateway; transfer and cash on delivery wait;
+ *     the demo method is paid at once (switch it off in Gestão · Pagamentos before opening).
+ * PT: Inicia o pagamento de uma encomenda nova: cartão e dinheiro móvel vão ao gateway; transferência e dinheiro na
+ *     entrega esperam; o método de demonstração fica pago logo (desligue-o em Gestão · Pagamentos antes de abrir).
+ */
+async function startPayment(order: { id: string; number: string; total: number; idempotencyKey: string | null }, method: PaymentMethod, msisdn: string | null) {
+  if (method === "test") {
     await updateOrder(order.id, { paymentReference: `TEST-${order.number}` }, { type: "payment_requested", detail: "teste" });
     await settlePayment({ id: order.id }, "paid", "TEST_PAYMENT");
-  } else if (payment.method !== "transfer" && payment.method !== "cod") {
+  } else if (method !== "transfer" && method !== "cod") {
     try {
-      const result = await getPaymentGateway(payment.method as GatewayMethod).charge({
+      const result = await getPaymentGateway(method as GatewayMethod).charge({
         orderNumber: order.number,
-        amount: total,
+        amount: order.total,
         msisdn: msisdn ?? undefined,
         idempotencyKey: order.idempotencyKey!,
       });
-      await updateOrder(order.id, { paymentReference: result.reference }, { type: "payment_requested", detail: payment.method });
+      await updateOrder(order.id, { paymentReference: result.reference }, { type: "payment_requested", detail: method });
       if (result.status !== "pending") await settlePayment({ id: order.id }, result.status as "paid" | "failed", result.responseCode);
     } catch (error) {
       await settlePayment({ id: order.id }, "failed");
@@ -169,7 +174,94 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderStatusD
       throw new AppError("PAYMENT_ERROR", "Could not start the payment", 502);
     }
   }
+}
 
+/** EN: How long a pending mobile payment / transfer keeps the piece. PT: Quanto tempo um pagamento pendente guarda a peça. */
+async function paymentExpiry(method: PaymentMethod) {
+  const isMobile = method === "mpesa" || method === "emola" || method === "mkesh";
+  const timeout = await getSetting("payments.mobileTimeoutSeconds", MOBILE_TIMEOUT_DEFAULT);
+  return isMobile ? new Date(Date.now() + timeout * 1000) : method === "transfer" ? new Date(Date.now() + TRANSFER_HOLD_HOURS * 3600 * 1000) : null;
+}
+
+/**
+ * EN: "Reservar esta peça" (design V3): one piece, collected in its store; the order is the 50% deposit (kind
+ *     "reservation") and the reservation becomes active when the deposit is paid (src/server/reservations.ts).
+ * PT: "Reservar esta peça" (V3): uma peça, levantada na sua loja; a encomenda é o sinal de 50% (tipo "reservation") e a
+ *     reserva fica activa quando o sinal estiver pago (src/server/reservations.ts).
+ */
+async function createReservationOrder(input: CreateOrderInput): Promise<OrderStatusDTO> {
+  const { payment, locale } = input;
+  const line = input.lines[0];
+  const [product] = await listProducts({ slugs: [line.slug] }, locale);
+  const variant = product?.variants.find((v) => v.id === line.variantId);
+  if (!product || !variant) throw new AppError("NOT_FOUND", `Product not found: ${line.slug}`, 404, { slug: line.slug });
+  const db = await getDb();
+  const storeRows = await db.select().from(stores);
+  const store = storeRows.find((s) => s.code === variant.store?.code) ?? storeRows.find((s) => input.fulfillment.type === "pickup" && s.code === input.fulfillment.storeCode);
+  if (!store) throw new AppError("VALIDATION_ERROR", "Unknown store", 400, { field: "storeCode" });
+  const customer = await currentCustomer();
+  const [level, discounts, settings] = await Promise.all([customer ? customerLevel(customer.id) : null, discountSettings(), reservationSettings()]);
+  const amounts = reservationAmounts(product, discounts.level ? level : null, settings);
+  const msisdn = "msisdn" in payment ? normalizeMsisdn(payment.msisdn) : null;
+  const image = product.images.find((i) => i.color === variant.color) ?? product.images[0];
+  const color = product.colors.find((c) => c.key === variant.color)?.name ?? null;
+
+  const order = await createOrderWithReservation(
+    {
+      customerId: customer?.id ?? null,
+      locale,
+      contact: { name: input.contact.name, email: input.contact.email || undefined, phone: msisdn ?? customer?.phone ?? undefined },
+      subtotal: amounts.price,
+      discount: amounts.discount,
+      shippingFee: 0,
+      total: amounts.deposit,
+      paymentMethod: payment.method,
+      msisdn,
+      idempotencyKey: randomUUID(),
+      paymentExpiresAt: await paymentExpiry(payment.method),
+      fulfillmentType: "pickup",
+      pickupStoreId: store.id,
+      kind: "reservation",
+    },
+    [
+      {
+        productId: product.id,
+        variantId: variant.id,
+        storeId: store.id,
+        slug: product.slug,
+        code: product.code,
+        name: product.name,
+        color,
+        size: variant.size,
+        imageUrl: image?.url ?? null,
+        unitPrice: amounts.price,
+        quantity: 1,
+      },
+    ],
+    ["created"],
+  );
+  await db.insert(reservations).values({
+    number: await nextReservationNumber(),
+    customerId: customer?.id ?? null,
+    contact: { name: input.contact.name, email: input.contact.email || undefined, phone: msisdn ?? customer?.phone ?? undefined },
+    origin: "online",
+    orderId: order.id,
+    productId: product.id,
+    variantId: variant.id,
+    slug: product.slug,
+    code: product.code,
+    name: product.type?.name ?? product.name,
+    color,
+    size: variant.size,
+    imageUrl: image?.url ?? null,
+    storeId: store.id,
+    price: amounts.price,
+    discount: amounts.discount,
+    total: amounts.total,
+    deposit: amounts.deposit,
+    days: isBridalStore(store.code) ? settings.bridalDays : settings.days,
+  });
+  await startPayment(order, payment.method, msisdn);
   return toOrderStatusDTO((await findOrder(order.id))!);
 }
 

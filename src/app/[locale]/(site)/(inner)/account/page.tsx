@@ -7,6 +7,7 @@ import { currentCustomer, toCustomerDTO } from "@/server/accounts";
 import { listCustomerFittings } from "@/server/fittings";
 import { customerVouchers } from "@/server/discounts";
 import { customerLoyalty } from "@/server/loyalty";
+import { customerReservations } from "@/server/reservations";
 import { listCustomerOrders } from "@/server/orders";
 
 type Props = { params: Promise<{ locale: string }> };
@@ -32,6 +33,6 @@ export default async function AccountPage({ params }: Props) {
     listCustomerFittings(row.id, locale),
     customerLoyalty(row.id),
   ]);
-  const vouchers = await customerVouchers(row.id, loyalty.level.key);
-  return <AccountDashboard customer={customer} orders={orders} fittings={fittings} loyalty={loyalty} vouchers={vouchers} />;
+  const [vouchers, reservations] = await Promise.all([customerVouchers(row.id, loyalty.level.key), customerReservations(row.id)]);
+  return <AccountDashboard customer={customer} orders={orders} fittings={fittings} loyalty={loyalty} vouchers={vouchers} reservations={reservations} />;
 }

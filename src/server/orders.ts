@@ -4,7 +4,7 @@ import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { maskMsisdn } from "@/lib/payments/msisdn";
 import type { MyOrderDTO, OrderStatusDTO, PaymentStatus } from "@/types";
 import { getDb } from "./db";
-import { orderEvents, orderLines, orders, productVariants, settings } from "./db/schema";
+import { orderEvents, orderLines, orders, productVariants, reservations, settings } from "./db/schema";
 import { AppError } from "./errors";
 
 /**
@@ -128,6 +128,7 @@ export async function toOrderStatusDTO(order: OrderRow): Promise<OrderStatusDTO>
   const store = order.pickupStoreId
     ? await db.query.stores.findFirst({ where: (s, { eq: e }) => e(s.id, order.pickupStoreId!) })
     : null;
+  const [reservation] = order.kind === "reservation" ? await db.select({ token: reservations.token }).from(reservations).where(eq(reservations.orderId, order.id)) : [];
   return {
     id: order.id,
     number: order.number,
@@ -140,13 +141,18 @@ export async function toOrderStatusDTO(order: OrderRow): Promise<OrderStatusDTO>
     fulfillmentStatus: order.fulfillmentStatus,
     pickupStore: store ? { code: store.code, name: store.name } : null,
     deliveryCode: order.fulfillmentType === "delivery" ? order.deliveryCode : null,
+    reservationToken: reservation?.token ?? null,
   };
 }
 
 /** EN: "As minhas encomendas" (newest first). PT: As minhas encomendas (mais recentes primeiro). */
 export async function listCustomerOrders(customerId: string): Promise<MyOrderDTO[]> {
   const db = await getDb();
-  const rows = await db.select().from(orders).where(eq(orders.customerId, customerId)).orderBy(desc(orders.createdAt));
+  const rows = await db
+    .select()
+    .from(orders)
+    .where(and(eq(orders.customerId, customerId), eq(orders.kind, "purchase")))
+    .orderBy(desc(orders.createdAt));
   const lines = await orderLinesOf(rows.map((r) => r.id));
   return rows.map((o) => ({
     id: o.id,

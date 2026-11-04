@@ -460,6 +460,9 @@ export const orders = pgTable(
     deliveryConfirmedAt: timestamp("delivery_confirmed_at", { withTimezone: true }),
     deliveredWithCode: boolean("delivered_with_code"),
     internalNotes: text("internal_notes"),
+    // EN: "purchase", or "reservation" = the online 50% deposit of a reservation (kept out of Encomendas and points).
+    // PT: "purchase", ou "reservation" = o sinal de 50% de uma reserva online (fora das Encomendas e dos pontos).
+    kind: text("kind").$type<"purchase" | "reservation">().notNull().default("purchase"),
     isDemo: boolean("is_demo").notNull().default(false),
     ...timestamps,
   },
@@ -544,6 +547,54 @@ export const discountCodes = pgTable("discount_codes", {
   sentVia: jsonb("sent_via").$type<("whatsapp" | "email")[]>().notNull().default([]),
   ...timestamps,
 });
+
+/**
+ * EN: Reservations of design V3: a piece kept in the customer's name for 30 days (60 for wedding dresses and Bridal
+ *     pieces) with a 50% deposit, paid online (deposit order, `orderId`) or in the store. The stock stays held while
+ *     the reservation is active; on expiry or cancellation the piece goes back on sale and the deposit is kept.
+ * PT: Reservas do V3: uma peça guardada em nome da cliente 30 dias (60 nos vestidos de noiva e peças da Bridal) com
+ *     sinal de 50%, pago online (encomenda do sinal, `orderId`) ou na loja. O stock fica preso enquanto a reserva está
+ *     activa; ao expirar ou cancelar, a peça volta à venda e o sinal fica retido.
+ */
+export const reservations = pgTable(
+  "reservations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    number: text("number").notNull().unique(), // "RS-2026-0012"
+    token: uuid("token").notNull().unique().defaultRandom(),
+    customerId: uuid("customer_id").references(() => customers.id, { onDelete: "set null" }),
+    contact: jsonb("contact").$type<Customer>().notNull(),
+    origin: text("origin").$type<"online" | "store">().notNull(),
+    orderId: uuid("order_id").references(() => orders.id, { onDelete: "set null" }),
+    productId: uuid("product_id").references(() => products.id, { onDelete: "set null" }),
+    variantId: uuid("variant_id").references(() => productVariants.id, { onDelete: "set null" }),
+    slug: text("slug").notNull(),
+    code: text("code").notNull(),
+    name: text("name").notNull(),
+    color: text("color"),
+    size: text("size"),
+    imageUrl: text("image_url"),
+    storeId: uuid("store_id").references(() => stores.id, { onDelete: "set null" }),
+    price: integer("price").notNull(), // EN: piece price. PT: preço da peça.
+    discount: integer("discount").notNull().default(0), // EN: customer discount. PT: desconto de cliente.
+    total: integer("total").notNull(), // EN: final price. PT: preço final.
+    deposit: integer("deposit").notNull(),
+    depositMethod: text("deposit_method"), // EN: store: cash, mpesa, card… PT: na loja: dinheiro, M-Pesa, cartão…
+    status: text("status").$type<"pending" | "active" | "completed" | "expired" | "cancelled">().notNull().default("pending"),
+    days: integer("days").notNull(),
+    startsAt: timestamp("starts_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    extensions: integer("extensions").notNull().default(0),
+    extendedDays: integer("extended_days").notNull().default(0),
+    moreTimeAt: timestamp("more_time_at", { withTimezone: true }),
+    remindedAt: timestamp("reminded_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    createdByName: text("created_by_name"),
+    ...timestamps,
+  },
+  (t) => [index("reservations_status_idx").on(t.status), index("reservations_customer_idx").on(t.customerId)],
+);
 
 // ══ Payments & notices / Pagamentos e avisos (Gestão · 10) ═════════════
 

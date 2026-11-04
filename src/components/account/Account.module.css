@@ -641,3 +641,106 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── As minhas reservas ── */
+.resRow {
+  display: grid;
+  grid-template-columns: 96px 1fr auto;
+  gap: 20px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--line);
+  align-items: center;
+}
+
+.resImg {
+  width: 96px;
+  height: 128px;
+  object-fit: cover;
+  object-position: center 20%;
+  background: var(--alt);
+}
+
+.resInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.resCode {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  line-height: 28px;
+}
+
+.resState {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.resState .state {
+  align-items: center;
+  gap: 6px;
+}
+
+.xs {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.resActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.resBtn,
+.resLink {
+  height: 40px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.resBtn {
+  border: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.resBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.resLink {
+  color: var(--accent-ink);
+}
+
+@media (max-width: 767px) {
+  .resRow {
+    grid-template-columns: 80px 1fr;
+  }
+
+  .resImg {
+    width: 80px;
+    height: 106px;
+  }
+
+  .resActions {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}

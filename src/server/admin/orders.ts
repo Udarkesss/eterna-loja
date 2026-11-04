@@ -118,6 +118,8 @@ export async function listOrdersFor(staff: StaffContext, filter: OrderListFilter
     .from(orders)
     .where(
       and(
+        // EN: Reservation deposits live in Reservas. PT: Os sinais de reserva estão em Reservas.
+        eq(orders.kind, "purchase"),
         filter.status && filter.status !== "all" ? eq(orders.paymentStatus, filter.status) : undefined,
         filter.from ? gte(orders.createdAt, fromMaputo(filter.from)) : undefined,
         filter.to ? lt(orders.createdAt, new Date(fromMaputo(filter.to).getTime() + 86_400_000)) : undefined,

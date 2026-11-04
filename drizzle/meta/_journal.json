@@ -71,6 +71,13 @@
       "when": 1793778392629,
       "tag": "0009_vouchers",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793779826167,
+      "tag": "0010_reservations",
+      "breakpoints": true
     }
   ]
 }

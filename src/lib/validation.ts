@@ -66,9 +66,16 @@ export const createOrderSchema = z
     fulfillment: fulfillmentSchema,
     payment: paymentSchema,
     discountCode: z.string().trim().max(40).optional(),
+    /** EN: Reserve the (single) piece with a deposit instead of buying it. PT: Reservar a peça com sinal em vez de comprar. */
+    reserve: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
     const p = data.payment;
+    if (data.reserve) {
+      if (data.lines.length !== 1 || data.lines[0].quantity !== 1) ctx.addIssue({ code: "custom", path: ["lines"], message: "ONE_PIECE" });
+      if (p.method === "cod") ctx.addIssue({ code: "custom", path: ["payment", "method"], message: "NO_COD" });
+      if (data.fulfillment.type !== "pickup") ctx.addIssue({ code: "custom", path: ["fulfillment"], message: "PICKUP_ONLY" });
+    }
     if ((p.method === "mpesa" || p.method === "emola" || p.method === "mkesh") && !validateMsisdn(p.msisdn, p.method)) {
       ctx.addIssue({ code: "custom", path: ["payment", "msisdn"], message: MSISDN_METHOD_MISMATCH });
     }

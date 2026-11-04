@@ -1,8 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Fragment, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type FormEvent } from "react";
 import { FavoritesList } from "@/components/favorites/FavoritesList";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import form from "@/components/ui/Form.module.css";
@@ -17,7 +18,7 @@ import { formatMZN } from "@/lib/format";
 import { BAR_POINTS, MT_PER_POINT, type Loyalty } from "@/lib/loyalty";
 import { formatMsisdn } from "@/lib/payments/msisdn";
 import { formatLongDate, toMaputo } from "@/lib/time";
-import type { CustomerDTO, CustomerVoucherDTO, FittingPublicDTO, IdentityProvider, MyOrderDTO } from "@/types";
+import type { CustomerDTO, CustomerVoucherDTO, FittingPublicDTO, IdentityProvider, MyOrderDTO, ReservationDTO } from "@/types";
 import styles from "./Account.module.css";
 import { useCustomer } from "./CustomerProvider";
 import { accountError } from "./errors";
@@ -44,7 +45,7 @@ const HASH: Record<Section, string> = {
   details: "dados",
 };
 
-export function AccountDashboard(props: { customer: CustomerDTO; orders: MyOrderDTO[]; fittings: FittingPublicDTO[]; loyalty: Loyalty; vouchers: CustomerVoucherDTO[] }) {
+export function AccountDashboard(props: { customer: CustomerDTO; orders: MyOrderDTO[]; fittings: FittingPublicDTO[]; loyalty: Loyalty; vouchers: CustomerVoucherDTO[]; reservations: ReservationDTO[] }) {
   const { dict, locale, href } = useI18n();
   const a = dict.account;
   const router = useRouter();
@@ -134,13 +135,7 @@ export function AccountDashboard(props: { customer: CustomerDTO; orders: MyOrder
 
         <div className={styles.main}>
           {section === "level" && <LevelPanel loyalty={loyalty} />}
-          {section === "reservations" && (
-            <EmptyPanel title={a.sections.reservations} intro={a.reservationsBody} empty={a.noReservations}>
-              <Link href={`${href("/como-comprar")}#reservar`} className={styles.link}>
-                {a.howToReserve}
-              </Link>
-            </EmptyPanel>
-          )}
+          {section === "reservations" && <ReservationsPanel reservations={props.reservations} />}
           {section === "orders" && <OrdersPanel orders={props.orders} />}
           {section === "vouchers" && <VouchersPanel vouchers={props.vouchers} />}
           {section === "fittings" && <FittingsPanel fittings={props.fittings} />}
@@ -244,16 +239,87 @@ function LevelPanel({ loyalty }: { loyalty: Loyalty }) {
   );
 }
 
-/** EN: Reservations and vouchers until those modules are on: title, how it works, empty state. PT: Estado vazio. */
-function EmptyPanel({ title, intro, empty, children }: { title: string; intro: string; empty: string; children?: ReactNode }) {
+/**
+ * EN: "As minhas reservas" of design V3: photo, piece, what was paid and what is left, days left of the deadline,
+ *     "Pedir mais tempo" (when switched on) and "Como levantar".
+ * PT: "As minhas reservas" do V3: foto, peça, pago e em falta, dias que faltam, "Pedir mais tempo" e "Como levantar".
+ */
+function ReservationsPanel({ reservations }: { reservations: ReservationDTO[] }) {
+  const { dict, locale, href } = useI18n();
+  const a = dict.account;
+  const [list, setList] = useState(reservations);
+  const [busy, setBusy] = useState<string | null>(null);
+  const day = (iso: string) =>
+    new Intl.DateTimeFormat(locale === "pt" ? "pt-PT" : "en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Africa/Maputo" }).format(new Date(iso)).replace(".", "");
+  async function askMore(token: string) {
+    setBusy(token);
+    try {
+      const next = await api.askMoreTime(token);
+      setList((l) => l.map((x) => (x.token === token ? next : x)));
+    } finally {
+      setBusy(null);
+    }
+  }
   return (
     <section className={styles.stack}>
       <div className={styles.panelHead}>
-        <h2 className={styles.title}>{title}</h2>
-        <p className={styles.small}>{intro}</p>
+        <h2 className={styles.title}>{a.sections.reservations}</h2>
+        <p className={styles.small}>{a.reservationsBody}</p>
       </div>
-      <p className={styles.empty}>{empty}</p>
-      {children}
+      {list.length === 0 ? (
+        <>
+          <p className={styles.empty}>{a.noReservations}</p>
+          <Link href={`${href("/como-comprar")}#reservar`} className={styles.link}>
+            {a.howToReserve}
+          </Link>
+        </>
+      ) : (
+        <div>
+          {list.map((r) => {
+            const tone = r.status === "active" ? (r.ending ? "warn" : "ok") : r.status === "pending" ? "warn" : undefined;
+            const state =
+              r.status === "active"
+                ? plural(a.reservation.left, r.daysLeft)
+                : r.status === "pending"
+                  ? a.reservation.pending
+                  : r.status === "completed"
+                    ? a.reservation.completed
+                    : a.reservation.expired;
+            return (
+              <div key={r.token} className={styles.resRow}>
+                {r.imageUrl ? <Image src={r.imageUrl} alt="" width={96} height={128} className={styles.resImg} /> : <span className={styles.resImg} />}
+                <div className={styles.resInfo}>
+                  <span className={styles.resCode}>{r.code}</span>
+                  <span className={styles.small}>{[r.name, r.color, r.size].filter(Boolean).join(" · ")}</span>
+                  <span className={styles.small}>
+                    {r.status === "completed" ? t(a.reservation.paidAll, { total: formatMZN(r.total, locale) }) : t(a.reservation.paid, { paid: formatMZN(r.deposit, locale), rest: formatMZN(r.rest, locale) })}
+                  </span>
+                  <span className={styles.resState}>
+                    <span className={styles.state} data-tone={tone}>
+                      <Icon name="hourglass" size={14} />
+                      {state}
+                    </span>
+                    {r.expiresAt && (r.status === "active" || r.status === "pending") && (
+                      <span className={styles.xs}>{t(a.reservation.until, { date: day(r.expiresAt), days: r.days })}</span>
+                    )}
+                  </span>
+                </div>
+                <div className={styles.resActions}>
+                  {r.status === "active" && (r.canAskMore || r.moreTimeAsked) && (
+                    <button type="button" className={styles.resBtn} disabled={busy === r.token || r.moreTimeAsked} onClick={() => askMore(r.token)}>
+                      <Icon name="whatsapp" size={15} />
+                      {r.moreTimeAsked ? a.reservation.asked : a.reservation.moreTime}
+                    </button>
+                  )}
+                  <Link href={href(`/reserva/${r.token}`)} className={styles.resLink}>
+                    {r.status === "active" ? a.reservation.howToCollect : a.reservation.see}
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }

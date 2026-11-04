@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useCart } from "@/components/cart/CartProvider";
 import { describeLine, useCartProducts } from "@/components/cart/useCartProducts";
@@ -21,7 +22,7 @@ import { MT_PER_POINT } from "@/lib/loyalty";
 import { sizeParts } from "@/lib/sizes";
 import { methodFromMsisdn, normalizeMsisdn, OPERATOR_NAMES } from "@/lib/payments/msisdn";
 import { createOrderSchema, type CreateOrderInput } from "@/lib/validation";
-import type { CheckoutOptionsDTO, MobileMethod, OrderStatusDTO, PaymentMethod } from "@/types";
+import type { CheckoutOptionsDTO, MobileMethod, OrderStatusDTO, PaymentMethod, ProductDTO } from "@/types";
 import type { MapAddress, MapPoint } from "./DeliveryMap";
 import { DEFAULT_PRICING, deliveryFee } from "@/lib/delivery";
 import styles from "./Checkout.module.css";
@@ -57,13 +58,39 @@ function formatPhone(value: string): string {
  * PT: Checkout — design "Checkout · 6 métodos de pagamento". Os dados do cartão só são validados aqui para seguir o
  *     design; NUNCA são enviados ao nosso servidor (na fase 6 são trocados pelos campos seguros do gateway).
  */
-export function CheckoutView() {
+/**
+ * EN: "Reservar esta peça" (design V3-Checkout-Reserva): the same checkout with one piece, no delivery and no voucher;
+ *     the customer pays the deposit and collects in the piece's store.
+ * PT: "Reservar esta peça" (V3-Checkout-Reserva): o mesmo checkout com uma peça, sem entrega nem voucher; a cliente paga
+ *     o sinal e levanta na loja da peça.
+ */
+export interface ReserveInfo {
+  product: ProductDTO;
+  variantId: string;
+  storeCode: string;
+  depositPct: number;
+  days: number; // EN: this piece. PT: desta peça.
+  baseDays: number;
+  bridalDays: number;
+  until: string; // EN: "25 de novembro de 2026". PT: "25 de novembro de 2026".
+}
+
+export function CheckoutView({ reserve }: { reserve?: ReserveInfo } = {}) {
   const { locale, dict, href } = useI18n();
   const c = dict.checkout;
+  const r = c.reserve;
+  const router = useRouter();
   const { clearBought: clear } = useCart();
-  const { lines: all, products, loading } = useCartProducts();
+  const cart = useCartProducts();
+  const reserveSlug = reserve?.product.slug;
+  const reserveVariant = reserve?.variantId;
   // EN: Only the pieces chosen for now; the rest stays in the cart. PT: Só as peças escolhidas para agora.
-  const lines = useMemo(() => nowLines(all), [all]);
+  const lines = useMemo(
+    () => (reserveSlug && reserveVariant ? [{ slug: reserveSlug, variantId: reserveVariant, quantity: 1 }] : nowLines(cart.lines)),
+    [cart.lines, reserveSlug, reserveVariant],
+  );
+  const products = useMemo(() => (reserve ? { [reserve.product.slug]: reserve.product } : cart.products), [reserve, cart.products]);
+  const loading = reserve ? false : cart.loading;
 
   const [options, setOptions] = useState<CheckoutOptionsDTO | null>(null);
   const [phase, setPhase] = useState<Phase>("form");
@@ -143,7 +170,11 @@ export function CheckoutView() {
   const discounts = combineDiscounts(levelAmount, voucher);
   const total = subtotal - Math.min(subtotal, discounts.total) + fee;
   const pieces = lines.reduce((n, l) => n + l.quantity, 0);
-  const totalLabel = formatMZN(order?.total ?? total, locale);
+  // EN: Reservation: customer discount on a piece not on sale, then the deposit. PT: Reserva: desconto de cliente, depois o sinal.
+  const reserveDiscount = reserve && level && reserve.product.salePrice == null ? Math.round((reserve.product.price * level.pct) / 100) : 0;
+  const reserveFinal = subtotal - reserveDiscount;
+  const deposit = reserve ? Math.round((reserveFinal * reserve.depositPct) / 100) : 0;
+  const totalLabel = formatMZN(order?.total ?? (reserve ? deposit : total), locale);
   const known = delivery === "pickup" || pricing.mode !== "zone" || !!zone;
   async function applyVoucher(code: string) {
     const clean = code.trim().toUpperCase();
@@ -209,13 +240,27 @@ export function CheckoutView() {
           : method === "cod" || method === "paypal" || method === "test";
   const payLabel = !method
     ? c.chooseMethod
-    : method === "card"
+    : reserve && method !== "transfer"
+      ? t(r.pay, { total: totalLabel })
+      : method === "card"
       ? t(c.payCard, { total: totalLabel })
       : method === "transfer"
         ? c.sendProof
         : method === "cod" || method === "test"
           ? c.confirmOrder
           : t(c.payWith, { total: totalLabel, method: c.methods[method].name });
+
+  // EN: Paid (or proof sent): a reservation opens its confirmation, a purchase shows the success state.
+  // PT: Pago (ou comprovativo enviado): a reserva abre a sua confirmação, a compra mostra o estado de sucesso.
+  const finish = useRef<(o: OrderStatusDTO) => void>(() => undefined);
+  finish.current = (o: OrderStatusDTO) => {
+    if (o.reservationToken) {
+      router.replace(href(`/reserva/${o.reservationToken}`));
+      return;
+    }
+    clear();
+    setPhase("success");
+  };
 
   // ── Status polling / Consulta do estado ──
   const poll = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -234,8 +279,7 @@ export function CheckoutView() {
           setOrder(next);
           if (next.paymentStatus === "paid") {
             stopPolling();
-            clear();
-            setPhase("success");
+            finish.current(next);
           } else if (next.paymentStatus !== "pending") {
             stopPolling();
             setPhase("failed");
@@ -245,7 +289,7 @@ export function CheckoutView() {
         }
       }, 3000);
     },
-    [clear],
+    [],
   );
 
   // EN: Each new state starts at the top of the page. PT: Cada novo estado começa no topo da página.
@@ -277,11 +321,14 @@ export function CheckoutView() {
       lines,
       contact: { name, email },
       fulfillment:
-        delivery === "pickup"
+        reserve
+          ? { type: "pickup" as const, storeCode: reserve.storeCode }
+          : delivery === "pickup"
           ? { type: "pickup" as const, storeCode }
           : { type: "delivery" as const, city, neighbourhood, address, lat: point?.lat, lng: point?.lng },
       payment,
-      discountCode: voucher?.code,
+      discountCode: reserve ? undefined : voucher?.code,
+      reserve: reserve ? true : undefined,
     };
     const parsed = createOrderSchema.safeParse(input);
     if (!parsed.success) {
@@ -310,8 +357,7 @@ export function CheckoutView() {
       setOrder(created);
 
       if (created.paymentStatus === "paid" || method === "transfer" || method === "cod") {
-        clear();
-        setPhase("success");
+        finish.current(created);
       } else if (created.paymentStatus === "pending") {
         setPhase(method === "card" || method === "paypal" ? "processing" : "pending");
         follow(created);
@@ -361,6 +407,7 @@ export function CheckoutView() {
 
   return (
     <>
+      {!reserve && (
       <ol aria-label={c.stepsLabel} className={`page-x ${styles.steps}`}>
         {c.steps.map((label, i) => (
           <li key={label} aria-current={i === stepIndex ? "step" : undefined} className={i <= stepIndex ? styles.stepOn : styles.stepOff}>
@@ -372,19 +419,45 @@ export function CheckoutView() {
           </li>
         ))}
       </ol>
+      )}
 
       <section className={`page-x ${styles.layout}`}>
         <div>
           {phase === "form" && (
             <form onSubmit={submit} className={styles.form} noValidate>
-              <h1 className={styles.title}>
-                <RichText text={c.title} />
-              </h1>
+              {reserve ? (
+                <>
+                  <div className={styles.reserveHead}>
+                    <span className="eyebrow">{r.eyebrow}</span>
+                    <h1 className={styles.title}>
+                      <RichText text={r.title} />
+                    </h1>
+                  </div>
+                  <ReservePiece reserve={reserve} />
+                  <div className={styles.reserveRules}>
+                    <span className="label">{r.rulesTitle}</span>
+                    <ul>
+                      {r.rules.map((rule, i) => (
+                        <li key={i}>
+                          <Icon name={RULE_ICONS[i]} size={18} />
+                          <span>
+                            <RichText text={t(rule, { days: reserve.baseDays, bridal: reserve.bridalDays, pct: reserve.depositPct, rest: 100 - reserve.depositPct })} />
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </>
+              ) : (
+                <h1 className={styles.title}>
+                  <RichText text={c.title} />
+                </h1>
+              )}
 
               {/* 1. Contacto */}
               <fieldset className={styles.fieldset}>
                 <legend className={styles.legend}>
-                  <span className={styles.num}>1.</span> {c.contact}
+                  <span className={styles.num}>{reserve ? "2." : "1."}</span> {c.contact}
                 </legend>
                 {customer && (
                   <p className={styles.signedIn}>
@@ -410,6 +483,7 @@ export function CheckoutView() {
               </fieldset>
 
               {/* 2. Entrega */}
+              {!reserve && (
               <fieldset className={styles.fieldset}>
                 <legend className={styles.legend}>
                   <span className={styles.num}>2.</span> {options.delivery ? c.delivery : c.pickupOnly}
@@ -503,14 +577,15 @@ export function CheckoutView() {
                   </>
                 )}
               </fieldset>
+              )}
 
               {/* 3. Pagamento */}
               <fieldset className={styles.fieldset}>
                 <legend className={styles.legend}>
-                  <span className={styles.num}>3.</span> {c.payment}
+                  <span className={styles.num}>3.</span> {reserve ? r.payTitle : c.payment}
                 </legend>
                 <div role="radiogroup" aria-label={c.methodGroup} className={styles.methods}>
-                  {options.methods.map((m) => {
+                  {options.methods.filter((m) => !reserve || m !== "cod").map((m) => {
                     const disabled = m === "cod" && delivery !== "delivery";
                     const on = method === m && !disabled;
                     return (
@@ -721,14 +796,14 @@ export function CheckoutView() {
                 <label className={styles.acceptBox}>
                   <input type="checkbox" checked={terms} onChange={() => setTerms(!terms)} />
                   <span>
-                    <RichText text={t(c.acceptTerms, { finalSale: dict.product.finalSale })} />
+                    <RichText text={reserve ? r.terms : t(c.acceptTerms, { finalSale: dict.product.finalSale })} />
                   </span>
                 </label>
                 <button type="submit" className={styles.pay} disabled={!methodReady || !terms || submitting}>
                   {submitting ? c.sending : payLabel}
                 </button>
                 {!terms && <span className={styles.terms}>{c.acceptFirst}</span>}
-                <Link href={`${href("/como-comprar")}#trocas`} className={`${styles.terms} underline`}>
+                <Link href={`${href("/como-comprar")}${reserve ? "#reservar" : "#trocas"}`} className={`${styles.terms} underline`}>
                   {c.readTerms}
                 </Link>
               </fieldset>
@@ -819,7 +894,7 @@ export function CheckoutView() {
 
         {/* Resumo da encomenda */}
         <aside aria-label={c.summary.title} className={styles.summary}>
-          <h2 className={styles.summaryTitle}>{c.summary.title}</h2>
+          <h2 className={styles.summaryTitle}>{reserve ? r.summaryTitle : c.summary.title}</h2>
           <ul className={styles.items}>
             {lines.map((line) => {
               const { product, variant, colorName, image } = describeLine(line, products);
@@ -841,6 +916,43 @@ export function CheckoutView() {
               );
             })}
           </ul>
+          {reserve ? (
+            <>
+              <dl className={styles.totals}>
+                <div>
+                  <dt>{r.piecePrice}</dt>
+                  <dd>{formatMZN(subtotal, locale)}</dd>
+                </div>
+                {reserveDiscount > 0 && level && (
+                  <div className={styles.saving}>
+                    <dt>
+                      <Icon name="gem" size={16} />
+                      {options?.levelDisplay === "named" ? t(c.summary.levelDiscountNamed, { level: level.name, pct: level.pct }) : t(c.summary.levelDiscount, { pct: level.pct })}
+                    </dt>
+                    <dd>−{formatMZN(reserveDiscount, locale)}</dd>
+                  </div>
+                )}
+                <div>
+                  <dt>{r.finalPrice}</dt>
+                  <dd>{formatMZN(reserveFinal, locale)}</dd>
+                </div>
+                <div>
+                  <dt>{t(r.depositLine, { pct: reserve.depositPct })}</dt>
+                  <dd>{formatMZN(deposit, locale)}</dd>
+                </div>
+                <div>
+                  <dt>{r.restLine}</dt>
+                  <dd>{formatMZN(reserveFinal - deposit, locale)}</dd>
+                </div>
+                <div className={styles.grand}>
+                  <dt className="label">{c.summary.total}</dt>
+                  <dd>{totalLabel}</dd>
+                </div>
+              </dl>
+              <span className={styles.voucherNote}>{t(r.payNowNote, { pct: 100 - reserve.depositPct, date: reserve.until })}</span>
+            </>
+          ) : (
+          <>
           {options?.vouchers !== false && (
             <div className={styles.voucherBox}>
               <label htmlFor="cupao" className={styles.voucherLabel}>
@@ -941,6 +1053,8 @@ export function CheckoutView() {
               {plural(c.summary.points, Math.floor((order?.total ?? total) / MT_PER_POINT))}
             </span>
           )}
+          </>
+          )}
           <ul className={styles.notes}>
             <li>
               <Icon name="lock" size={16} />
@@ -963,6 +1077,33 @@ export function CheckoutView() {
         </aside>
       </section>
     </>
+  );
+}
+
+const RULE_ICONS: IconName[] = ["card", "calendar", "store", "alert", "return", "sparkle"];
+
+/** EN: The reserved piece, with the date it is kept until. PT: A peça reservada, com a data até quando fica guardada. */
+function ReservePiece({ reserve }: { reserve: ReserveInfo }) {
+  const { dict } = useI18n();
+  const r = dict.checkout.reserve;
+  const p = reserve.product;
+  const variant = p.variants.find((v) => v.id === reserve.variantId);
+  const image = p.images.find((i) => i.color === variant?.color) ?? p.images[0];
+  const color = p.colors.find((x) => x.key === variant?.color)?.name;
+  const size = variant ? [sizeParts(variant.size).detail, sizeParts(variant.size).letter].filter(Boolean).join(" · ") : "";
+  return (
+    <div className={styles.reservePiece}>
+      {image && <Image src={image.url} alt={image.alt} width={140} height={186} className={styles.reserveImg} />}
+      <div className={styles.reserveInfo}>
+        <span className="eyebrow">{[p.collection?.name, p.type?.name].filter(Boolean).join(" · ")}</span>
+        <span className={styles.reserveCode}>{p.code}</span>
+        <span className={styles.optionSub}>{[color, size].filter(Boolean).join(" · ")}</span>
+        <span className={styles.reserveUntil}>
+          <Icon name="hourglass" size={16} />
+          <RichText text={t(r.keptUntil, { date: reserve.until, days: reserve.days })} />
+        </span>
+      </div>
+    </div>
   );
 }
 

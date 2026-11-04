@@ -38,7 +38,7 @@ export async function loyaltyYears(customerIds: string[]): Promise<Map<string, M
     db
       .select({ customerId: orders.customerId, total: orders.total, createdAt: orders.createdAt })
       .from(orders)
-      .where(and(inArray(orders.customerId, customerIds), eq(orders.paymentStatus, "paid"), ne(orders.fulfillmentStatus, "cancelled"))),
+      .where(and(inArray(orders.customerId, customerIds), eq(orders.paymentStatus, "paid"), ne(orders.fulfillmentStatus, "cancelled"), eq(orders.kind, "purchase"))),
     db.select().from(loyaltyEntries).where(inArray(loyaltyEntries.customerId, customerIds)),
   ]);
   const slot = (id: string, year: number) => {

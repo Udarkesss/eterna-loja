@@ -57,7 +57,7 @@ export async function listClients(filter: { q?: string; level?: string } = {}): 
       ? db
           .select({ id: orders.customerId, at: max(orders.createdAt) })
           .from(orders)
-          .where(and(inArray(orders.customerId, ids), eq(orders.paymentStatus, "paid")))
+          .where(and(inArray(orders.customerId, ids), eq(orders.paymentStatus, "paid"), eq(orders.kind, "purchase")))
           .groupBy(orders.customerId)
       : [],
     ids.length
