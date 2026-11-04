@@ -72,6 +72,16 @@ export const mainNav: { label: Localized; href: string }[] = [
   { label: L("Contacte-nos", "Contact us"), href: "#contactos" },
 ];
 
+/**
+ * EN: The menu follows the home sections (Gestão → Conteúdo do site): their order, and a section switched off leaves
+ *     the menu. `order` = the visible section keys in order.
+ * PT: O menu segue as secções do Início: a ordem, e uma secção desligada sai do menu.
+ */
+export function navFor(order: string[] | undefined) {
+  if (!order) return mainNav;
+  return order.map((key) => mainNav.find((m) => m.href === `#${key}`)).filter((m): m is (typeof mainNav)[number] => !!m);
+}
+
 /** EN: Footer "Informações" links (pages to be written). PT: Ligações "Informações" do rodapé (páginas por escrever). */
 export const infoPages = ["tamanhos", "trocas-devolucoes", "reservas", "pagamentos", "envios", "perguntas-frequentes"] as const;
 

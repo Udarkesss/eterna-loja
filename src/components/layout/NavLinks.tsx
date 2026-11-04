@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { mainNav } from "@/data/site";
+import { navFor } from "@/data/site";
 import { useI18n } from "@/i18n/I18nProvider";
 import { resolveHref } from "@/lib/links";
 import { useSectionNav } from "./useSectionNav";
@@ -13,15 +13,16 @@ import { useSectionNav } from "./useSectionNav";
  * PT: O menu principal do V3: cada item é uma secção do Início; no Início desliza até lá e a secção à vista fica
  *     sublinhada. O primeiro item (a colecção activa) é dourado.
  */
-export function NavLinks({ linkClassName, collectionClassName, collection }: { linkClassName: string; collectionClassName?: string; collection?: string }) {
+export function NavLinks({ linkClassName, collectionClassName, collection, order }: { linkClassName: string; collectionClassName?: string; collection?: string; order?: string[] }) {
   const { locale } = useI18n();
   const { active, go } = useSectionNav();
 
   return (
     <>
-      {mainNav.map((item, i) => {
+      {navFor(order).map((item) => {
         const id = item.href.replace(/^#/, "");
-        const className = i === 0 && collectionClassName ? `${linkClassName} ${collectionClassName}` : linkClassName;
+        const isCollection = item.href === "#colecao";
+        const className = isCollection && collectionClassName ? `${linkClassName} ${collectionClassName}` : linkClassName;
         return (
           <li key={item.href}>
             <Link
@@ -33,7 +34,7 @@ export function NavLinks({ linkClassName, collectionClassName, collection }: { l
                 go(id);
               }}
             >
-              {i === 0 && collection ? collection : item.label[locale]}
+              {isCollection && collection ? collection : item.label[locale]}
             </Link>
           </li>
         );

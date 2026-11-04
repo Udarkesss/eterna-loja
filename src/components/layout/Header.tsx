@@ -1,4 +1,5 @@
 import { activeCollection } from "@/server/catalog";
+import { getPageSections } from "@/server/content";
 import Image from "next/image";
 import { getDictionary } from "@/i18n";
 import type { Locale } from "@/types";
@@ -16,7 +17,9 @@ import styles from "./Header.module.css";
  */
 export async function Header({ locale }: { locale: Locale }) {
   // EN: The first menu item is the active collection (Gestão → Colecções). PT: O primeiro item é a colecção activa.
-  const collection = (await activeCollection(locale))?.name;
+  const [active, sections] = await Promise.all([activeCollection(locale), getPageSections("home", locale)]);
+  const collection = active?.name;
+  const order = sections.map((x) => x.key);
   const dict = getDictionary(locale);
 
   return (
@@ -27,7 +30,7 @@ export async function Header({ locale }: { locale: Locale }) {
             <LanguageSwitcher />
           </span>
           <span className={styles.phone}>
-            <MobileMenu collection={collection} />
+            <MobileMenu collection={collection} order={order} />
           </span>
         </div>
         <HomeLogoLink className={styles.brand} label={dict.nav.home}>
@@ -37,7 +40,7 @@ export async function Header({ locale }: { locale: Locale }) {
       </div>
       <nav aria-label={dict.nav.main} className={styles.nav}>
         <ul className={`page-x ${styles.navList}`}>
-          <NavLinks linkClassName={styles.navLink} collectionClassName={styles.collection} collection={collection} />
+          <NavLinks linkClassName={styles.navLink} collectionClassName={styles.collection} collection={collection} order={order} />
         </ul>
       </nav>
     </header>

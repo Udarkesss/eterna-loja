@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState, useTransition } from "react";
 import { publishPageAction, type ContentResult } from "@/app/gestao/actions/content";
 import { Icon } from "@/components/ui/Icon";
@@ -114,16 +113,6 @@ export function ContentEditor({ page, sections: initial, publishedAt }: { page: 
                   <Icon name="alert" size={18} />
                   Esta secção está escondida e não aparece na loja.
                 </div>
-              )}
-              {cur.key === "hero" && (
-                <Link href="/gestao/conteudo/imagem-principal" className={s.a}>
-                  Vídeo, imagem, parallax e ocasiões →
-                </Link>
-              )}
-              {cur.key === "occasions" && (
-                <Link href="/gestao/conteudo/imagem-principal#ocasioes" className={s.a}>
-                  Editar o mosaico de ocasiões →
-                </Link>
               )}
               <FieldEditor name="root" value={cur.data} onChange={(v) => update(sections.map((y) => (y.key === cur.key ? { ...y, data: v as Record<string, unknown> } : y)))} />
               <span className={s.hint}>Para pôr uma palavra em itálico dourado, escreva-a entre *asteriscos*. Uma linha em branco separa parágrafos.</span>

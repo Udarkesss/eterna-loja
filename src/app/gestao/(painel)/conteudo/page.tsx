@@ -1,48 +1,41 @@
-import Link from "next/link";
-import s from "@/components/admin/admin.module.css";
-import { ContentEditor } from "@/components/admin/ContentEditor";
-import { PageTop, when } from "@/components/admin/ui";
-import { INFO_LABELS, listSections, SECTION_LABELS } from "@/server/admin/content";
+import { HomeContentEditor } from "@/components/admin/HomeContentEditor";
+import { PageTop } from "@/components/admin/ui";
+import { listOccasionTargets, listSections, listTiles } from "@/server/admin/content";
+import { siteCampaign } from "@/server/campaigns";
+import { getDb } from "@/server/db";
+import { categories } from "@/server/db/schema";
 import { requireStaffPage } from "@/server/staff/access";
 
 export const metadata = { title: "Conteúdo do site" };
 
-/** EN: "Gestão · 8 Conteúdo do site" — pages Início and Informações. PT: Páginas Início e Informações. */
-export default async function ContentPage({ searchParams }: { searchParams: Promise<{ pagina?: string }> }) {
+/**
+ * EN: "Gestão · Conteúdo do site" of design V3-G-Conteudo. PT: Conteúdo do site do V3.
+ */
+export default async function ContentPage() {
   await requireStaffPage("content");
-  const page = (await searchParams).pagina === "informacoes" ? "info" : "home";
-  const rows = await listSections(page);
-  const last = rows.map((r) => r.publishedAt).filter((d): d is Date => !!d).sort((a, b) => b.getTime() - a.getTime())[0];
-
+  const db = await getDb();
+  const [rows, tiles, targets, cats, campaign] = await Promise.all([listSections("home"), listTiles(), listOccasionTargets(), db.select().from(categories), siteCampaign("pt")]);
+  const active = cats.find((r) => r.kind === "collection" && !r.parentId && r.details?.active);
   return (
     <>
       <PageTop
-        eyebrow="Páginas e secções"
+        eyebrow="Site"
         title={
           <>
             Conteúdo do <em>site</em>
           </>
         }
       />
-      <div role="tablist" aria-label="Páginas" className={s.tabs}>
-        <Link href="?pagina=inicio" role="tab" aria-selected={page === "home"}>
-          Início
-        </Link>
-        <Link href="?pagina=informacoes" role="tab" aria-selected={page === "info"}>
-          Informações
-        </Link>
-        <Link href="/gestao/conteudo/imagem-principal" role="tab" aria-selected={false}>
-          Vídeo, parallax e ocasiões
-        </Link>
-        <Link href="/gestao/produtos" role="tab" aria-selected={false}>
-          Noivas e Ocasiões (produtos e colecções)
-        </Link>
-      </div>
-      <ContentEditor
-        key={page}
-        page={page}
-        publishedAt={last ? when(last) : null}
-        sections={rows.map((r) => ({ key: r.key, label: (page === "home" ? SECTION_LABELS : INFO_LABELS)[r.key] ?? r.key, visible: r.visible, data: r.data }))}
+      <HomeContentEditor
+        sections={rows.map((r) => ({ key: r.key, visible: r.visible, data: r.data }))}
+        tiles={tiles.map((t) => ({ id: t.id, name: t.name, phrase: t.phrase, imageUrl: t.imageUrl, categoryId: t.categoryId, size: t.size }))}
+        targets={targets}
+        collection={
+          active
+            ? { id: active.id, name: active.name.pt, message: active.details?.message?.pt ?? null, buttonText: active.details?.buttonText?.pt ?? null, imageUrl: active.imageUrl }
+            : null
+        }
+        campaign={campaign ? { name: campaign.name, placement: campaign.homePlacement } : null}
       />
     </>
   );

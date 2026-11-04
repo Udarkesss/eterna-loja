@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
-import { mainNav, site, storeSeeds, whatsappLink } from "@/data/site";
+import { navFor, site, storeSeeds, whatsappLink } from "@/data/site";
 import { useI18n } from "@/i18n/I18nProvider";
 import { resolveHref } from "@/lib/links";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -19,7 +19,7 @@ import styles from "./MobileMenu.module.css";
  * PT: Menu do telemóvel do design V3: gaveta em ecrã inteiro com o menu principal (colecção activa assinalada),
  *     Conta / Favoritos e "Fale connosco". Escape ou o X fecham; o foco volta ao botão do menu.
  */
-export function MobileMenu({ collection }: { collection?: string }) {
+export function MobileMenu({ collection, order }: { collection?: string; order?: string[] }) {
   const { locale, dict, href } = useI18n();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -67,7 +67,7 @@ export function MobileMenu({ collection }: { collection?: string }) {
           </div>
           <nav aria-label={dict.nav.main}>
             <ul className={styles.list}>
-              {mainNav.map((item, i) => (
+              {navFor(order).map((item) => (
                 <li key={item.href}>
                   <Link
                     href={resolveHref(item.href, locale)}
@@ -79,8 +79,8 @@ export function MobileMenu({ collection }: { collection?: string }) {
                       window.setTimeout(() => go(item.href.replace(/^#/, "")), 50);
                     }}
                   >
-                    <span>{i === 0 && collection ? collection : item.label[locale]}</span>
-                    {i === 0 && <span className={styles.tag}>{dict.nav.activeCollection}</span>}
+                    <span>{item.href === "#colecao" && collection ? collection : item.label[locale]}</span>
+                    {item.href === "#colecao" && <span className={styles.tag}>{dict.nav.activeCollection}</span>}
                     <Icon name="chevronRight" size={18} />
                   </Link>
                 </li>
