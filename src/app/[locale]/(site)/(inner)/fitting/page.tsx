@@ -26,7 +26,7 @@ export default async function FittingPage({ params, searchParams }: Props) {
   const { piece } = await searchParams;
   const settings = await bridalSettings();
   const [dresses, days, methods, customer] = await Promise.all([
-    listProducts({ category: "vestidos-de-noiva" }, locale),
+    listProducts({ fitting: true }, locale),
     bridalAvailability(settings),
     enabledPaymentMethods(),
     currentCustomer(),

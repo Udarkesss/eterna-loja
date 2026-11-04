@@ -2,16 +2,23 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { archiveProductAction, saveProductAction, uploadProductImageAction, type ProductActionResult } from "@/app/gestao/actions/products";
 import { Icon } from "@/components/ui/Icon";
-import { COLOR_FAMILIES, type ColorFamily, type Localized, type ProductStatus } from "@/types";
-import s from "./admin.module.css";
+import { sizeParts, sortSizes } from "@/lib/sizes";
+import type { ColorFamily, Localized, ProductStatus } from "@/types";
+import c from "./AdminV3.module.css";
+import d3 from "./Dashboard.module.css";
+import e from "./ProductEditor.module.css";
 
 /**
- * EN: "Gestão · 7 Editar produto". Texts in Portuguese and English (the store is bilingual); the first photo is the
- *     main one; stock per size, colour and store. "Publicar" needs the publish permission (matrix: products.publish).
- * PT: Textos em português e inglês (a loja é bilingue); a primeira foto é a principal; stock por tamanho, cor e loja.
+ * EN: "Gestão · Editar produto" of design V3-G-Produto-Editar: Informação (code, name, type, price · sale, description),
+ *     Cores e tamanhos (colour palette, size system, units per colour and size for each store; combinations at 0 are
+ *     struck through on the site), Fotografias por cor; Publicação (published, "Pode ir a prova"), Colecções e ocasiões,
+ *     and how the card looks in the lists. English texts stay in "Textos em inglês" (the store is bilingual).
+ * PT: Editar produto do V3: Informação, Cores e tamanhos (paleta, sistema de tamanhos, unidades por cor e tamanho em cada
+ *     loja; as combinações a 0 ficam riscadas no site), Fotografias por cor; Publicação, Colecções e ocasiões e como
+ *     aparece nas listas. Os textos em inglês ficam em "Textos em inglês".
  */
 
 export interface EditorProduct {
@@ -27,17 +34,69 @@ export interface EditorProduct {
   isNew: boolean;
   seoTitle: string;
   typeId: string | null;
-  collectionId: string | null;
+  collectionIds: string[];
   occasionIds: string[];
+  fitting: boolean;
   colors: { key: string; name: Localized; hex: string | null; family: ColorFamily | null }[];
   variants: { id?: string; size: string; color: string | null; storeCode: string; stock: number }[];
   images: { id?: string; url: string; alt: Localized; color: string | null }[];
 }
 
-type Opt = { id: string; name: string };
-const FAMILY_PT: Record<ColorFamily, string> = { blue: "Azul", off_white: "Off-white", beige: "Bege", fuchsia: "Fúcsia", black: "Preto", red: "Vermelho", green: "Verde", gold: "Dourado" };
-const digits = (v: string) => Number(v.replace(/\D/g, "").slice(0, 8)) || 0;
-const fmt = (n: number) => (n ? String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ") : "");
+type Opt = { id: string; name: string; note?: string };
+
+/** EN: The V3 palette (name, English, colour, filter family). PT: A paleta do V3. */
+const PALETTE: [string, string, string, ColorFamily | null][] = [
+  ["Branco", "White", "#FFFFFF", "off_white"],
+  ["Marfim", "Ivory", "#F4EFE3", "off_white"],
+  ["Creme", "Cream", "#F1E6CF", "off_white"],
+  ["Pérola", "Pearl", "#EAE4DA", "off_white"],
+  ["Champanhe", "Champagne", "#E9D9B6", "beige"],
+  ["Nude", "Nude", "#E3C6AE", "beige"],
+  ["Bege", "Beige", "#D9C3A5", "beige"],
+  ["Castanho", "Brown", "#6B4A35", "beige"],
+  ["Mostarda", "Mustard", "#C9A13B", "gold"],
+  ["Amarelo", "Yellow", "#E9C93F", "gold"],
+  ["Laranja", "Orange", "#D9732F", "red"],
+  ["Salmão", "Salmon", "#E9967A", "fuchsia"],
+  ["Blush", "Blush", "#EEC9C3", "fuchsia"],
+  ["Rosa", "Pink", "#E58FA8", "fuchsia"],
+  ["Rosa-velho", "Dusty pink", "#C49092", "fuchsia"],
+  ["Rosa-choque", "Hot pink", "#D6337A", "fuchsia"],
+  ["Vermelho", "Red", "#B3202A", "red"],
+  ["Vinho", "Wine", "#6E1F2F", "red"],
+  ["Lilás", "Lilac", "#B9A2C9", "fuchsia"],
+  ["Lavanda", "Lavender", "#C8BFE0", "blue"],
+  ["Violeta", "Violet", "#6F4A8E", "blue"],
+  ["Azul-claro", "Light blue", "#9CC3E4", "blue"],
+  ["Azul", "Blue", "#2F5BB7", "blue"],
+  ["Azul-marinho", "Navy", "#1F2A44", "blue"],
+  ["Verde-menta", "Mint", "#A9DCC7", "green"],
+  ["Verde-claro", "Light green", "#9CC9A0", "green"],
+  ["Verde", "Green", "#2E7D4F", "green"],
+  ["Verde-seco", "Olive", "#6E7B4C", "green"],
+  ["Cinzento", "Grey", "#8D8D8D", "black"],
+  ["Preto", "Black", "#111111", "black"],
+  ["Dourado", "Gold", "#C8A24A", "gold"],
+  ["Prateado", "Silver", "#C9CCD1", "off_white"],
+  ["Rosegold", "Rose gold", "#D8A39A", "gold"],
+  ["Multicolor", "Multicolour", "#B3202A", null],
+];
+
+/** EN: Size systems of the design. PT: Sistemas de tamanhos do design. */
+const SIZE_SYSTEMS: Record<string, { label: string; sizes: string[] }> = {
+  clothing: { label: "Vestuário · US · EU · letra", sizes: ["2US/34EUR/XS", "4US/36EUR/S", "6US/38EUR/S", "8US/40EUR/M", "10US/42EUR/M", "12US/44EUR/L", "16US/48EUR/XL", "18US/50EUR/XXL", "20US/52EUR/XXXL"] },
+  letters: { label: "Só letra", sizes: ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] },
+  shoes: { label: "Calçado · US → EU", sizes: ["5", "6", "7", "7.5", "8", "8.5", "9", "10", "11"] },
+  bras: { label: "Soutiens", sizes: ["32A", "32B", "34A", "34B", "34C", "36B", "36C", "36D", "38B", "38C", "38D"] },
+  length: { label: "Comprimento", sizes: ["26W", "28W", "30W", "32W", "34W", "36W"] },
+  one: { label: "Tamanho único", sizes: ["Tamanho único"] },
+};
+const systemOf = (sizes: string[]) =>
+  (Object.keys(SIZE_SYSTEMS).find((k) => sizes.length > 0 && sizes.every((x) => SIZE_SYSTEMS[k].sizes.includes(x))) ?? (sizes.some((x) => /\//.test(x)) ? "clothing" : "letters")) as keyof typeof SIZE_SYSTEMS;
+const sizeTop = (x: string) => sizeParts(x).letter;
+const sizeSub = (x: string) => sizeParts(x).detail ?? (/^\d+(\.\d)?$/.test(x) ? `${x} US` : "");
+const digits = (v: string) => Number(v.replace(/[^\d,]/g, "").split(",")[0]) || 0;
+const mt = (n: number) => (n ? `${String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ")},00 MT` : "");
 
 export function ProductEditor(props: {
   product: EditorProduct;
@@ -53,453 +112,489 @@ export function ProductEditor(props: {
   const [dirty, setDirty] = useState(false);
   const [result, setResult] = useState<ProductActionResult | null>(null);
   const [pending, start] = useTransition();
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [picker, setPicker] = useState(false);
+  const [colorQuery, setColorQuery] = useState("");
+  const firstStore = props.stores.find((x) => x.editable)?.code ?? props.stores[0]?.code ?? "02";
+  const [store, setStore] = useState(p.variants[0]?.storeCode ?? firstStore);
+  const usedSizes = useMemo(() => sortSizes([...new Set(p.variants.map((v) => v.size))]), [p.variants]);
+  const [system, setSystem] = useState<keyof typeof SIZE_SYSTEMS>(systemOf(usedSizes));
+  const [onSizes, setOnSizes] = useState<string[]>(usedSizes);
+  const fileFor = useRef<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const ro = !props.canEdit;
+  const storeEditable = !ro && (props.stores.find((x) => x.code === store)?.editable ?? false);
+
   const set = (patch: Partial<EditorProduct>) => {
     setP((cur) => ({ ...cur, ...patch }));
     setDirty(true);
     setResult(null);
   };
-  const ro = !props.canEdit;
-  const stock = p.variants.reduce((n, v) => n + v.stock, 0);
-  const lowStock = p.variants.length > 0 && p.variants.some((v) => v.stock <= 1);
-  const seo = p.seoTitle || `${p.name.pt || "Nome da peça"} ${p.code} | Eterna Maputo`;
 
-  function save(status: ProductStatus) {
+  // ── Colours / Cores ──
+  function addColor(name: string, en: string, hex: string, family: ColorFamily | null) {
+    if (p.colors.some((x) => x.name.pt === name)) return;
+    const key = name.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-");
+    set({ colors: [...p.colors, { key, name: { pt: name, en }, hex, family }] });
+  }
+  function removeColor(key: string) {
+    set({ colors: p.colors.filter((x) => x.key !== key), variants: p.variants.filter((v) => v.color !== key), images: p.images.map((i) => (i.color === key ? { ...i, color: null } : i)) });
+  }
+
+  // ── Sizes and units / Tamanhos e unidades ──
+  const colorRows = p.colors.length ? p.colors.map((x) => x.key) : [null];
+  const unitsOf = (color: string | null, size: string) => p.variants.find((v) => v.color === color && v.size === size && v.storeCode === store);
+  function setUnits(color: string | null, size: string, value: number) {
+    const found = unitsOf(color, size);
+    if (found) set({ variants: p.variants.map((v) => (v === found ? { ...v, stock: Math.max(0, value) } : v)) });
+    else set({ variants: [...p.variants, { size, color, storeCode: store, stock: Math.max(0, value) }] });
+  }
+  function toggleSize(size: string) {
+    if (onSizes.includes(size)) {
+      setOnSizes(onSizes.filter((x) => x !== size));
+      set({ variants: p.variants.filter((v) => v.size !== size || v.stock > 0) });
+    } else setOnSizes(sortSizes([...onSizes, size]));
+  }
+  const total = p.variants.filter((v) => v.storeCode === store).reduce((n, v) => n + v.stock, 0);
+  const systemSizes = sortSizes([...new Set([...SIZE_SYSTEMS[system].sizes, ...usedSizes.filter((x) => systemOf([x]) === system)])]);
+
+  // ── Photos per colour / Fotografias por cor ──
+  async function upload(files: FileList | null, color: string | null) {
+    if (!files?.length) return;
+    setUploading(color ?? "all");
+    const added: EditorProduct["images"] = [];
+    for (const file of Array.from(files).slice(0, 12)) {
+      const form = new FormData();
+      form.set("file", file);
+      const r = await uploadProductImageAction(form);
+      const colorName = p.colors.find((x) => x.key === color)?.name;
+      if (r.ok && r.url) added.push({ url: r.url, alt: { pt: [p.code || "Peça", colorName?.pt].filter(Boolean).join(" · "), en: [p.code || "Piece", colorName?.en].filter(Boolean).join(" · ") }, color });
+      else setResult(r);
+    }
+    set({ images: [...p.images, ...added] });
+    setUploading(null);
+    if (fileRef.current) fileRef.current.value = "";
+  }
+  const groups: { key: string | null; name: string; hex: string | null }[] = [...p.colors.map((x) => ({ key: x.key, name: x.name.pt, hex: x.hex })), { key: null, name: "Todas as cores", hex: null }];
+
+  // ── Save / Guardar ──
+  function save() {
     start(async () => {
       const r = await saveProductAction({
         ...p,
-        status,
+        variants: p.variants.filter((v) => onSizes.includes(v.size) || v.stock > 0),
         composition: p.composition.pt || p.composition.en ? p.composition : null,
         seoTitle: p.seoTitle || null,
       });
       setResult(r);
       if (r.ok) {
         setDirty(false);
-        setP((cur) => ({ ...cur, status: props.canPublish ? status : cur.status }));
         if (!p.id && r.id) router.replace(`/gestao/produtos/${r.id}`);
         else router.refresh();
       }
     });
   }
-
-  async function upload(files: FileList | null) {
-    if (!files?.length) return;
-    setUploading(true);
-    const added: EditorProduct["images"] = [];
-    for (const file of Array.from(files).slice(0, 8 - p.images.length)) {
-      const form = new FormData();
-      form.set("file", file);
-      const r = await uploadProductImageAction(form);
-      const first = p.images.length + added.length === 0;
-      if (r.ok && r.url) added.push({ url: r.url, alt: { pt: `${p.code || "Peça"}${first ? " de frente" : ""}`, en: `${p.code || "Piece"}${first ? " front" : ""}` }, color: null });
-      else setResult(r);
-    }
-    set({ images: [...p.images, ...added] });
-    setUploading(false);
-    if (fileRef.current) fileRef.current.value = "";
+  function archive() {
+    if (!p.id || !window.confirm(`Arquivar o ${p.code}? Deixa de aparecer na loja; as encomendas antigas mantêm-se.`)) return;
+    start(async () => {
+      const r = await archiveProductAction(p.id!);
+      setResult(r);
+      if (r.ok) router.push("/gestao/produtos");
+    });
   }
 
-  const moveImage = (i: number, d: number) => {
-    const a = [...p.images];
-    const j = i + d;
-    if (j < 0 || j >= a.length) return;
-    [a[i], a[j]] = [a[j], a[i]];
-    set({ images: a });
-  };
-
-  const statusLabel = p.status === "published" ? "Publicado na loja" : p.status === "scheduled" ? "Agendado" : p.status === "archived" ? "Arquivado" : "Rascunho";
+  const cardImage = p.images.find((i) => i.color === (p.colors[0]?.key ?? null)) ?? p.images[0];
+  const toggleIn = (list: string[], id: string) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
 
   return (
     <>
-      <div className={s.top} style={{ marginTop: -20 }}>
-        <div className={s.actions}>
-          {dirty && <span className={s.chip} data-tone="warn">Alterações por publicar</span>}
-          {!dirty && result?.ok && <span className={s.chip} data-tone="ok">✓ {result.message}</span>}
-          {!dirty && !result && <span className={s.chip}>{statusLabel}</span>}
-        </div>
-        <div className={s.actions}>
+      <div className={e.bar}>
+        <span>
+          {dirty ? (
+            <span className={c.st} data-tone="warn">
+              Alterações por guardar
+            </span>
+          ) : result?.ok ? (
+            <span className={c.st} data-tone="ok">
+              {result.message}
+            </span>
+          ) : null}
+          {result && !result.ok && (
+            <span role="alert" className={c.err}>
+              {result.message}
+            </span>
+          )}
+        </span>
+        <span className={c.row}>
           {p.id && (
-            <a href={`/pt/product/${p.code.toLowerCase()}`} target="_blank" className={s.btnOutline}>
-              <Icon name="eye" size={16} />
+            <a href={`/pt/product/${p.code.toLowerCase()}`} target="_blank" rel="noopener noreferrer" className={`${c.btn} ${c.sm}`}>
+              <Icon name="eye" size={15} />
               Pré-visualizar
             </a>
           )}
           {props.canEdit && (
-            <button className={s.btnOutline} disabled={pending} onClick={() => save(props.canPublish ? "draft" : p.status)}>
-              {props.canPublish ? "Guardar rascunho" : "Guardar"}
+            <button type="button" className={`${c.btnPrimary} ${c.sm}`} disabled={pending} onClick={save}>
+              Guardar
             </button>
           )}
-          {props.canPublish && (
-            <button className={s.btn} disabled={pending} onClick={() => save(p.status === "scheduled" ? "scheduled" : "published")}>
-              {p.status === "scheduled" ? "Agendar" : "Publicar"}
-            </button>
-          )}
-        </div>
+        </span>
       </div>
-      {result && !result.ok && <div className={s.error}>{result.message}</div>}
 
-      <div className={s.split}>
-        <div className={s.stack}>
-          <section className={s.card}>
-            <h2 className={s.h2}>Informação</h2>
-            <div className={s.row3}>
-              <label className={s.label}>
-                Código
-                <input className={s.input} value={p.code} readOnly={ro} onChange={(e) => set({ code: e.target.value.toUpperCase() })} placeholder="ex.: 8G1L7" />
-              </label>
-              <label className={s.label} style={{ gridColumn: "span 2" }}>
-                Nome da peça (PT)
-                <input className={s.input} value={p.name.pt} readOnly={ro} onChange={(e) => set({ name: { ...p.name, pt: e.target.value } })} />
-              </label>
+      <div className={e.cols}>
+        <div className={e.stack}>
+          <section className={d3.panel}>
+            <div className={d3.panelHead}>
+              <h2>Informação</h2>
             </div>
-            <label className={s.label}>
-              Nome da peça (EN)
-              <input className={s.input} value={p.name.en} readOnly={ro} onChange={(e) => set({ name: { ...p.name, en: e.target.value } })} />
-            </label>
-            <div className={s.row2}>
-              <label className={s.label}>
-                Descrição (PT)
-                <textarea className={s.textarea} rows={4} value={p.description.pt} readOnly={ro} onChange={(e) => set({ description: { ...p.description, pt: e.target.value } })} />
-              </label>
-              <label className={s.label}>
-                Descrição (EN)
-                <textarea className={s.textarea} rows={4} value={p.description.en} readOnly={ro} onChange={(e) => set({ description: { ...p.description, en: e.target.value } })} />
-              </label>
-            </div>
-            <div className={s.row2}>
-              <label className={s.label}>
-                Composição e cuidados (PT)
-                <textarea className={s.textarea} rows={2} value={p.composition.pt} readOnly={ro} onChange={(e) => set({ composition: { ...p.composition, pt: e.target.value } })} />
-              </label>
-              <label className={s.label}>
-                Composição e cuidados (EN)
-                <textarea className={s.textarea} rows={2} value={p.composition.en} readOnly={ro} onChange={(e) => set({ composition: { ...p.composition, en: e.target.value } })} />
-              </label>
-            </div>
-            <span className={s.hint}>Frases curtas, em português de Moçambique. Sem emojis. *palavra* fica em itálico.</span>
-          </section>
-
-          <section className={s.card}>
-            <div className={s.cardHead}>
-              <h2 className={s.h2}>Fotografias</h2>
-              <span className={s.muted}>{p.images.length} de 8</span>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 16 }}>
-              {p.images.map((img, i) => (
-                <div key={img.url} className={s.fieldset}>
-                  <div style={{ position: "relative", aspectRatio: "4 / 5", background: "var(--blush-light)" }}>
-                    <Image src={img.url} alt={img.alt.pt} fill sizes="160px" style={{ objectFit: "cover" }} />
-                    {i === 0 && (
-                      <span className={s.chip} data-tone="dark" style={{ position: "absolute", left: 8, top: 8 }}>
-                        Principal
-                      </span>
-                    )}
-                  </div>
-                  {!ro && (
-                    <div className={s.actions} style={{ gap: 4 }}>
-                      <button className={`${s.btnOutline} ${s.small}`} onClick={() => moveImage(i, -1)} disabled={i === 0} aria-label="Mover para a esquerda">
-                        ←
-                      </button>
-                      <button className={`${s.btnOutline} ${s.small}`} onClick={() => moveImage(i, 1)} disabled={i === p.images.length - 1} aria-label="Mover para a direita">
-                        →
-                      </button>
-                      <button className={`${s.btnDanger} ${s.small}`} onClick={() => set({ images: p.images.filter((_, j) => j !== i) })} aria-label="Remover fotografia">
-                        <Icon name="close" size={14} />
-                      </button>
-                    </div>
-                  )}
-                  <label className={s.label}>
-                    Texto alternativo (PT)
-                    <input className={s.input} value={img.alt.pt} readOnly={ro} onChange={(e) => set({ images: p.images.map((x, j) => (j === i ? { ...x, alt: { ...x.alt, pt: e.target.value } } : x)) })} />
-                  </label>
-                  <label className={s.label}>
-                    (EN)
-                    <input className={s.input} value={img.alt.en} readOnly={ro} onChange={(e) => set({ images: p.images.map((x, j) => (j === i ? { ...x, alt: { ...x.alt, en: e.target.value } } : x)) })} />
-                  </label>
-                  {p.colors.length > 1 && (
-                    <select className={s.select} value={img.color ?? ""} disabled={ro} onChange={(e) => set({ images: p.images.map((x, j) => (j === i ? { ...x, color: e.target.value || null } : x)) })} aria-label="Cor da fotografia">
-                      <option value="">Todas as cores</option>
-                      {p.colors.map((c) => (
-                        <option key={c.key} value={c.key}>
-                          {c.name.pt}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-              ))}
-              {!ro && p.images.length < 8 && (
-                <label
-                  style={{ aspectRatio: "4 / 5", border: "1px dashed var(--border)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, textAlign: "center", padding: 12, cursor: "pointer", fontSize: 13, color: "var(--ink-muted)" }}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    upload(e.dataTransfer.files);
-                  }}
-                >
-                  <Icon name="upload" />
-                  {uploading ? "A carregar…" : "Arraste fotos ou escolha ficheiros"}
-                  <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden onChange={(e) => upload(e.target.files)} />
+            <div className={e.body}>
+              <div className={e.codeName}>
+                <label className={c.field}>
+                  <span className={c.lbl}>Código</span>
+                  <input className={c.input} value={p.code} readOnly={ro} onChange={(ev) => set({ code: ev.target.value.toUpperCase() })} placeholder="ex.: SUIT311" />
                 </label>
-              )}
-            </div>
-            <span className={s.hint}>Retrato 4:5, luz natural, fundo neutro. JPG ou WebP até 5 MB. A primeira é a principal. Sem fotografia, a peça não aparece na loja.</span>
-          </section>
-
-          <section className={s.card}>
-            <h2 className={s.h2}>Preço e stock</h2>
-            <div className={s.row2}>
-              <label className={s.label}>
-                Preço (MT)
-                <input className={s.input} inputMode="numeric" value={fmt(p.price)} readOnly={ro} onChange={(e) => set({ price: digits(e.target.value) })} />
-              </label>
-              <label className={s.label}>
-                Preço em saldo (MT)
-                <input className={s.input} inputMode="numeric" placeholder="Opcional" value={fmt(p.salePrice ?? 0)} readOnly={ro} onChange={(e) => set({ salePrice: digits(e.target.value) || null })} />
-                <span className={s.hint}>Mostra o preço antigo riscado e o selo Saldos.</span>
-              </label>
-            </div>
-
-            <div className={s.fieldset}>
-              <span className={s.legend}>Cores</span>
-              {p.colors.map((c, i) => (
-                <div key={i} className={s.row3} style={{ gridTemplateColumns: "1fr 1fr 110px 150px auto", alignItems: "end" }}>
-                  <label className={s.label}>
-                    Nome (PT)
-                    <input className={s.input} value={c.name.pt} readOnly={ro} onChange={(e) => set({ colors: p.colors.map((x, j) => (j === i ? { ...x, name: { ...x.name, pt: e.target.value } } : x)) })} />
-                  </label>
-                  <label className={s.label}>
-                    Nome (EN)
-                    <input className={s.input} value={c.name.en} readOnly={ro} onChange={(e) => set({ colors: p.colors.map((x, j) => (j === i ? { ...x, name: { ...x.name, en: e.target.value } } : x)) })} />
-                  </label>
-                  <label className={s.label}>
-                    Cor
-                    <input className={s.input} type="color" value={c.hex ?? "#ffffff"} disabled={ro} onChange={(e) => set({ colors: p.colors.map((x, j) => (j === i ? { ...x, hex: e.target.value } : x)) })} style={{ padding: 4 }} />
-                  </label>
-                  <label className={s.label}>
-                    Filtro
-                    <select className={s.select} value={c.family ?? ""} disabled={ro} onChange={(e) => set({ colors: p.colors.map((x, j) => (j === i ? { ...x, family: (e.target.value || null) as ColorFamily | null } : x)) })}>
-                      <option value="">—</option>
-                      {COLOR_FAMILIES.map((f) => (
-                        <option key={f} value={f}>
-                          {FAMILY_PT[f]}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  {!ro && (
-                    <button className={`${s.btnDanger} ${s.small}`} onClick={() => set({ colors: p.colors.filter((_, j) => j !== i), variants: p.variants.map((v) => (v.color === c.key ? { ...v, color: null } : v)) })} aria-label="Remover cor">
-                      <Icon name="close" size={14} />
-                    </button>
-                  )}
-                </div>
-              ))}
-              {!ro && (
-                <button
-                  className={`${s.btnOutline} ${s.small}`}
-                  style={{ alignSelf: "flex-start" }}
-                  onClick={() => set({ colors: [...p.colors, { key: `cor-${Date.now().toString(36)}`, name: { pt: "", en: "" }, hex: "#FFFFFF", family: null }] })}
-                >
-                  <Icon name="plus" size={14} />
-                  Adicionar cor
-                </button>
-              )}
-            </div>
-
-            <table className={s.table}>
-              <thead>
-                <tr>
-                  <th>Tamanho</th>
-                  <th>Cor</th>
-                  <th>Stock</th>
-                  <th>Loja</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {p.variants.map((v, i) => {
-                  const editable = !ro && (props.stores.find((st) => st.code === v.storeCode)?.editable ?? false);
-                  const upd = (patch: Partial<EditorProduct["variants"][number]>) => set({ variants: p.variants.map((x, j) => (j === i ? { ...x, ...patch } : x)) });
-                  return (
-                    <tr key={v.id ?? `n${i}`}>
-                      <td>
-                        <input className={s.input} value={v.size} readOnly={!editable} onChange={(e) => upd({ size: e.target.value })} placeholder="6US/38EUR/S" aria-label="Tamanho" />
-                      </td>
-                      <td>
-                        <select className={s.select} value={v.color ?? ""} disabled={!editable} onChange={(e) => upd({ color: e.target.value || null })} aria-label="Cor">
-                          <option value="">—</option>
-                          {p.colors.map((c) => (
-                            <option key={c.key} value={c.key}>
-                              {c.name.pt || c.key}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td style={{ width: 110 }}>
-                        <input className={s.input} type="number" min={0} value={v.stock} readOnly={!editable} onChange={(e) => upd({ stock: Math.max(0, Number(e.target.value)) })} aria-label={`Stock ${v.size}`} />
-                      </td>
-                      <td>
-                        <select className={s.select} value={v.storeCode} disabled={!editable} onChange={(e) => upd({ storeCode: e.target.value })} aria-label="Loja">
-                          {props.stores.filter((st) => st.editable || st.code === v.storeCode).map((st) => (
-                            <option key={st.code} value={st.code}>
-                              Loja {st.code}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td>
-                        {editable && (
-                          <button className={`${s.btnDanger} ${s.small}`} onClick={() => set({ variants: p.variants.filter((_, j) => j !== i) })} aria-label="Remover tamanho">
-                            <Icon name="close" size={14} />
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            {!ro && (
-              <button
-                className={`${s.btnOutline} ${s.small}`}
-                style={{ alignSelf: "flex-start" }}
-                onClick={() => set({ variants: [...p.variants, { size: "", color: p.colors[0]?.key ?? null, storeCode: props.stores.find((st) => st.editable)?.code ?? props.stores[0].code, stock: 1 }] })}
-              >
-                <Icon name="plus" size={14} />
-                Adicionar tamanho
-              </button>
-            )}
-            {lowStock && (
-              <div className={s.warning}>
-                <Icon name="alert" size={18} />
-                <span>
-                  <strong style={{ fontWeight: 500 }}>Atenção:</strong>{" "}
-                  {stock === 0 ? "sem stock — a peça aparece como esgotada na loja." : "há tamanhos com a última unidade ou esgotados."}
-                </span>
+                <label className={c.field}>
+                  <span className={c.lbl}>Nome</span>
+                  <input className={c.input} value={p.name.pt} readOnly={ro} onChange={(ev) => set({ name: { ...p.name, pt: ev.target.value } })} />
+                </label>
               </div>
-            )}
+              <div className={c.half}>
+                <label className={c.field}>
+                  <span className={c.lbl}>Tipo de peça</span>
+                  <select className={c.select} value={p.typeId ?? ""} disabled={ro} onChange={(ev) => set({ typeId: ev.target.value || null })}>
+                    <option value="">—</option>
+                    {props.types.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                        {t.note ? ` · ${t.note}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <span className={c.help}>A lista vem de Catálogo → Tipos de peça.</span>
+                </label>
+                <label className={c.field}>
+                  <span className={c.lbl}>Preço · saldo</span>
+                  <span className={c.row} style={{ gap: 8 }}>
+                    <input className={`${c.input} ${c.num}`} inputMode="numeric" value={mt(p.price)} readOnly={ro} onChange={(ev) => set({ price: digits(ev.target.value) })} />
+                    <input className={`${c.input} ${c.num}`} inputMode="numeric" placeholder="Preço de saldo" value={mt(p.salePrice ?? 0)} readOnly={ro} onChange={(ev) => set({ salePrice: digits(ev.target.value) || null })} />
+                  </span>
+                </label>
+              </div>
+              <label className={c.field}>
+                <span className={c.lbl}>Descrição</span>
+                <textarea className={`${c.input} ${e.area}`} value={p.description.pt} readOnly={ro} onChange={(ev) => set({ description: { ...p.description, pt: ev.target.value } })} />
+              </label>
+              <details className={e.more}>
+                <summary>Textos em inglês e composição</summary>
+                <div className={e.body} style={{ padding: "14px 0 0" }}>
+                  <label className={c.field}>
+                    <span className={c.lbl}>Nome (EN)</span>
+                    <input className={c.input} value={p.name.en} readOnly={ro} onChange={(ev) => set({ name: { ...p.name, en: ev.target.value } })} />
+                  </label>
+                  <label className={c.field}>
+                    <span className={c.lbl}>Descrição (EN)</span>
+                    <textarea className={`${c.input} ${e.area}`} value={p.description.en} readOnly={ro} onChange={(ev) => set({ description: { ...p.description, en: ev.target.value } })} />
+                  </label>
+                  <div className={c.half}>
+                    <label className={c.field}>
+                      <span className={c.lbl}>Composição e cuidados</span>
+                      <textarea className={`${c.input} ${e.area}`} value={p.composition.pt} readOnly={ro} onChange={(ev) => set({ composition: { ...p.composition, pt: ev.target.value } })} />
+                    </label>
+                    <label className={c.field}>
+                      <span className={c.lbl}>(EN)</span>
+                      <textarea className={`${c.input} ${e.area}`} value={p.composition.en} readOnly={ro} onChange={(ev) => set({ composition: { ...p.composition, en: ev.target.value } })} />
+                    </label>
+                  </div>
+                </div>
+              </details>
+            </div>
           </section>
 
-          <section className={s.card}>
-            <h2 className={s.h2}>Pesquisa no Google</h2>
-            <label className={s.label}>
-              Título da página
-              <input className={s.input} value={p.seoTitle} placeholder={seo} readOnly={ro} onChange={(e) => set({ seoTitle: e.target.value })} />
-              <span className={s.hint}>Gerado a partir do nome; pode ser editado.</span>
-            </label>
-            <div style={{ padding: 16, border: "1px solid var(--line)", display: "flex", flexDirection: "column", gap: 4 }}>
-              <span className={s.muted}>eterna.co.mz › pt › product › {p.code.toLowerCase() || "codigo"}</span>
-              <span style={{ fontSize: 18, color: "#1a0dab" }}>{seo}</span>
-              <span className={s.muted}>
-                {fmt(p.salePrice ?? p.price)} MT · {p.description.pt.slice(0, 130) || "Descrição da peça."} Glória Mall, Maputo.
+          <section className={d3.panel}>
+            <div className={d3.panelHead}>
+              <h2>Cores e tamanhos</h2>
+              <select className={c.select} style={{ width: 140 }} value={store} onChange={(ev) => setStore(ev.target.value)} aria-label="Loja">
+                {props.stores.map((x) => (
+                  <option key={x.code} value={x.code}>
+                    Loja {Number(x.code)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className={e.body}>
+              <span className={c.label}>Cores</span>
+              <div className={e.chips}>
+                {p.colors.map((x) => (
+                  <span key={x.key} className={e.chip} data-on>
+                    <span className={e.dot} style={{ background: x.hex ?? "var(--alt)" }} />
+                    {x.name.pt}
+                    {!ro && (
+                      <button type="button" aria-label={`Tirar ${x.name.pt}`} onClick={() => removeColor(x.key)}>
+                        ×
+                      </button>
+                    )}
+                  </span>
+                ))}
+                {!ro && (
+                  <button type="button" className={e.chip} data-dashed onClick={() => setPicker(!picker)}>
+                    <Icon name="plus" size={14} /> Cor
+                  </button>
+                )}
+              </div>
+              {picker && !ro && (
+                <div className={e.picker}>
+                  <label className={d3.search}>
+                    <Icon name="search" size={16} />
+                    <input value={colorQuery} onChange={(ev) => setColorQuery(ev.target.value)} placeholder="Procurar cor…" aria-label="Procurar cor" />
+                  </label>
+                  <div className={e.palette}>
+                    {PALETTE.filter(([name]) => !colorQuery || name.toLowerCase().includes(colorQuery.toLowerCase())).map(([name, en, hex, family]) => (
+                      <button key={name} type="button" onClick={() => addColor(name, en, hex, family)}>
+                        <span
+                          className={e.swatch}
+                          data-ring={p.colors.some((x) => x.name.pt === name) || undefined}
+                          style={{ background: name === "Multicolor" ? "conic-gradient(#B3202A,#E9C93F,#2E7D4F,#2F5BB7,#B3202A)" : hex }}
+                        />
+                        <span>{name}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <span className={c.xsMuted}>Combinação: escolha duas cores (ex.: Preto e Dourado). Estampados: use a cor principal.</span>
+                </div>
+              )}
+
+              <span className={c.row} style={{ gap: 12, marginTop: 6 }}>
+                <span className={c.label}>Tamanhos</span>
+                <select className={c.select} style={{ width: 260 }} value={system} disabled={ro} onChange={(ev) => setSystem(ev.target.value as keyof typeof SIZE_SYSTEMS)}>
+                  {Object.entries(SIZE_SYSTEMS).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v.label}
+                    </option>
+                  ))}
+                </select>
+              </span>
+              <div className={e.chips}>
+                {systemSizes.map((x) => (
+                  <button key={x} type="button" className={e.chip} data-on={onSizes.includes(x) || undefined} disabled={ro} onClick={() => toggleSize(x)}>
+                    {sizeTop(x)} {sizeSub(x) && <span className={c.xsMuted}>{sizeSub(x)}</span>}
+                  </button>
+                ))}
+              </div>
+
+              <span className={c.label} style={{ marginTop: 6 }}>
+                Unidades por cor e tamanho · Loja {Number(store)}
+              </span>
+              {onSizes.length === 0 ? (
+                <span className={c.xsMuted}>Escolha os tamanhos acima.</span>
+              ) : (
+                <div style={{ overflowX: "auto" }}>
+                  <table className={e.matrix}>
+                    <thead>
+                      <tr>
+                        <th>Cor \ tamanho</th>
+                        {onSizes.map((x) => (
+                          <th key={x}>
+                            {sizeTop(x)}
+                            {sizeSub(x) && (
+                              <>
+                                <br />
+                                <span>{sizeSub(x)}</span>
+                              </>
+                            )}
+                          </th>
+                        ))}
+                        <th>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {colorRows.map((key) => {
+                        const color = p.colors.find((x) => x.key === key);
+                        const rowTotal = onSizes.reduce((n, x) => n + (unitsOf(key, x)?.stock ?? 0), 0);
+                        return (
+                          <tr key={key ?? "u"}>
+                            <th>
+                              <span className={c.row} style={{ gap: 8 }}>
+                                {color && <span className={e.dot} style={{ background: color.hex ?? "var(--alt)" }} />}
+                                {color?.name.pt ?? "Sem cor"}
+                              </span>
+                            </th>
+                            {onSizes.map((x) => {
+                              const n = unitsOf(key, x)?.stock ?? 0;
+                              return (
+                                <td key={x} data-off={n === 0 || undefined}>
+                                  <input
+                                    value={n}
+                                    inputMode="numeric"
+                                    readOnly={!storeEditable}
+                                    aria-label={`${color?.name.pt ?? "Sem cor"} ${x}`}
+                                    onChange={(ev) => setUnits(key, x, Number(ev.target.value.replace(/\D/g, "")) || 0)}
+                                  />
+                                </td>
+                              );
+                            })}
+                            <td>
+                              <b className={c.num}>{rowTotal}</b>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <span className={c.xsMuted}>
+                As combinações a 0 ficam riscadas no site. Total: {total} {total === 1 ? "unidade" : "unidades"}.
               </span>
             </div>
           </section>
+
+          <section className={d3.panel}>
+            <div className={d3.panelHead}>
+              <h2>Fotografias por cor</h2>
+            </div>
+            <div className={e.body} style={{ gap: 0 }}>
+              <div className={c.note} style={{ marginBottom: 6 }}>
+                <Icon name="image" size={16} />
+                <span>Fotos de produto: 3:4 · mínimo 1200 × 1600 px · JPG ou WebP · até 2 MB. Cada foto pertence a uma cor ou a “Todas as cores” (pormenores, etiqueta).</span>
+              </div>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                hidden
+                onChange={(ev) => upload(ev.target.files, fileFor.current)}
+              />
+              {groups.map((g) => {
+                const imgs = p.images.map((img, i) => ({ img, i })).filter(({ img }) => img.color === g.key || (g.key === null && !p.colors.some((x) => x.key === img.color)));
+                return (
+                  <div key={g.key ?? "all"} className={e.group}>
+                    <span className={c.row} style={{ gap: 8, fontSize: 14 }}>
+                      {g.hex ? <span className={e.dot} style={{ background: g.hex }} /> : <Icon name="image" size={16} />}
+                      <b style={{ fontWeight: 500 }}>{g.name}</b>
+                      <span className={c.xsMuted}>
+                        · {imgs.length} {imgs.length === 1 ? "foto" : "fotos"}
+                      </span>
+                    </span>
+                    <div className={c.row} style={{ gap: 10, flexWrap: "wrap" }}>
+                      {imgs.map(({ img, i }) => (
+                        <div key={img.url} className={e.photo}>
+                          <Image src={img.url} alt={img.alt.pt} width={96} height={128} />
+                          {!ro && (
+                            <button type="button" className={e.remove} aria-label="Tirar fotografia" onClick={() => set({ images: p.images.filter((_, j) => j !== i) })}>
+                              <Icon name="close" size={12} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      {!ro && (
+                        <button
+                          type="button"
+                          className={e.drop}
+                          onClick={() => {
+                            fileFor.current = g.key;
+                            fileRef.current?.click();
+                          }}
+                          onDragOver={(ev) => ev.preventDefault()}
+                          onDrop={(ev) => {
+                            ev.preventDefault();
+                            void upload(ev.dataTransfer.files, g.key);
+                          }}
+                        >
+                          <Icon name="upload" size={18} />
+                          <span className={c.xsMuted}>{uploading === (g.key ?? "all") ? "A carregar…" : "Arraste fotos"}</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
         </div>
 
-        <div className={s.stack}>
-          <section className={s.card}>
-            <h2 className={s.h2}>Publicação</h2>
-            <div role="radiogroup" aria-label="Estado" className={s.fieldset}>
-              {(
-                [
-                  ["published", "Publicado na loja"],
-                  ["draft", "Rascunho (só a equipa vê)"],
-                  ["scheduled", "Agendar publicação"],
-                ] as const
-              ).map(([id, label]) => (
-                <label key={id} className={s.check}>
-                  <input type="radio" name="estado" checked={p.status === id} disabled={!props.canPublish} onChange={() => set({ status: id })} />
-                  {label}
-                </label>
-              ))}
+        <div className={e.stack}>
+          <section className={d3.panel}>
+            <div className={d3.panelHead}>
+              <h2>Publicação</h2>
             </div>
-            {!props.canPublish && <span className={s.hint}>Só a Administração publica ou tira peças da loja.</span>}
-            {p.status === "scheduled" && (
-              <label className={s.label}>
-                Publicar em
-                <input className={s.input} type="datetime-local" value={p.publishAt ?? ""} disabled={!props.canPublish} onChange={(e) => set({ publishAt: e.target.value })} />
+            <div className={e.body}>
+              <label className={c.toggleRow}>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={p.status === "published"}
+                  className={c.toggle}
+                  disabled={!props.canPublish}
+                  onClick={() => set({ status: p.status === "published" ? "draft" : "published" })}
+                />
+                <span>Publicado · está na loja e no site</span>
               </label>
-            )}
-            <label className={s.check}>
-              <input type="checkbox" checked={p.isNew} disabled={ro} onChange={() => set({ isNew: !p.isNew })} />
-              Mostrar selo “Novo”
-            </label>
-            {props.canPublish && p.id && p.status !== "archived" && (
-              <button
-                className={s.linkBtn}
-                style={{ alignSelf: "flex-start", color: "var(--danger)" }}
-                onClick={() =>
-                  window.confirm("Arquivar este produto? Deixa de aparecer na loja; as encomendas antigas mantêm-se.") &&
-                  start(async () => {
-                    setResult(await archiveProductAction(p.id!));
-                    router.refresh();
-                  })
-                }
-              >
-                Arquivar produto
-              </button>
-            )}
-          </section>
-
-          <section className={s.card}>
-            <h2 className={s.h2}>Organização</h2>
-            <label className={s.label}>
-              Colecção
-              <select className={s.select} value={p.collectionId ?? ""} disabled={ro} onChange={(e) => set({ collectionId: e.target.value || null })}>
-                <option value="">—</option>
-                {props.collections.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className={s.label}>
-              Tipo de peça
-              <select className={s.select} value={p.typeId ?? ""} disabled={ro} onChange={(e) => set({ typeId: e.target.value || null })}>
-                <option value="">—</option>
-                {props.types.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <fieldset className={s.fieldset}>
-              <legend className={s.legend}>Ocasiões</legend>
-              <div className={s.checks} style={{ flexDirection: "column" }}>
-                {props.occasions.map((o) => (
-                  <label key={o.id}>
-                    <input
-                      type="checkbox"
-                      disabled={ro}
-                      checked={p.occasionIds.includes(o.id)}
-                      onChange={() => set({ occasionIds: p.occasionIds.includes(o.id) ? p.occasionIds.filter((x) => x !== o.id) : [...p.occasionIds, o.id] })}
-                    />
-                    {o.name}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-          </section>
-
-          <section className={s.card}>
-            <span className={s.legend}>Como aparece na loja</span>
-            <div style={{ position: "relative", aspectRatio: "4 / 5", background: "var(--blush-light)" }}>
-              {p.images[0] && <Image src={p.images[0].url} alt="" fill sizes="300px" style={{ objectFit: "cover" }} />}
-              {p.isNew && (
-                <span className={s.chip} style={{ position: "absolute", left: 10, top: 10, background: "var(--ivory)", color: "var(--ink)" }}>
-                  Novo
+              <label className={c.toggleRow}>
+                <button type="button" role="switch" aria-checked={p.fitting} className={c.toggle} disabled={ro} onClick={() => set({ fitting: !p.fitting })} />
+                <span>
+                  Pode ir a prova <span className={c.xsMuted}>(só vestidos de noiva)</span>
                 </span>
+              </label>
+              <div className={c.note}>
+                <Icon name="info" size={16} />
+                <span className={c.small}>Rascunho = no armazém ou a chegar. Não aparece no site.</span>
+              </div>
+              {p.id && props.canPublish && (
+                <button type="button" className={c.textBtn} data-tone="bad" style={{ alignSelf: "flex-start", paddingLeft: 0 }} onClick={archive} disabled={pending}>
+                  Arquivar produto
+                </button>
               )}
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 15 }}>
-              <span className={s.strong}>{p.code || "CÓDIGO"}</span>
-              <span>{fmt(p.salePrice ?? p.price) || "0"},00 MT</span>
+          </section>
+
+          <section className={d3.panel}>
+            <div className={d3.panelHead}>
+              <h2>Colecções e ocasiões</h2>
             </div>
-            <span className={s.muted}>{p.name.pt}</span>
+            <div className={e.body}>
+              <span className={c.label}>Colecções</span>
+              <div className={e.chips}>
+                {props.collections.map((x) => (
+                  <button key={x.id} type="button" className={e.chip} data-on={p.collectionIds.includes(x.id) || undefined} disabled={ro} onClick={() => set({ collectionIds: toggleIn(p.collectionIds, x.id) })}>
+                    {p.collectionIds.includes(x.id) && <Icon name="check" size={12} />}
+                    {x.name}
+                    {x.note ? ` · ${x.note}` : ""}
+                  </button>
+                ))}
+              </div>
+              <span className={c.label}>Ocasiões</span>
+              <div className={e.chips}>
+                {props.occasions.map((x) => (
+                  <button key={x.id} type="button" className={e.chip} data-on={p.occasionIds.includes(x.id) || undefined} disabled={ro} onClick={() => set({ occasionIds: toggleIn(p.occasionIds, x.id) })}>
+                    {x.name}
+                  </button>
+                ))}
+              </div>
+              <label className={c.toggleRow}>
+                <button type="button" role="switch" aria-checked={p.isNew} className={c.toggle} disabled={ro} onClick={() => set({ isNew: !p.isNew })} />
+                <span>Selo “Novo”</span>
+              </label>
+            </div>
+          </section>
+
+          <section className={d3.panel}>
+            <div className={d3.panelHead}>
+              <h2>Como aparece nas listas</h2>
+            </div>
+            <div className={e.body}>
+              <div className={e.card}>
+                <div className={e.cardImg}>{cardImage && <Image src={cardImage.url} alt="" fill sizes="220px" style={{ objectFit: "cover" }} />}</div>
+                <span className={e.cardCode}>{p.code || "CÓDIGO"}</span>
+                <span className={c.row} style={{ gap: 4 }}>
+                  {p.colors.map((x, i) => (
+                    <span key={x.key} className={e.dot} data-ring={i === 0 || undefined} style={{ background: x.hex ?? "var(--alt)" }} />
+                  ))}
+                  {p.colors[0] && <span className={c.xsMuted}>{p.colors[0].name.pt}</span>}
+                </span>
+                <span className={c.xsMuted}>{onSizes.map(sizeTop).join(" · ")}</span>
+              </div>
+              <span className={c.xsMuted}>Preço escondido nas listas (Definições). Na ficha o preço aparece sempre.</span>
+            </div>
           </section>
         </div>
       </div>

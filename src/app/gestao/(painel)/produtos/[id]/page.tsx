@@ -34,8 +34,9 @@ export default async function ProductEditPage({ params }: { params: Promise<{ id
       isNew: true,
       seoTitle: "",
       typeId: null,
-      collectionId: cats.collections[0]?.id ?? null,
+      collectionIds: cats.collections[0] ? [cats.collections[0].id] : [],
       occasionIds: [],
+      fitting: false,
       colors: [],
       variants: [],
       images: [],
@@ -56,8 +57,9 @@ export default async function ProductEditPage({ params }: { params: Promise<{ id
       isNew: p.isNew,
       seoTitle: p.seoTitle ?? "",
       typeId: p.typeId,
-      collectionId: p.collectionId,
+      collectionIds: [...new Set([p.collectionId, ...d.categoryIds.filter((c) => cats.collections.some((o) => o.id === c))].filter((x): x is string => !!x))],
       occasionIds: d.categoryIds.filter((c) => cats.occasions.some((o) => o.id === c)),
+      fitting: p.fitting,
       colors: p.colors.map((c) => ({ key: c.key, name: c.name, hex: c.hex, family: c.family })),
       variants: d.variants.map((v) => ({ id: v.id, size: v.size, color: v.color, storeCode: storeRows.find((st) => st.id === v.storeId)?.code ?? storeRows[0].code, stock: v.stock })),
       images: d.images.map((i) => ({ id: i.id, url: i.url, alt: i.alt ?? { pt: p.code, en: p.code }, color: i.color })),
@@ -68,8 +70,11 @@ export default async function ProductEditPage({ params }: { params: Promise<{ id
     <>
       <PageTop
         crumbs={[{ href: "/gestao/produtos", label: "Produtos" }, { label: isNew ? "Novo produto" : product.code }]}
-        eyebrow={isNew ? "Novo produto" : `Editar produto · ${product.code}`}
-        title={isNew ? "Novo produto" : product.name.pt || product.code}
+        title={
+          <>
+            {isNew ? "Novo" : "Editar"} <em>produto</em>
+          </>
+        }
       />
       <ProductEditor
         product={product}

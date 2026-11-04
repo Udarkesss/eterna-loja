@@ -83,6 +83,8 @@ export interface ProductFilter {
   priceMin?: number;
   slugs?: string[];
   isNew?: boolean;
+  /** EN: Only pieces that can go to a bridal fitting (Gestão · Editar produto). PT: Só peças que podem ir a prova. */
+  fitting?: boolean;
   search?: string;
   sort?: ProductSort;
   limit?: number;
@@ -238,6 +240,7 @@ export async function listProducts(filter: ProductFilter, locale: Locale): Promi
     if (!root) return [];
     conditions.push(inCategories(withDescendants(root.id, rows)));
   }
+  if (filter.fitting) conditions.push(eq(products.fitting, true));
   if (filter.types?.length) {
     const ids = rows.filter((r) => filter.types!.includes(r.slug)).map((r) => r.id);
     if (!ids.length) return [];

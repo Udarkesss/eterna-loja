@@ -76,7 +76,8 @@ export async function createBridalBooking(input: BridalBookingInput & { phone: s
   const store = await storeByCode(BRIDAL_STORE);
   await assertSlotFree(store.id, startsAt, pkg.minutes);
   const db = await getDb();
-  const rows = await db.select({ id: products.id, slug: products.slug, collectionId: products.collectionId }).from(products);
+  // EN: Only pieces marked "Pode ir a prova". PT: Só peças marcadas "Pode ir a prova".
+  const rows = await db.select({ id: products.id, slug: products.slug, collectionId: products.collectionId }).from(products).where(eq(products.fitting, true));
   const chosen = input.productSlugs.map((slug) => rows.find((r) => r.slug === slug)).filter((r): r is NonNullable<typeof r> => !!r);
   const privee = (await db.query.categories.findFirst({ where: (c, { eq: e }) => e(c.slug, "eterna-privee") }))?.id;
   const kind = privee && chosen.some((p) => p.collectionId === privee) ? "bride_privee" : "bride_white";

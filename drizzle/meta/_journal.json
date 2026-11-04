@@ -78,6 +78,13 @@
       "when": 1793779826167,
       "tag": "0010_reservations",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793814414950,
+      "tag": "0011_product_fitting",
+      "breakpoints": true
     }
   ]
 }

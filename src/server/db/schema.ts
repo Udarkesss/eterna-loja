@@ -122,6 +122,8 @@ export const products = pgTable(
     status: productStatus("status").notNull().default("draft"),
     publishAt: timestamp("publish_at", { withTimezone: true }), // EN: for "scheduled". PT: para "agendado".
     isNew: boolean("is_new").notNull().default(false), // EN: "Novo" badge. PT: selo "Novo".
+    // EN: "Pode ir a prova" (design V3, wedding dresses only). PT: "Pode ir a prova" (V3, só vestidos de noiva).
+    fitting: boolean("fitting").notNull().default(false),
     seoTitle: text("seo_title"),
     sourceId: text("source_id").unique(), // EN: import origin. PT: origem da importação.
     ...timestamps,

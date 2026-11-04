@@ -20,7 +20,9 @@ const actor = (s: StaffContext) => ({ type: "staff" as const, id: s.id, name: s.
 export async function listCategoriesByKind() {
   const db = await getDb();
   const rows = await db.select().from(categories).orderBy(asc(categories.position));
-  const pick = (kind: string) => rows.filter((r) => r.kind === kind).map((r) => ({ id: r.id, slug: r.slug, name: r.name.pt }));
+  // EN: Types carry their group ("Fatos executivos · Roupa Executiva"). PT: Os tipos levam o grupo.
+  const pick = (kind: string) =>
+    rows.filter((r) => r.kind === kind).map((r) => ({ id: r.id, slug: r.slug, name: r.name.pt, note: kind === "type" && r.parentId ? rows.find((x) => x.id === r.parentId)?.name.pt : undefined }));
   return { collections: pick("collection"), occasions: pick("occasion"), types: pick("type") };
 }
 
@@ -144,8 +146,9 @@ export interface ProductInput {
   isNew: boolean;
   seoTitle: string | null;
   typeId: string | null;
-  collectionId: string | null;
+  collectionIds: string[]; // EN: first = main collection. PT: a primeira é a principal.
   occasionIds: string[];
+  fitting: boolean;
   colors: { key: string; name: Localized; hex: string | null; family: ColorFamily | null }[];
   variants: { id?: string; size: string; color: string | null; storeCode: string; stock: number }[];
   images: { id?: string; url: string; alt: Localized; color: string | null }[];
@@ -181,7 +184,8 @@ export async function saveProduct(staff: StaffContext, input: ProductInput): Pro
     isNew: input.isNew,
     seoTitle: input.seoTitle || null,
     typeId: input.typeId,
-    collectionId: input.collectionId,
+    collectionId: input.collectionIds[0] ?? null,
+    fitting: input.fitting,
     colors: input.colors.map((c) => ({ key: c.key, name: c.name, hex: c.hex, family: c.family })) as ProductColor[],
   };
 
@@ -194,7 +198,7 @@ export async function saveProduct(staff: StaffContext, input: ProductInput): Pro
       : await tx.insert(products).values(values).returning({ id: products.id });
 
     // EN: Categories: type + collection + occasions. PT: Categorias: tipo + colecção + ocasiões.
-    const catIds = [...new Set([input.typeId, input.collectionId, ...input.occasionIds].filter((x): x is string => !!x))];
+    const catIds = [...new Set([input.typeId, ...input.collectionIds, ...input.occasionIds].filter((x): x is string => !!x))];
     await tx.delete(productCategories).where(eq(productCategories.productId, row.id));
     if (catIds.length) await tx.insert(productCategories).values(catIds.map((categoryId) => ({ productId: row.id, categoryId })));
 
