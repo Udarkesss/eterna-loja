@@ -1,9 +1,10 @@
 import "server-only";
 import { asc, desc, eq, inArray } from "drizzle-orm";
+import { sizeParts } from "@/lib/sizes";
 import type { ColorFamily, Localized, ProductColor, ProductStatus } from "@/types";
 import { audit } from "../audit";
 import { getDb } from "../db";
-import { categories, productCategories, productImages, products, productVariants, stores } from "../db/schema";
+import { categories, productCategories, productImages, products, productVariants, reservations, stores } from "../db/schema";
 import { AppError } from "../errors";
 import { accessOf, storeScope, type StaffContext } from "../staff/access";
 
@@ -13,7 +14,7 @@ import { accessOf, storeScope, type StaffContext } from "../staff/access";
  * PT: Produtos na gestão. Gestoras (L) editam stock, preços e textos; só T publica ou apaga.
  */
 
-export type AdminProductStatus = "Publicado" | "Rascunho" | "Esgotado" | "Agendado" | "Arquivado";
+export type AdminProductState = "published" | "bridal" | "reserved" | "soldout" | "draft" | "scheduled" | "archived";
 const actor = (s: StaffContext) => ({ type: "staff" as const, id: s.id, name: s.name, role: s.roleName });
 
 export async function listCategoriesByKind() {
@@ -23,58 +24,98 @@ export async function listCategoriesByKind() {
   return { collections: pick("collection"), occasions: pick("occasion"), types: pick("type") };
 }
 
-export async function listProductsAdmin(staff: StaffContext, filter: { tab?: string; q?: string; collection?: string; occasion?: string }) {
+/** EN: Tabs of design V3-G-Produtos. PT: Separadores do V3. */
+export const PRODUCT_VIEWS = { todos: "Todos", publicados: "Publicados", rascunhos: "Rascunhos (armazém)", reservados: "Reservados", "sem-stock": "Sem stock", "sem-foto": "Sem fotografia" } as const;
+export type ProductView = keyof typeof PRODUCT_VIEWS;
+
+/**
+ * EN: "Gestão · Produtos" of design V3: piece (photo, code, type), group, collections, colours, sizes, stock and state
+ *     (Publicado · Publicado · prova (Bridal) · Reservada · Sem stock · Rascunho · armazém). Store managers see the
+ *     stock of their stores.
+ * PT: Produtos do V3: peça, grupo, colecções, cores, tamanhos, stock e estado. As gestoras vêem o stock das suas lojas.
+ */
+export async function listProductsAdmin(staff: StaffContext, filter: { view?: ProductView; q?: string; type?: string; collection?: string }) {
   const db = await getDb();
   const rows = await db.select().from(products).orderBy(desc(products.updatedAt));
   const ids = rows.map((r) => r.id);
-  const [variants, images, links, cats] = await Promise.all([
+  const [variants, images, links, cats, storeRows, held] = await Promise.all([
     ids.length ? db.select().from(productVariants).where(inArray(productVariants.productId, ids)) : [],
-    ids.length ? db.select().from(productImages).where(inArray(productImages.productId, ids)).orderBy(asc(productImages.position)) : [],
+    ids.length ? db.select({ productId: productImages.productId, url: productImages.url }).from(productImages).where(inArray(productImages.productId, ids)).orderBy(asc(productImages.position)) : [],
     ids.length ? db.select().from(productCategories).where(inArray(productCategories.productId, ids)) : [],
     db.select().from(categories),
+    db.select({ id: stores.id, code: stores.code }).from(stores),
+    db.select({ productId: reservations.productId }).from(reservations).where(eq(reservations.status, "active")),
   ]);
   const scope = storeScope(staff, "products.view");
+  const reservedIds = new Set(held.map((h) => h.productId));
+  const catById = new Map(cats.map((c) => [c.id, c]));
 
-  const items = rows.map((p) => {
-    const vs = variants.filter((v) => v.productId === p.id && (!scope || (v.storeId && scope.includes(v.storeId))));
-    const stock = vs.reduce((n, v) => n + v.stock, 0);
-    const occasionIds = links.filter((l) => l.productId === p.id).map((l) => l.categoryId);
-    const occasion = cats.find((c) => occasionIds.includes(c.id) && c.kind === "occasion");
-    const status: AdminProductStatus =
-      p.status === "draft" ? "Rascunho" : p.status === "archived" ? "Arquivado" : p.status === "scheduled" ? "Agendado" : stock === 0 ? "Esgotado" : "Publicado";
-    return {
-      id: p.id,
-      code: p.code,
-      name: p.name.pt,
-      type: cats.find((c) => c.id === p.typeId)?.singular?.pt ?? cats.find((c) => c.id === p.typeId)?.name.pt ?? "—",
-      collection: cats.find((c) => c.id === p.collectionId)?.name.pt ?? "—",
-      collectionId: p.collectionId,
-      occasion: occasion?.name.pt ?? "—",
-      occasionIds,
-      sizes: [...new Set(vs.map((v) => v.size))].join(", "),
-      stock,
-      price: p.price,
-      salePrice: p.salePrice,
-      status,
-      image: images.find((i) => i.productId === p.id)?.url ?? null,
-      hasVariantsHere: vs.length > 0,
-    };
-  });
+  const items = rows
+    .filter((p) => p.status !== "archived")
+    .map((p) => {
+      const vs = variants.filter((v) => v.productId === p.id && (!scope || (v.storeId && scope.includes(v.storeId))));
+      const stock = vs.reduce((n, v) => n + v.stock, 0);
+      const type = p.typeId ? catById.get(p.typeId) : undefined;
+      const group = type?.parentId ? catById.get(type.parentId)?.name.pt : undefined;
+      const collectionIds = [...new Set([p.collectionId, ...links.filter((l) => l.productId === p.id).map((l) => l.categoryId).filter((cid) => catById.get(cid)?.kind === "collection")].filter((x): x is string => !!x))];
+      const bridal = vs.some((v) => storeRows.find((s) => s.id === v.storeId)?.code === "22");
+      const image = images.find((i) => i.productId === p.id)?.url ?? null;
+      const colorKeys = [...new Set(vs.map((v) => v.color).filter((x): x is string => !!x))];
+      const state: AdminProductState =
+        p.status === "draft"
+          ? "draft"
+          : p.status === "scheduled"
+            ? "scheduled"
+            : reservedIds.has(p.id) && stock === 0
+              ? "reserved"
+              : stock === 0
+                ? "soldout"
+                : bridal
+                  ? "bridal"
+                  : "published";
+      return {
+        id: p.id,
+        code: p.code,
+        name: p.name.pt,
+        type: type?.singular?.pt ?? type?.name.pt ?? "—",
+        typeId: p.typeId,
+        group: group ?? "—",
+        collections: collectionIds.map((cid) => catById.get(cid)?.name.pt ?? "").filter(Boolean),
+        collectionIds,
+        colors: (colorKeys.length ? colorKeys : p.colors.map((c) => c.key)).map((k) => {
+          const c = p.colors.find((x) => x.key === k);
+          return { key: k, name: c?.name.pt ?? k, hex: c?.hex ?? null };
+        }),
+        sizes: [...new Set(vs.filter((v) => v.stock > 0).map((v) => sizeParts(v.size).letter))].join(" · ") || "—",
+        stock,
+        state,
+        reserved: reservedIds.has(p.id),
+        image,
+        hasVariantsHere: vs.length > 0,
+        search: `${p.code} ${p.name.pt} ${p.colors.map((c) => c.name.pt).join(" ")}`.toLowerCase(),
+      };
+    });
 
   const visible = scope ? items.filter((i) => i.hasVariantsHere) : items;
-  const counts = {
-    Todos: visible.length,
-    Publicados: visible.filter((i) => i.status === "Publicado").length,
-    Rascunhos: visible.filter((i) => i.status === "Rascunho").length,
-    Esgotados: visible.filter((i) => i.status === "Esgotado").length,
-  };
-  const TAB: Record<string, AdminProductStatus> = { Publicados: "Publicado", Rascunhos: "Rascunho", Esgotados: "Esgotado" };
-  const q = (filter.q ?? "").toLowerCase();
+  const inView = (i: (typeof visible)[number], v: ProductView) =>
+    v === "todos"
+      ? true
+      : v === "publicados"
+        ? i.state === "published" || i.state === "bridal"
+        : v === "rascunhos"
+          ? i.state === "draft" || i.state === "scheduled"
+          : v === "reservados"
+            ? i.reserved
+            : v === "sem-stock"
+              ? i.stock === 0 && !i.reserved
+              : !i.image;
+  const counts = Object.fromEntries((Object.keys(PRODUCT_VIEWS) as ProductView[]).map((v) => [v, visible.filter((i) => inView(i, v)).length])) as Record<ProductView, number>;
+  const q = (filter.q ?? "").toLowerCase().trim();
   const list = visible
-    .filter((i) => !filter.tab || !TAB[filter.tab] || i.status === TAB[filter.tab])
-    .filter((i) => !q || `${i.code} ${i.name}`.toLowerCase().includes(q))
-    .filter((i) => !filter.collection || i.collectionId === filter.collection)
-    .filter((i) => !filter.occasion || i.occasionIds.includes(filter.occasion));
+    .filter((i) => inView(i, filter.view ?? "todos"))
+    .filter((i) => !q || i.search.includes(q))
+    .filter((i) => !filter.type || i.typeId === filter.type)
+    .filter((i) => !filter.collection || i.collectionIds.includes(filter.collection));
   return { list, counts };
 }
 
@@ -196,35 +237,27 @@ export async function saveProduct(staff: StaffContext, input: ProductInput): Pro
 }
 
 /** EN: Bulk actions of the product list. PT: Acções em massa da lista de produtos. */
-export async function bulkProducts(staff: StaffContext, ids: string[], action: { kind: "publish" | "draft" } | { kind: "collection"; collectionId: string } | { kind: "sale"; percent: number }) {
+/**
+ * EN: Bulk bar of design V3: "Juntar a uma colecção" (adds it, keeps the others), "Publicar", "Passar a rascunho".
+ * PT: Barra de acções em massa do V3: "Juntar a uma colecção" (junta, mantém as outras), "Publicar", "Passar a rascunho".
+ */
+export async function bulkProducts(staff: StaffContext, ids: string[], action: { kind: "publish" | "draft" } | { kind: "join"; collectionId: string }) {
   if (!ids.length) return;
   const db = await getDb();
-  if (action.kind === "publish" || action.kind === "draft") {
+  if (action.kind !== "join") {
     if (accessOf(staff, "products.publish") !== "T") throw new AppError("FORBIDDEN", "NO_ACCESS", 403);
     await db.update(products).set({ status: action.kind === "publish" ? "published" : "draft" }).where(inArray(products.id, ids));
-  } else if (action.kind === "collection") {
-    const rows = await db.select().from(products).where(inArray(products.id, ids));
-    for (const p of rows) {
-      const { categoryIds } = await getProductForEdit(p.id);
-      const next = [...new Set([...categoryIds.filter((c) => c !== p.collectionId), action.collectionId])];
-      await db.transaction(async (tx) => {
-        await tx.update(products).set({ collectionId: action.collectionId }).where(eq(products.id, p.id));
-        await tx.delete(productCategories).where(eq(productCategories.productId, p.id));
-        await tx.insert(productCategories).values(next.map((categoryId) => ({ productId: p.id, categoryId })));
-      });
-    }
   } else {
-    const pct = Math.min(90, Math.max(0, Math.round((action as { percent: number }).percent)));
+    const [collection] = await db.select().from(categories).where(eq(categories.id, action.collectionId));
+    if (!collection || collection.kind !== "collection") throw new AppError("VALIDATION_ERROR", "Escolha a colecção.", 400);
     const rows = await db.select().from(products).where(inArray(products.id, ids));
     for (const p of rows) {
-      await db
-        .update(products)
-        .set({ salePrice: pct ? Math.round((p.price * (100 - pct)) / 100 / 100) * 100 : null })
-        .where(eq(products.id, p.id));
+      await db.insert(productCategories).values({ productId: p.id, categoryId: collection.id }).onConflictDoNothing();
+      if (!p.collectionId) await db.update(products).set({ collectionId: collection.id }).where(eq(products.id, p.id));
     }
   }
-  const extra = "percent" in action ? ` ${(action as { percent: number }).percent}%` : "";
-  await audit({ actor: actor(staff), action: "Produtos alterados em massa", detail: `${ids.length} · ${action.kind}${extra}` });
+  const label = action.kind === "join" ? "juntados a uma colecção" : action.kind === "publish" ? "publicados" : "passados a rascunho";
+  await audit({ actor: actor(staff), action: "Produtos alterados em massa", detail: `${ids.length} ${label}` });
 }
 
 export async function deleteProduct(staff: StaffContext, id: string) {

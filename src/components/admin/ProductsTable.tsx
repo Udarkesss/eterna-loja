@@ -5,168 +5,186 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { bulkProductsAction, type ProductActionResult } from "@/app/gestao/actions/products";
 import { Icon } from "@/components/ui/Icon";
-import s from "./admin.module.css";
+import c from "./AdminV3.module.css";
+import d3 from "./Dashboard.module.css";
 
 /**
- * EN: Product table with selection and the design's bulk bar (Publicar · Mover para colecção · Marcar em saldo).
- * PT: Tabela de produtos com selecção e a barra de acções em massa do design.
+ * EN: Product table of design V3-G-Produtos with selection and the bulk bar ("Juntar a uma colecção", "Publicar",
+ *     "Passar a rascunho").
+ * PT: Tabela de produtos do V3 com selecção e a barra de acções em massa.
  */
 
-interface Item {
+export interface ProductRowItem {
   id: string;
   code: string;
   type: string;
-  collection: string;
-  occasion: string;
+  group: string;
+  collections: string[];
+  colors: { key: string; name: string; hex: string | null }[];
   sizes: string;
   stock: number;
-  price: number;
-  salePrice: number | null;
-  status: "Publicado" | "Rascunho" | "Esgotado" | "Agendado" | "Arquivado";
+  state: "published" | "bridal" | "reserved" | "soldout" | "draft" | "scheduled" | "archived";
   image: string | null;
 }
 
-const TONE = { Publicado: "ok", Rascunho: "", Esgotado: "bad", Agendado: "warn", Arquivado: "" } as const;
-const MARK = { Publicado: "✓", Rascunho: "◷", Esgotado: "!", Agendado: "◷", Arquivado: "–" } as const;
-const fmt = (n: number) => `${n.toLocaleString("pt-PT").replace(/ |\./g, " ")},00`;
+const STATE: Record<ProductRowItem["state"], { label: string; tone?: "ok" | "warn" | "bad"; icon?: "hourglass" | "dress" }> = {
+  published: { label: "Publicado", tone: "ok" },
+  bridal: { label: "Publicado · prova", tone: "ok", icon: "dress" },
+  reserved: { label: "Reservada", tone: "warn", icon: "hourglass" },
+  soldout: { label: "Sem stock", tone: "bad" },
+  draft: { label: "Rascunho · armazém" },
+  scheduled: { label: "Agendado", tone: "warn" },
+  archived: { label: "Arquivado" },
+};
 
-export function ProductsTable({ items, collections, canPublish, canEdit }: { items: Item[]; collections: { id: string; name: string }[]; canPublish: boolean; canEdit: boolean }) {
+export function ProductsTable({ items, collections, canPublish, canEdit }: { items: ProductRowItem[]; collections: { id: string; name: string }[]; canPublish: boolean; canEdit: boolean }) {
   const [sel, setSel] = useState<string[]>([]);
   const [pending, start] = useTransition();
   const [result, setResult] = useState<ProductActionResult | null>(null);
-  const [move, setMove] = useState("");
+  const [join, setJoin] = useState(false);
   const all = sel.length === items.length && items.length > 0;
 
   const run = (action: Parameters<typeof bulkProductsAction>[1]) =>
     start(async () => {
       const r = await bulkProductsAction(sel, action);
       setResult(r);
-      if (r.ok) setSel([]);
+      if (r.ok) {
+        setSel([]);
+        setJoin(false);
+      }
     });
 
   return (
     <>
-      {result?.message && <div className={result.ok ? s.notice : s.error}>{result.message}</div>}
-      {sel.length > 0 && canEdit && (
-        <div className={s.card} style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", padding: "12px 16px", background: "var(--privee)", color: "var(--on-privee)" }}>
-          <span>
-            {sel.length} {sel.length === 1 ? "produto seleccionado" : "produtos seleccionados"}
+      {result?.message && (
+        <span role={result.ok ? "status" : "alert"} className={result.ok ? c.ok : c.err}>
+          {result.message}
+        </span>
+      )}
+      {canEdit && (
+        <div className={c.row} style={{ flexWrap: "wrap", padding: "12px 14px", background: "var(--alt)" }}>
+          <span className={c.small}>
+            <b style={{ fontWeight: 500 }}>
+              {sel.length} {sel.length === 1 ? "seleccionado" : "seleccionados"}
+            </b>
           </span>
+          {join ? (
+            <>
+              <select className={c.select} style={{ width: 220 }} defaultValue="" onChange={(e) => e.target.value && run({ kind: "join", collectionId: e.target.value })} disabled={pending}>
+                <option value="">Escolha a colecção…</option>
+                {collections.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.name}
+                  </option>
+                ))}
+              </select>
+              <button type="button" className={c.textBtn} onClick={() => setJoin(false)}>
+                Cancelar
+              </button>
+            </>
+          ) : (
+            <button type="button" className={`${c.btn} ${c.xs}`} disabled={!sel.length || pending} onClick={() => setJoin(true)}>
+              <Icon name="layers" size={14} />
+              Juntar a uma colecção
+            </button>
+          )}
           {canPublish && (
             <>
-              <button className={`${s.btnOutline} ${s.small}`} disabled={pending} onClick={() => run({ kind: "publish" })}>
+              <button type="button" className={`${c.btn} ${c.xs}`} disabled={!sel.length || pending} onClick={() => run({ kind: "publish" })}>
                 Publicar
               </button>
-              <button className={`${s.btnOutline} ${s.small}`} disabled={pending} onClick={() => run({ kind: "draft" })}>
+              <button type="button" className={`${c.btn} ${c.xs}`} disabled={!sel.length || pending} onClick={() => run({ kind: "draft" })}>
                 Passar a rascunho
               </button>
             </>
           )}
-          <select className={s.select} style={{ width: "auto", minHeight: 34 }} value={move} onChange={(e) => setMove(e.target.value)} aria-label="Mover para colecção">
-            <option value="">Mover para colecção…</option>
-            {collections.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-          {move && (
-            <button className={`${s.btnOutline} ${s.small}`} disabled={pending} onClick={() => run({ kind: "collection", collectionId: move })}>
-              Mover
-            </button>
-          )}
-          <button
-            className={`${s.btnOutline} ${s.small}`}
-            disabled={pending}
-            onClick={() => {
-              const v = window.prompt("Desconto em % (0 para tirar do saldo):", "20");
-              if (v !== null && !Number.isNaN(Number(v))) run({ kind: "sale", percent: Number(v) });
-            }}
-          >
-            Marcar em saldo
-          </button>
-          <button className={s.linkBtn} style={{ color: "var(--on-privee)", marginLeft: "auto" }} onClick={() => setSel([])} aria-label="Limpar selecção">
-            <Icon name="close" size={18} />
-          </button>
+          <span className={c.xsMuted} style={{ marginLeft: "auto" }}>
+            Publicado = está na loja ou na montra · Rascunho = armazém ou a chegar
+          </span>
         </div>
       )}
-      <section className={s.cardFlush}>
-        {items.length === 0 ? (
-          <p className={s.empty}>Nenhum produto com estes filtros.</p>
-        ) : (
-          <table className={s.table}>
-            <thead>
-              <tr>
-                <th>
-                  <input type="checkbox" aria-label="Seleccionar todos" checked={all} onChange={() => setSel(all ? [] : items.map((i) => i.id))} />
-                </th>
-                <th>Produto</th>
-                <th>Colecção</th>
-                <th>Ocasião</th>
-                <th>Tamanhos</th>
-                <th>Stock</th>
-                <th>Preço</th>
-                <th>Estado</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((p) => (
-                <tr key={p.id}>
-                  <td>
+      <table className={d3.table}>
+        <thead>
+          <tr>
+            <th style={{ width: 40 }}>
+              {canEdit && <input type="checkbox" aria-label="Seleccionar todos" checked={all} onChange={() => setSel(all ? [] : items.map((i) => i.id))} style={{ width: 18, height: 18 }} />}
+            </th>
+            <th>Peça</th>
+            <th>Grupo</th>
+            <th>Colecções</th>
+            <th>Cores</th>
+            <th>Tamanhos</th>
+            <th className={d3.right}>Stock</th>
+            <th>Estado</th>
+            <th />
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((p) => {
+            const st = STATE[p.state];
+            return (
+              <tr key={p.id}>
+                <td>
+                  {canEdit && (
                     <input
                       type="checkbox"
                       aria-label={`Seleccionar ${p.code}`}
                       checked={sel.includes(p.id)}
-                      onChange={() => setSel(sel.includes(p.id) ? sel.filter((x) => x !== p.id) : [...sel, p.id])}
+                      onChange={() => setSel((x) => (x.includes(p.id) ? x.filter((y) => y !== p.id) : [...x, p.id]))}
+                      style={{ width: 18, height: 18 }}
                     />
-                  </td>
-                  <td>
-                    <Link href={`/gestao/produtos/${p.id}`} className={s.product}>
-                      {p.image ? <Image src={p.image} alt="" width={44} height={55} className={s.thumb} /> : <span className={s.thumb} />}
-                      <span className={s.two}>
-                        <span className={s.strong}>{p.code}</span>
-                        <span className={s.muted}>{p.type}</span>
-                      </span>
-                    </Link>
-                  </td>
-                  <td>{p.collection}</td>
-                  <td>{p.occasion}</td>
-                  <td className={s.muted}>{p.sizes || "—"}</td>
-                  <td style={{ color: p.stock === 0 ? "var(--danger)" : p.stock === 1 ? "var(--warning)" : undefined }}>
-                    {p.stock === 0 ? "0 · esgotado" : p.stock === 1 ? "1 · última" : p.stock}
-                  </td>
-                  <td className={s.num}>
-                    {p.salePrice ? (
-                      <span className={s.two}>
-                        <span>{fmt(p.salePrice)} MT</span>
-                        <span className={s.muted} style={{ textDecoration: "line-through" }}>
-                          {fmt(p.price)} MT
-                        </span>
-                      </span>
-                    ) : (
-                      `${fmt(p.price)} MT`
-                    )}
-                  </td>
-                  <td>
-                    <span className={s.chip} data-tone={TONE[p.status] || undefined}>
-                      {MARK[p.status]} {p.status}
+                  )}
+                </td>
+                <td>
+                  <span className={c.row} style={{ gap: 12 }}>
+                    {p.image ? <Image src={p.image} alt="" width={40} height={52} style={{ objectFit: "cover", width: 40, height: 52 }} /> : <span style={{ width: 40, height: 52, background: "var(--alt)", display: "inline-block" }} />}
+                    <span className={c.who}>
+                      <b>{p.code}</b>
+                      <span className={c.xsMuted}>{p.type}</span>
                     </span>
-                  </td>
-                  <td>
-                    <Link href={`/gestao/produtos/${p.id}`} className={s.a}>
-                      Editar
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-        <div className={s.pager}>
-          <span>A mostrar {items.length} {items.length === 1 ? "produto" : "produtos"}</span>
-        </div>
-      </section>
+                  </span>
+                </td>
+                <td>{p.group}</td>
+                <td>
+                  <span className={c.row} style={{ gap: 6, flexWrap: "wrap" }}>
+                    {p.collections.map((x) => (
+                      <span key={x} className={c.tag}>
+                        {x}
+                      </span>
+                    ))}
+                  </span>
+                </td>
+                <td>
+                  <span className={c.row} style={{ gap: 4 }}>
+                    {p.colors.slice(0, 6).map((x) => (
+                      <span key={x.key} title={x.name} style={{ width: 16, height: 16, borderRadius: 999, background: x.hex ?? "var(--alt)", border: "1px solid var(--line)", display: "inline-block" }} />
+                    ))}
+                  </span>
+                </td>
+                <td>
+                  <span className={c.small}>{p.sizes}</span>
+                </td>
+                <td className={d3.right}>
+                  <b className={c.num} style={{ fontWeight: 500 }}>
+                    {p.stock}
+                  </b>
+                </td>
+                <td>
+                  <span className={c.st} data-tone={st.tone}>
+                    {st.icon && <Icon name={st.icon} size={13} />}
+                    {st.label}
+                  </span>
+                </td>
+                <td>
+                  <Link href={`/gestao/produtos/${p.id}`} className={c.textBtn}>
+                    Editar
+                  </Link>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </>
   );
 }

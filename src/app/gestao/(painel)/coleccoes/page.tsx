@@ -15,19 +15,19 @@ export default async function CollectionsPage() {
       <PageTop eyebrow="Catálogo" title="Colecções" />
       <div className={s.stats}>
         {cats.collections.map((c) => {
-          const items = list.filter((p) => p.collectionId === c.id);
+          const items = list.filter((p) => p.collectionIds.includes(c.id));
           return (
             <Link key={c.id} href={`/gestao/produtos?colecao=${c.id}`} className={s.stat}>
               <span className={s.statLabel}>{c.name}</span>
               <span className={s.statValue}>{items.length}</span>
               <span className={s.statSub}>
-                {items.filter((p) => p.status === "Publicado").length} publicadas · {items.filter((p) => p.status === "Esgotado").length} esgotadas
+                {items.filter((p) => p.state === "published" || p.state === "bridal").length} publicadas · {items.filter((p) => p.state === "soldout").length} esgotadas
               </span>
             </Link>
           );
         })}
       </div>
-      <p className={s.muted}>Para mudar peças de colecção, seleccione-as em Produtos e use “Mover para colecção”.</p>
+      <p className={s.muted}>Para mudar peças de colecção, seleccione-as em Produtos e use “Juntar a uma colecção”.</p>
     </>
   );
 }
