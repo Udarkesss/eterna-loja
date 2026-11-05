@@ -912,6 +912,13 @@ export function CheckoutView({ reserve }: { reserve?: ReserveInfo } = {}) {
                 </button>
                 <span className={styles.optionSub}>{c.pending.noSignal}</span>
               </div>
+              {/* EN: Design V3-Estado: the PIN warning and help. PT: Aviso do PIN e ajuda (V3). */}
+              <p className={styles.optionSub}>
+                <Icon name="lock" size={14} /> {c.pending.neverPin}
+              </p>
+              <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className={styles.optionSub} style={{ textDecoration: "underline", textUnderlineOffset: 4 }}>
+                {c.pending.help}
+              </a>
             </div>
           )}
 
