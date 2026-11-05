@@ -15,7 +15,8 @@ import {
 import { Icon } from "@/components/ui/Icon";
 import c from "./AdminV3.module.css";
 import d3 from "./Dashboard.module.css";
-import k from "./Collections.module.css";
+import k from "./Collections.module.css";
+import mob from "./Mobile.module.css";
 import { FrameButton } from "./FrameDialog";
 
 /**
@@ -181,9 +182,9 @@ export function CollectionEditor(props: {
         <span>
           <Feedback result={res} />
         </span>
-        <span className={c.row}>
+        <span className={`${c.row} ${mob.mfix}`}>
           {d.id && d.slug && !d.history && (
-            <a href={`/pt/category/${props.data.slug ?? ""}`} target="_blank" rel="noopener noreferrer" className={`${c.btn} ${c.sm}`}>
+            <a href={`/pt/category/${props.data.slug ?? ""}`} target="_blank" rel="noopener noreferrer" className={`${c.btn} ${c.sm} ${mob.dOnly}`}>
               <Icon name="eye" size={15} />
               Pré-visualizar
             </a>
@@ -191,6 +192,12 @@ export function CollectionEditor(props: {
           <button type="button" className={`${c.btnPrimary} ${c.sm}`} disabled={pending} onClick={save}>
             Guardar
           </button>
+          {/* EN: Phone (V3-M-G-Colecao-Editar): "Guardar · Activar colecção". PT: Telemóvel: também activar aqui. */}
+          {d.id && !d.history && d.status !== "active" && (
+            <button type="button" className={`${c.btn} ${c.sm} ${mob.mOnly}`} onClick={() => setConfirm(true)}>
+              Activar {special ? "edição" : "colecção"}
+            </button>
+          )}
         </span>
       </div>
       <div className={k.cols}>

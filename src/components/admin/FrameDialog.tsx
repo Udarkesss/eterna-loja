@@ -6,6 +6,7 @@ import { getFrameAction, saveFrameAction, uploadPosterAction } from "@/app/gesta
 import { FRAME_DEFAULT, type Frame, type FrameKind } from "@/data/framing";
 import { Icon } from "@/components/ui/Icon";
 import c from "./AdminV3.module.css";
+import mob from "./Mobile.module.css";
 
 /**
  * EN: "Enquadrar" window of design V3-G-Enquadrar. Covers and photos: drag to move, click to mark the focus, zoom,
@@ -186,11 +187,11 @@ export function FrameDialog({ url, kind, title, label, onClose }: { url: string;
     );
 
   return (
-    <div className={c.modalBack} onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className={c.modal} role="dialog" aria-modal="true" aria-label={`Enquadrar · ${title}`} style={{ width: 980 }}>
+    <div className={`${c.modalBack} ${mob.mSheetBack}`} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className={`${c.modal} ${mob.mSheet}`} role="dialog" aria-modal="true" aria-label={`Enquadrar · ${title}`} style={{ width: 980 }}>
         <div className={c.panelH}>
           <h3>Enquadrar · {title}</h3>
-          <span className={c.xsMuted} style={{ marginLeft: "auto", marginRight: 12 }}>
+          <span className={`${c.xsMuted} ${mob.dOnly}`} style={{ marginLeft: "auto", marginRight: 12 }}>
             {kind === "video" ? "Arraste para cima ou para baixo · a moldura não sai do vídeo" : kind === "circle" ? "Arraste a foto · o círculo fica sempre centrado" : "Arraste para mover · clique para marcar o foco"}
           </span>
           <button type="button" className={c.icoBtn} onClick={onClose} aria-label="Fechar">
@@ -201,7 +202,7 @@ export function FrameDialog({ url, kind, title, label, onClose }: { url: string;
           <div className={c.panelB}>A carregar…</div>
         ) : (
           <div className={c.panelB}>
-            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 260px", gap: 24, alignItems: "start" }}>
+            <div className={mob.mStack} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 260px", gap: 24, alignItems: "start" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div
                   ref={stage}
@@ -303,7 +304,7 @@ export function FrameDialog({ url, kind, title, label, onClose }: { url: string;
                 {msg.text}
               </span>
             )}
-            <div className={c.end}>
+            <div className={`${c.end} ${mob.mSheetBar}`}>
               <button type="button" className={`${c.btn} ${c.sm}`} onClick={onClose}>
                 Cancelar
               </button>
