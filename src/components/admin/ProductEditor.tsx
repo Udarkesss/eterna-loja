@@ -11,6 +11,7 @@ import type { ColorFamily, Localized, ProductStatus } from "@/types";
 import c from "./AdminV3.module.css";
 import d3 from "./Dashboard.module.css";
 import e from "./ProductEditor.module.css";
+import mob from "./Mobile.module.css";
 import { FrameButton } from "./FrameDialog";
 
 /**
@@ -180,11 +181,12 @@ export function ProductEditor(props: {
             </span>
           )}
         </span>
-        <span className={c.row}>
+        <span className={`${c.row} ${mob.mfix}`}>
           {p.id && (
             <a href={`/pt/product/${p.code.toLowerCase()}`} target="_blank" rel="noopener noreferrer" className={`${c.btn} ${c.sm}`}>
               <Icon name="eye" size={15} />
-              Pré-visualizar
+              <span className={mob.dOnly}>Pré-visualizar</span>
+              <span className={mob.mOnly}>Ver</span>
             </a>
           )}
           {props.canEdit && (

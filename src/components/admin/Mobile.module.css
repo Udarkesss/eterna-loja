@@ -283,3 +283,31 @@
     display: none;
   }
 }
+
+/* EN: Fixed action bar above the tab bar (V3-M-G-Produto-Editar .mfix: "Ver · Guardar").
+   PT: Barra de acções fixa por cima dos separadores (V3: "Ver · Guardar"). */
+@media (max-width: 860px) {
+  .mfix {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(72px + env(safe-area-inset-bottom));
+    z-index: 29;
+    display: grid !important;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+  }
+
+  .mfix > * {
+    width: 100%;
+    justify-content: center;
+  }
+
+  :global(#main):has(.mfix) {
+    padding-bottom: 180px;
+  }
+}
