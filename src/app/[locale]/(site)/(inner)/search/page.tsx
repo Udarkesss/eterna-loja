@@ -69,6 +69,12 @@ export default async function SearchPage({ params, searchParams }: Props) {
                 </div>
               }
             />
+            {/* EN: Phones (V3-M-Pesquisa): help after the results. PT: Telemóvel: ajuda depois dos resultados. */}
+            {found > 0 && (
+              <div className={styles.phoneHelp}>
+                <HelpBox />
+              </div>
+            )}
           </div>
         </section>
       )}
