@@ -254,6 +254,19 @@
   color: var(--muted);
 }
 
+.levelNote {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.levelNote b {
+  font-weight: 500;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
 .stock {
   font-size: 13px;
   color: var(--success, #2f6b4f);

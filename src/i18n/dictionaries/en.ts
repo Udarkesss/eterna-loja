@@ -71,6 +71,8 @@ export const en: Dictionary = {
     sizeGuide: "Size guide",
     available: "Available in this size",
     lastOne: "Last piece in this size",
+    levelNoteBefore: "With your customer discount you pay",
+    levelNoteAfter: "at checkout.",
     otherSize: "Need another size? Ask us on WhatsApp",
     otherSizeMessage: "Hello, I would like to know if piece {code} is available in another size.",
     addToCart: "Add to bag",

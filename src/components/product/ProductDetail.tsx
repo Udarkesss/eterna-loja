@@ -38,14 +38,20 @@ export function ProductDetail({ product, eyebrow, badge, reserve, children }: { 
   // EN: Signed-in customer's discount for the deposit shown on "Reservar". PT: Desconto da cliente para o sinal em "Reservar".
   const { customer } = useCustomer();
   const [levelPct, setLevelPct] = useState(0);
+  // EN: The level discount on purchases ("Com o seu desconto de cliente paga …", design V3). PT: Desconto do nível nas compras.
+  const [buyPct, setBuyPct] = useState(0);
   const [stack, setStack] = useState(false);
   useEffect(() => {
-    if (!customer) return setLevelPct(0);
+    if (!customer) {
+      setBuyPct(0);
+      return setLevelPct(0);
+    }
     api
       .checkoutOptions(locale)
       .then((o) => {
         // EN: Reservations (and wedding dresses) may be left out of the level discount (Definições). PT: Podem ficar de fora.
         setLevelPct(o.loyalty?.onReservations === false ? 0 : (o.level?.pct ?? 0));
+        setBuyPct(o.level?.pct ?? 0);
         setStack(!!o.loyalty?.stack);
       })
       .catch(() => setLevelPct(0));
@@ -90,6 +96,7 @@ export function ProductDetail({ product, eyebrow, badge, reserve, children }: { 
   // PT: "Reservar · 6 412,50 MT" (V3): sinal do preço final; 60 dias nas peças da Bridal (Loja 22).
   const final = price - levelDiscount([{ price: product.price, unit: price, quantity: 1 }], levelPct, stack);
   const deposit = Math.round((final * reserve.depositPct) / 100);
+  const buyFinal = price - levelDiscount([{ price: product.price, unit: price, quantity: 1 }], buyPct, stack);
   const reserveDays = (selected ?? product.variants[0])?.store?.code === "22" ? reserve.bridalDays : reserve.days;
 
   return (
@@ -143,6 +150,14 @@ export function ProductDetail({ product, eyebrow, badge, reserve, children }: { 
             {product.salePrice != null && <s className={styles.old}>{formatMZN(product.price, locale)}</s>}
             <span className={product.salePrice != null ? styles.sale : undefined}>{formatMZN(price, locale)}</span>
           </span>
+          {buyFinal < price && (
+            <span className={styles.levelNote}>
+              <Icon name="gem" size={16} />
+              <span>
+                {dict.product.levelNoteBefore} <b>{formatMZN(buyFinal, locale)}</b> {dict.product.levelNoteAfter}
+              </span>
+            </span>
+          )}
         </div>
 
         {product.colors.length > 0 && (
