@@ -9,7 +9,7 @@ import { randomCode, sha256 } from "./crypto";
  * PT: Códigos de uso único (registo por WhatsApp, recuperação): 6 dígitos, 30 minutos, uma vez, 5 tentativas.
  */
 
-type Purpose = "whatsapp_signup" | "password_reset" | "email_verify";
+type Purpose = "whatsapp_signup" | "password_reset" | "email_verify" | "staff_invite";
 const VALID_MS = 30 * 60_000;
 const MAX_ATTEMPTS = 5;
 

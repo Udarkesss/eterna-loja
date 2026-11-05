@@ -400,3 +400,16 @@
   font-size: 22px;
   font-weight: 400;
 }
+
+/* EN: Invitation titles (V3-E-Convite). PT: Títulos do convite. */
+.title {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: 34px;
+  line-height: 1.1;
+  margin: 0;
+}
+.title em {
+  font-style: italic;
+  color: var(--accent-ink);
+}

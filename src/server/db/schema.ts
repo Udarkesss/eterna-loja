@@ -348,6 +348,9 @@ export const staffUsers = pgTable("staff_users", {
   vehicleType: text("vehicle_type"), // "Mota", "Carro", "Bicicleta"
   vehiclePlate: text("vehicle_plate"),
   commissionPct: integer("commission_pct"), // EN: null = general value. PT: null = valor geral.
+  // EN: Driver invitation (design V3-E-Convite): hashed link token, valid 48 hours. PT: Convite do entregador (48 horas).
+  inviteTokenHash: text("invite_token_hash"),
+  inviteExpiresAt: timestamp("invite_expires_at", { withTimezone: true }),
   createdById: uuid("created_by_id").references((): AnyPgColumn => staffUsers.id, { onDelete: "set null" }),
   isDemo: boolean("is_demo").notNull().default(false),
   ...timestamps,
@@ -387,7 +390,7 @@ export const oneTimeCodes = pgTable("one_time_codes", {
   id: uuid("id").primaryKey().defaultRandom(),
   subjectType: text("subject_type").$type<"customer" | "staff">().notNull(),
   subjectId: uuid("subject_id"),
-  purpose: text("purpose").$type<"whatsapp_signup" | "password_reset" | "email_verify">().notNull(),
+  purpose: text("purpose").$type<"whatsapp_signup" | "password_reset" | "email_verify" | "staff_invite">().notNull(),
   channel: text("channel").$type<"whatsapp" | "email">().notNull(),
   target: text("target").notNull(),
   codeHash: text("code_hash").notNull(),
