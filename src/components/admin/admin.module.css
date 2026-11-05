@@ -906,35 +906,175 @@
   }
 }
 
+/* EN: Phone frame of design V3-M-G-* (top bar, tab bar, menu page). PT: Moldura do telemóvel do V3. */
+.mtop,
+.mnav,
+.mSearch {
+  display: none;
+}
+
+.mtop {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: 56px;
+  background: var(--contrast, #1c1917);
+  color: var(--on-contrast, #faf7f2);
+  grid-template-columns: 96px 1fr 96px;
+  align-items: center;
+  padding: 0 6px;
+}
+
+.mIco {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.mRight {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mWord {
+  justify-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.mWord b {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 20px;
+  letter-spacing: 0.32em;
+}
+
+.mWord span {
+  font-size: 9px;
+  line-height: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.mCount {
+  position: absolute;
+  top: 5px;
+  right: 3px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--ink);
+  font-size: 10px;
+  line-height: 17px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.mSearch {
+  padding: 10px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.mSearch > form {
+  width: 100%;
+  max-width: none;
+}
+
+.mnav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  height: 72px;
+  padding-bottom: env(safe-area-inset-bottom);
+  background: #fff;
+  border-top: 1px solid var(--line);
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.mnav a {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.mnav a[aria-current="page"] {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.mnav a[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 22%;
+  right: 22%;
+  height: 2px;
+  background: var(--ink);
+}
+
+.mN {
+  position: absolute;
+  top: 8px;
+  left: calc(50% + 6px);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--ink);
+  font-size: 10px;
+  line-height: 18px;
+  text-align: center;
+  font-weight: 500;
+}
+
 @media (max-width: 860px) {
   .shell {
     flex-direction: column;
   }
 
-  .aside {
-    position: static;
-    height: auto;
-    width: 100%;
-    padding: 16px;
-    gap: 12px;
+  .aside,
+  .topbar {
+    display: none;
   }
 
-  .nav {
-    flex-direction: row;
-    overflow-x: auto;
+  .mtop {
+    display: grid;
   }
 
-  .navLink {
-    white-space: nowrap;
+  .mnav {
+    display: grid;
   }
 
-  .me {
-    margin-top: 0;
-    padding-top: 12px;
+  .mSearch {
+    display: block;
   }
 
   .main {
-    padding: 24px 16px 48px;
+    padding: 18px 16px 112px;
+    gap: 20px;
   }
 
   .h1 {
@@ -962,5 +1102,84 @@
 
   .shell {
     display: block;
+  }
+}
+
+/* EN: Phone menu page (design V3-M-G-Menu). PT: Página Menu do telemóvel do V3. */
+.mMenu {
+  background: var(--contrast, #1c1917);
+  color: var(--on-contrast, #faf7f2);
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.mMenuTop {
+  height: 56px;
+  display: grid;
+  grid-template-columns: 56px 1fr 56px;
+  align-items: center;
+  padding: 0 6px;
+}
+
+.mMenuMe {
+  padding: 10px 20px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  border-bottom: 1px solid #3a3431;
+}
+
+.mMenuNav {
+  padding: 4px 20px 16px;
+}
+
+.mMenuGroup {
+  padding: 14px 0 4px;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.mMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 48px;
+  padding: 0 4px;
+  font-size: 15px;
+  font-weight: 300;
+  color: inherit;
+}
+
+.mMenuFoot {
+  margin-top: auto;
+  padding: 16px 20px 28px;
+  border-top: 1px solid #3a3431;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mMenuOut {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+@media (max-width: 860px) {
+  .mMenu {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    overflow-y: auto;
   }
 }

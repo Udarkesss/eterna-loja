@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { AdminNav } from "@/components/admin/AdminNav";
+import { MobileTabs, MobileTop } from "@/components/admin/MobileChrome";
 import s from "@/components/admin/admin.module.css";
 import { TopSearch } from "@/components/admin/TopSearch";
 import { Icon } from "@/components/ui/Icon";
@@ -54,6 +55,7 @@ export default async function PainelLayout({ children }: { children: ReactNode }
         </div>
       </aside>
       <div className={s.mainCol}>
+        <MobileTop notices={notices} />
         {/* EN: Top bar of design V3: search, notices, initials. PT: Barra de topo do V3: pesquisa, avisos, iniciais. */}
         <div className={s.topbar}>
           <Suspense fallback={<span className={s.topSearch} />}>
@@ -71,6 +73,7 @@ export default async function PainelLayout({ children }: { children: ReactNode }
         <main id="main" className={s.main}>
           {children}
         </main>
+        <MobileTabs items={items} />
       </div>
     </div>
   );
