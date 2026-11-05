@@ -384,18 +384,14 @@
     overflow: visible;
   }
 
+  /* EN: Titles stay (they name the block); only the frame goes. PT: Os títulos ficam; só a moldura sai. */
   .panel:has(> .panelBody) > .panelHead {
-    padding: 0;
+    padding: 0 0 12px;
     border: 0;
-    justify-content: flex-end;
   }
 
   .panel:has(> .panelBody) > .panelHead h2 {
-    display: none;
-  }
-
-  .panel:has(> .panelBody) > .panelHead:not(:has(> :not(h2))) {
-    display: none;
+    font-size: 20px;
   }
 
   .panelBody {
