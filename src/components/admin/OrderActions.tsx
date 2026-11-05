@@ -15,6 +15,7 @@ import {
 } from "@/app/gestao/actions/orders";
 import type { FulfillmentStatus, FulfillmentType, PaymentMethod, PaymentStatus } from "@/types";
 import s from "./admin.module.css";
+import mob from "./Mobile.module.css";
 
 /**
  * EN: "Próximo passo" box: shows only the next sensible action for the order's state
@@ -181,9 +182,23 @@ export function OrderActions({
 
   const cancellable = can.cancel && o.paymentStatus === "pending" && o.fulfillmentStatus !== "cancelled";
 
+  // EN: Phone (V3-M-G-Encomenda): "Marcar como pronta · Confirmar levantamento" in the fixed bar.
+  // PT: Telemóvel: os dois passos do levantamento na barra fixa.
+  const pickupBar = paidOrCod && o.fulfillmentType === "pickup" && can.edit && (o.fulfillmentStatus === "pending" || o.fulfillmentStatus === "ready");
+
   return (
     <div className={s.fieldset} style={{ gap: 14 }}>
       {feedback}
+      {pickupBar && (
+        <span className={`${mob.mfix} ${mob.mOnly}`}>
+          <button className={s.btn} disabled={pending || o.fulfillmentStatus !== "pending"} onClick={() => run(() => fulfillmentAction(o.id, "ready"))}>
+            Marcar como pronta
+          </button>
+          <button className={s.btnOutline} disabled={pending || o.fulfillmentStatus !== "ready"} onClick={() => run(() => fulfillmentAction(o.id, "collected"))}>
+            Confirmar levantamento
+          </button>
+        </span>
+      )}
       {steps.length ? steps : <span className={s.muted}>Sem acções pendentes.</span>}
       {cancellable && (
         <button

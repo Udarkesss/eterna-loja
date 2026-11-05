@@ -304,7 +304,13 @@
 
   .mfix > * {
     width: 100%;
+    min-width: 0;
+    padding-left: 10px;
+    padding-right: 10px;
     justify-content: center;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.25;
   }
 
   :global(#main):has(.mfix) {
