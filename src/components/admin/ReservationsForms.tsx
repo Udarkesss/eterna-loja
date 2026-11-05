@@ -64,8 +64,10 @@ export function NewStoreReservation(props: {
   depositPct: number;
   remindDays: number;
   disabled: boolean;
+  /** EN: Opened from the Painel's "Nova reserva". PT: Aberta pelo "Nova reserva" do Painel. */
+  startOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(!!props.startOpen && !props.disabled);
   const [who, setWho] = useState("");
   const [pieceText, setPieceText] = useState("");
   const [store, setStore] = useState(props.stores[0]?.code ?? "02");

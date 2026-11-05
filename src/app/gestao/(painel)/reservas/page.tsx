@@ -16,7 +16,7 @@ import { canEdit, requireStaffPage, storeScope } from "@/server/staff/access";
 
 export const metadata = { title: "Reservas" };
 
-type Props = { searchParams: Promise<{ q?: string; vista?: string; loja?: string; origem?: string }> };
+type Props = { searchParams: Promise<{ q?: string; vista?: string; loja?: string; origem?: string; nova?: string }> };
 
 /**
  * EN: "Gestão · Reservas" of design V3 (online and in the store). PT: Reservas do V3 (online e na loja).
@@ -45,6 +45,7 @@ export default async function ReservationsPage({ searchParams }: Props) {
         title="Reservas"
         actions={
           <NewStoreReservation
+            startOpen={p.nova === "1"}
             pieces={pieces.filter((x) => myStores.some((s) => s.code === x.storeCode))}
             people={people}
             stores={myStores.map((s) => ({ code: s.code, days: isBridalStore(s.code) ? settings.bridalDays : settings.days }))}

@@ -10,6 +10,7 @@ import { FITTING_KIND_LABELS } from "@/data/fittings";
 import { formatLongDate, toMaputo } from "@/lib/time";
 import type { FittingKind } from "@/types";
 import { dashboardFor } from "@/server/admin/dashboard";
+import { listAdminReservations } from "@/server/admin/reservations";
 import { FULFILLMENT_LABEL, METHOD_LABEL, PAYMENT_LABEL } from "@/server/admin/orders";
 import { can, requireStaffPage } from "@/server/staff/access";
 
@@ -24,6 +25,10 @@ export const metadata = { title: "Painel" };
 export default async function DashboardPage() {
   const staff = await requireStaffPage("dashboard");
   const d = await dashboardFor(staff);
+  // EN: "Reservas activas" and "Reservas a terminar" of design V3 (only for roles that see reservations).
+  // PT: "Reservas activas" e "Reservas a terminar" do V3 (só para papéis que vêem reservas).
+  const res = can(staff, "reservations") ? await listAdminReservations(staff, { view: "terminar" }) : null;
+  const ending = res ? res.list.slice(0, 3) : [];
   const hour = Number(toMaputo(new Date()).time.slice(0, 2));
   const greeting = hour < 12 ? "Bom dia" : hour < 19 ? "Boa tarde" : "Boa noite";
   const date = formatLongDate(d.today, "pt");
@@ -51,7 +56,7 @@ export default async function DashboardPage() {
         actions={
           <>
             {can(staff, "reservations") && (
-              <Link href="/gestao/reservas" className={`${s.btnOutline} ${m.mOnly}`}>
+              <Link href="/gestao/reservas?nova=1" className={s.btnOutline}>
                 Nova reserva
               </Link>
             )}
@@ -81,11 +86,19 @@ export default async function DashboardPage() {
             <b>{d.toPrepare}</b>
             <span className={m.small}>{d.toPrepareStores || "Tudo preparado"}</span>
           </div>
-          <div className={m.kpi}>
-            <span className={m.label}>Pagamentos pendentes</span>
-            <b>{d.pendingCount}</b>
-            <span className={m.small}>{d.pendingHint}</span>
-          </div>
+          {res ? (
+            <div className={m.kpi}>
+              <span className={m.label}>Reservas activas</span>
+              <b>{res.kpis.active}</b>
+              <span className={m.small}>{res.kpis.ending ? `${res.kpis.ending} ${res.kpis.ending === 1 ? "termina" : "terminam"} em ${res.settings.remindDays} dias` : "Nenhuma a terminar"}</span>
+            </div>
+          ) : (
+            <div className={m.kpi}>
+              <span className={m.label}>Pagamentos pendentes</span>
+              <b>{d.pendingCount}</b>
+              <span className={m.small}>{d.pendingHint}</span>
+            </div>
+          )}
           <div className={m.kpi}>
             <span className={m.label}>Provas esta semana</span>
             <b>{d.fittingsWeek}</b>
@@ -125,6 +138,36 @@ export default async function DashboardPage() {
                 </Link>
               </div>
             </div>
+          </section>
+        )}
+        {res && (
+          <section className={m.mcard}>
+            <div className={m.mcardH}>
+              <h3>Reservas a terminar</h3>
+              <Link href="/gestao/reservas?vista=terminar">Ver todas</Link>
+            </div>
+            {ending.length === 0 ? (
+              <p className={m.empty}>Nenhuma reserva a terminar nos próximos {res.settings.remindDays} dias.</p>
+            ) : (
+              ending.map((r) => (
+                <div key={r.id} className={m.mli} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 20px", borderTop: "1px solid var(--line)" }}>
+                  <span style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
+                    <b style={{ fontWeight: 500 }}>
+                      {r.code} · {r.customer}
+                    </b>
+                    <span style={{ fontSize: 13, color: "var(--muted)" }}>
+                      {r.store} · {r.due !== "—" ? `falta pagar ${r.due} MT` : r.origin === "Na loja" ? "reserva feita na loja" : "reserva online"}
+                    </span>
+                  </span>
+                  <span style={{ fontSize: 13, color: r.tone === "bad" ? "var(--danger, #a63a2b)" : "var(--muted)", whiteSpace: "nowrap" }}>{r.left}</span>
+                  {r.remindHref && (
+                    <a href={r.remindHref} target="_blank" rel="noopener noreferrer" className={`${s.btnOutline} ${s.small}`}>
+                      Avisar
+                    </a>
+                  )}
+                </div>
+              ))
+            )}
           </section>
         )}
         <section className={m.mcard}>
@@ -213,11 +256,19 @@ export default async function DashboardPage() {
           <b className={d3.gold}>{d.toPrepare}</b>
           <span className={d3.kpiSub}>{d.toPrepareStores || "Tudo preparado"}</span>
         </div>
-        <div className={d3.kpi}>
-          <span className={d3.kpiLabel}>Pagamentos pendentes</span>
-          <b className={d3.gold}>{d.pendingCount}</b>
-          <span className={d3.kpiSub}>{d.pendingHint}</span>
-        </div>
+        {res ? (
+          <div className={d3.kpi}>
+            <span className={d3.kpiLabel}>Reservas activas</span>
+            <b className={d3.gold}>{res.kpis.active}</b>
+            <span className={d3.kpiSub}>{res.kpis.ending ? `${res.kpis.ending} ${res.kpis.ending === 1 ? "termina" : "terminam"} em ${res.settings.remindDays} dias` : "Nenhuma a terminar"}</span>
+          </div>
+        ) : (
+          <div className={d3.kpi}>
+            <span className={d3.kpiLabel}>Pagamentos pendentes</span>
+            <b className={d3.gold}>{d.pendingCount}</b>
+            <span className={d3.kpiSub}>{d.pendingHint}</span>
+          </div>
+        )}
         <div className={d3.kpi}>
           <span className={d3.kpiLabel}>Provas esta semana</span>
           <b>{d.fittingsWeek}</b>
@@ -263,6 +314,39 @@ export default async function DashboardPage() {
                   </div>
                 </div>
               </div>
+            </section>
+          )}
+
+          {res && (
+            <section className={d3.panel}>
+              <div className={d3.panelHead}>
+                <h2>Reservas a terminar</h2>
+                <Link href="/gestao/reservas?vista=terminar" className={d3.ulink}>
+                  Ver todas
+                </Link>
+              </div>
+              {ending.length === 0 ? (
+              <p className={d3.empty}>Nenhuma reserva a terminar nos próximos {res.settings.remindDays} dias.</p>
+            ) : (
+              ending.map((r) => (
+                <div key={r.id} className={undefined} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 20px", borderTop: "1px solid var(--line)" }}>
+                  <span style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
+                    <b style={{ fontWeight: 500 }}>
+                      {r.code} · {r.customer}
+                    </b>
+                    <span style={{ fontSize: 13, color: "var(--muted)" }}>
+                      {r.store} · {r.due !== "—" ? `falta pagar ${r.due} MT` : r.origin === "Na loja" ? "reserva feita na loja" : "reserva online"}
+                    </span>
+                  </span>
+                  <span style={{ fontSize: 13, color: r.tone === "bad" ? "var(--danger, #a63a2b)" : "var(--muted)", whiteSpace: "nowrap" }}>{r.left}</span>
+                  {r.remindHref && (
+                    <a href={r.remindHref} target="_blank" rel="noopener noreferrer" className={`${s.btnOutline} ${s.small}`}>
+                      Avisar
+                    </a>
+                  )}
+                </div>
+              ))
+            )}
             </section>
           )}
 
