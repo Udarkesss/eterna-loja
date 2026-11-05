@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import { bulkProductsAction, type ProductActionResult } from "@/app/gestao/actions/products";
 import { Icon } from "@/components/ui/Icon";
 import c from "./AdminV3.module.css";
+import m from "./Mobile.module.css";
 import d3 from "./Dashboard.module.css";
 
 /**
@@ -103,7 +104,7 @@ export function ProductsTable({ items, collections, canPublish, canEdit }: { ite
           </span>
         </div>
       )}
-      <table className={d3.table}>
+      <table className={`${d3.table} ${m.prodTable}`}>
         <thead>
           <tr>
             <th style={{ width: 40 }}>
