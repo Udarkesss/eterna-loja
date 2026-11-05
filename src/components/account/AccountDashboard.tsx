@@ -134,6 +134,10 @@ export function AccountDashboard(props: { customer: CustomerDTO; orders: MyOrder
 
         <div className={styles.main}>
           {section === "level" && <LevelPanel loyalty={loyalty} />}
+          {/* EN: Active reservations also under the level (design V3-Conta). PT: Reservas activas também por baixo do nível (V3). */}
+          {section === "level" && props.reservations.some((r) => r.status === "active") && (
+            <ReservationsPanel reservations={props.reservations.filter((r) => r.status === "active")} />
+          )}
           {section === "reservations" && <ReservationsPanel reservations={props.reservations} />}
           {section === "orders" && <OrdersPanel orders={props.orders} />}
           {section === "vouchers" && <VouchersPanel vouchers={props.vouchers} />}
