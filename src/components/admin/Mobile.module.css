@@ -365,3 +365,60 @@
     display: none !important;
   }
 }
+
+/* EN: Phone "Tipos de peça" (V3-M-G-Tipos): one compact row per type — grip, circle, name, pieces, actions.
+   PT: Tipos no telemóvel: uma linha compacta por tipo — pega, círculo, nome, peças, acções. */
+@media (max-width: 860px) {
+  .mTypes,
+  .mTypes tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .mTypes thead {
+    display: none;
+  }
+
+  .mTypes tr {
+    display: grid;
+    grid-template-columns: 22px auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .mTypes td {
+    padding: 0 !important;
+    border: 0 !important;
+  }
+
+  .mTypes td:nth-child(2) > span > span:first-child {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  .mTypes td:nth-child(3) input {
+    width: 100% !important;
+  }
+
+  .mTypes td:nth-child(5),
+  .mTypes td:nth-child(6) {
+    grid-row: 2;
+  }
+
+  .mTypes td:nth-child(5) {
+    grid-column: 3;
+    justify-self: end;
+  }
+
+  .mTypes td:nth-child(6) {
+    grid-column: 4;
+  }
+}
+
+@media (max-width: 860px) {
+  .mTypes td:nth-child(2) > span {
+    flex-direction: column;
+  }
+}

@@ -15,6 +15,7 @@ import { Icon } from "@/components/ui/Icon";
 import c from "./AdminV3.module.css";
 import d3 from "./Dashboard.module.css";
 import t from "./Types.module.css";
+import mob from "./Mobile.module.css";
 import { FrameButton } from "./FrameDialog";
 
 /**
@@ -83,7 +84,7 @@ export function TypesTable({ types, disabled }: { types: TypeRow[]; disabled: bo
         }}
       />
       <Feedback result={res} />
-      <table className={d3.table}>
+      <table className={`${d3.table} ${mob.mTypes}`} data-keep="">
         <thead>
           <tr>
             <th style={{ width: 36 }} />
