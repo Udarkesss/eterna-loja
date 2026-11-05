@@ -12,9 +12,10 @@ export const metadata = { title: "Editar produto" };
 
 /** EN: "Gestão · 7 Editar produto" (also "Novo produto" at /gestao/produtos/novo). PT: Editar ou criar produto. */
 export default async function ProductEditPage({ params }: { params: Promise<{ id: string }> }) {
-  const staff = await requireStaffPage("products.view");
   const { id } = await params;
   const isNew = id === "novo";
+  // EN: Creating needs "products.edit"; viewing needs "products.view". PT: Criar precisa de editar; ver basta ver.
+  const staff = await requireStaffPage(isNew ? "products.edit" : "products.view");
   if (!isNew && !/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const db = await getDb();
   const [cats, storeRows] = await Promise.all([listCategoriesByKind(), db.select().from(stores).orderBy(asc(stores.position))]);
