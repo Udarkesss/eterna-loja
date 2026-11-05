@@ -254,6 +254,15 @@
   color: var(--muted);
 }
 
+.stock {
+  font-size: 13px;
+  color: var(--success, #2f6b4f);
+}
+
+.stock[data-last] {
+  color: var(--warning, #8a5a00);
+}
+
 .otherSize {
   font-size: 13px;
   color: var(--accent-ink);

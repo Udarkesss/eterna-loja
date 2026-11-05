@@ -72,6 +72,7 @@ export const pt = {
     size: "Tamanho",
     sizeGuide: "Guia de tamanhos",
     available: "Disponível neste tamanho",
+    lastOne: "Última unidade neste tamanho",
     otherSize: "Precisa de outro tamanho? Pergunte-nos no WhatsApp",
     otherSizeMessage: "Olá, gostaria de saber se há a peça {code} noutro tamanho.",
     addToCart: "Adicionar ao carrinho",

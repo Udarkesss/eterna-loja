@@ -70,6 +70,7 @@ export const en: Dictionary = {
     size: "Size",
     sizeGuide: "Size guide",
     available: "Available in this size",
+    lastOne: "Last piece in this size",
     otherSize: "Need another size? Ask us on WhatsApp",
     otherSizeMessage: "Hello, I would like to know if piece {code} is available in another size.",
     addToCart: "Add to bag",

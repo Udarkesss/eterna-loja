@@ -201,6 +201,12 @@ export function ProductDetail({ product, eyebrow, badge, reserve, children }: { 
               );
             })}
           </div>
+          {/* EN: Stock of the chosen size (design V3). PT: Stock do tamanho escolhido (V3). */}
+          {selected && selected.stock > 0 && (
+            <span className={styles.stock} data-last={selected.stock === 1 ? "" : undefined}>
+              {selected.stock === 1 ? dict.product.lastOne : dict.product.available}
+            </span>
+          )}
           {struck && <span className={styles.note}>{dict.product.sizesStruck}</span>}
           <a href={whatsappLink(t(dict.product.otherSizeMessage, { code: product.code }))} target="_blank" rel="noopener noreferrer" className={styles.otherSize}>
             {dict.product.otherSize}
