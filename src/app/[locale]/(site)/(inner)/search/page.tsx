@@ -47,7 +47,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
         ) : (
           <h1 className="visually-hidden">{dict.search.title}</h1>
         )}
-        {listing && <TypeBar tiles={listing.tiles} label={dict.catalog.types} />}
+        {listing && <TypeBar tiles={listing.tiles} label={dict.catalog.types} min={2} />}
       </section>
 
       {listing && found > 0 && <CategoryToolbar total={listing.filtered.length} inline />}

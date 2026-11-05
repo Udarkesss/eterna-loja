@@ -15,8 +15,9 @@ export interface TypeTile {
  * PT: Barra de tipos do V3: molduras circulares, centradas, nomes em maiúsculas; "Todos" mostra quatro peças. A foto
  *     de cada tipo é uma peça desse tipo. No telemóvel desliza para o lado.
  */
-export function TypeBar({ tiles, label }: { tiles: TypeTile[]; label: string }) {
-  if (tiles.length < 3) return null; // EN: "Todos" + at least two types. PT: "Todos" + pelo menos dois tipos.
+export function TypeBar({ tiles, label, min = 3 }: { tiles: TypeTile[]; label: string; min?: number }) {
+  // EN: "Todos" + at least two types (search: one is enough, design V3-Pesquisa). PT: Na pesquisa basta um tipo (V3).
+  if (tiles.length < min) return null;
   return (
     <nav aria-label={label} className={styles.typeBar}>
       {tiles.map((tile) => (
