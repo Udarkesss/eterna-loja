@@ -10,6 +10,7 @@ import { getDictionary } from "@/i18n";
 import { localizePath } from "@/i18n/config";
 import { resolveLocale } from "@/i18n/params";
 import { categoryHref } from "@/lib/links";
+import { formatLongDate, todayMaputo } from "@/lib/time";
 import { findCategory } from "@/server/catalog";
 import type { CategoryDTO, Locale } from "@/types";
 
@@ -95,6 +96,13 @@ async function CollectionPage({ category, query, locale }: { category: CategoryD
     locale,
   );
   const lineLink = (s: string) => `${categoryHref(category.slug, locale)}?linha=${s}`;
+  // EN: The active special edition (drafts stay private until activated). PT: A edição especial activa (rascunhos não aparecem).
+  const today = todayMaputo();
+  const special = category.children
+    .filter((c) => c.kind === "collection" && c.details && !c.details.history && c.details.status === "active" && (!c.details.endsOn || c.details.endsOn >= today))
+    .sort((a, b) => Number(b.details?.status === "active") - Number(a.details?.status === "active") || (a.details?.startsOn ?? "").localeCompare(b.details?.startsOn ?? ""))[0];
+  const dayMonth = (d: string) => formatLongDate(d, locale).replace(/^[^,]+,\s*/, "");
+  const specialDates = special?.details?.startsOn && special.details.endsOn ? dict.catalog.specialDates.replace("{from}", dayMonth(special.details.startsOn)).replace("{to}", dayMonth(special.details.endsOn)) : "";
 
   return (
     <>
@@ -136,6 +144,28 @@ async function CollectionPage({ category, query, locale }: { category: CategoryD
           <Results listing={listing} locale={locale} columns={4} />
         </div>
       </section>
+
+      {/* EN: Special edition inside this collection (design V3-Colecao "Edição especial · dentro da Essenza").
+          PT: Edição especial dentro desta colecção (V3). */}
+      {special && (
+        <section className={styles.special} data-theme="bridal">
+          <div className={styles.specialImage}>{special.imageUrl && <Image src={special.imageUrl} alt={special.name} fill sizes="(max-width: 767px) 100vw, 50vw" />}</div>
+          <div className={styles.specialText}>
+            <span className={styles.specialBadge}>{dict.catalog.specialWithin.replace("{name}", category.name)}</span>
+            <h2 className={styles.specialTitle}>{special.name}</h2>
+            {(special.description || specialDates) && (
+              <p className={styles.specialBody}>
+                {special.description}
+                {special.description && specialDates ? " " : ""}
+                {specialDates}
+              </p>
+            )}
+            <Link href={categoryHref(special.slug, locale)} className={styles.specialCta}>
+              {special.details?.buttonText || dict.catalog.specialCta}
+            </Link>
+          </div>
+        </section>
+      )}
     </>
   );
 }

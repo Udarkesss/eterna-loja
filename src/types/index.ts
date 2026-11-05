@@ -29,7 +29,18 @@ export interface CategoryDTO extends CategorySummary {
   kind: CategoryKind;
   description: string | null;
   imageUrl: string | null; // EN: type circle / collection cover. PT: círculo do tipo / capa da colecção.
-  details: { edition: string | null; season: string | null; lines: string[]; active: boolean } | null;
+  details: {
+    edition: string | null;
+    season: string | null;
+    lines: string[];
+    active: boolean;
+    /** EN: Gestão · Colecções state and planned dates (special editions). PT: Estado e datas planeadas. */
+    status: "draft" | "active" | "archived" | null;
+    startsOn: string | null;
+    endsOn: string | null;
+    history: boolean;
+    buttonText: string | null;
+  } | null;
   /** EN: Order and filters (Gestão · Categorias e filtros). PT: Ordem e filtros. */
   listing: CategoryListing | null;
   parent: CategorySummary | null;

@@ -39,6 +39,11 @@ function toCategoryDTO(row: CategoryRow, rows: CategoryRow[], locale: Locale): C
           season: row.details.season?.[locale] ?? null,
           lines: row.details.lines ?? [],
           active: row.details.active ?? false,
+          status: row.details.status ?? null,
+          startsOn: row.details.startsOn ?? null,
+          endsOn: row.details.endsOn ?? null,
+          history: row.details.history ?? false,
+          buttonText: row.details.buttonText?.[locale] ?? null,
         }
       : null,
     listing: row.details?.listing ?? null,

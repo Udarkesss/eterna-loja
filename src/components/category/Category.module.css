@@ -758,3 +758,91 @@
     font-size: 11px;
   }
 }
+
+/* EN: Special edition band of design V3-Colecao. PT: Faixa da edição especial do V3. */
+.special {
+  margin-top: 96px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--alt);
+}
+
+.specialImage {
+  position: relative;
+  height: 520px;
+  overflow: hidden;
+}
+
+.specialImage img {
+  object-fit: cover;
+  object-position: center 30%;
+}
+
+.specialText {
+  padding: 64px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+}
+
+.specialBadge {
+  align-self: flex-start;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 12px;
+  line-height: 18px;
+  letter-spacing: 0.04em;
+}
+
+.specialTitle {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 44px;
+  line-height: 50px;
+}
+
+.specialBody {
+  color: var(--muted);
+}
+
+.specialCta {
+  align-self: flex-start;
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  height: 52px;
+  padding: 0 28px;
+  background: var(--contrast, var(--ink));
+  color: var(--on-contrast, var(--surface));
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 767px) {
+  .special {
+    margin-top: 56px;
+    grid-template-columns: 1fr;
+  }
+
+  .specialImage {
+    height: 360px;
+  }
+
+  .specialText {
+    padding: 32px 16px 40px;
+  }
+
+  .specialTitle {
+    font-size: 34px;
+    line-height: 40px;
+  }
+
+  .specialCta {
+    align-self: stretch;
+    justify-content: center;
+  }
+}
