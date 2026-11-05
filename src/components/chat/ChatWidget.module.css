@@ -234,6 +234,10 @@
     width: 54px;
     height: 54px;
   }
+  /* EN: Above a fixed bottom bar (product "Adicionar ao carrinho"). PT: Acima de uma barra fixa em baixo. */
+  :global(body:has([data-bottom-bar])) .fab {
+    bottom: calc(92px + env(safe-area-inset-bottom));
+  }
   .window {
     right: 0;
     bottom: 0;

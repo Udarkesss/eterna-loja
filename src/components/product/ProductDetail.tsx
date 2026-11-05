@@ -240,7 +240,7 @@ export function ProductDetail({ product, eyebrow, badge, reserve, children }: { 
       </div>
 
       {/* EN: Phones: fixed bar with the button, price and colour. PT: Telemóvel: barra fixa com o botão, preço e cor. */}
-      <div className={styles.fixedBar}>
+      <div className={styles.fixedBar} data-bottom-bar="">
         <button type="button" className={styles.add} onClick={handleAdd} disabled={!canAdd}>
           {addLabel}
         </button>
