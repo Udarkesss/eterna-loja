@@ -204,7 +204,7 @@ export function PaymentsEditor(props: {
           </tbody>
         </table>
         <div className={s.actions}>
-          <select className={s.select} style={{ width: "auto" }} value={adding} onChange={(e) => setAdding(e.target.value)} aria-label="Pessoa">
+          <select className={s.select} style={{ width: "auto", maxWidth: "100%", minWidth: 0 }} value={adding} onChange={(e) => setAdding(e.target.value)} aria-label="Pessoa">
             <option value="">Escolher pessoa…</option>
             {props.staff
               .filter((p) => !recipients.some((r) => r.staffUserId === p.id))
