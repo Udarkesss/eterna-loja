@@ -5,6 +5,7 @@ import { savePaymentsAction, type SettingsResult } from "@/app/gestao/actions/se
 import { Icon } from "@/components/ui/Icon";
 import type { PaymentMethod } from "@/types";
 import s from "./admin.module.css";
+import mob from "./Mobile.module.css";
 
 /**
  * EN: Payment method switches, notice recipients and events (design "Gestão · 10").
@@ -71,9 +72,11 @@ export function PaymentsEditor(props: {
       <div className={s.top} style={{ marginTop: -16, justifyContent: "flex-end" }}>
         <div className={s.actions}>
           {result && <span className={s.chip} data-tone={result.ok ? "ok" : "bad"}>{result.ok ? "✓ Guardado" : result.message}</span>}
-          <button className={s.btn} disabled={pending} onClick={save}>
-            Guardar alterações
-          </button>
+          <span className={mob.mfix}>
+            <button className={s.btn} disabled={pending} onClick={save}>
+              Guardar alterações
+            </button>
+          </span>
         </div>
       </div>
 

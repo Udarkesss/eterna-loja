@@ -9,6 +9,7 @@ import type { StoreCardEdit } from "@/server/admin/contacts";
 import c from "./AdminV3.module.css";
 import k from "./Collections.module.css";
 import d3 from "./Dashboard.module.css";
+import mob from "./Mobile.module.css";
 import { FrameButton } from "./FrameDialog";
 
 /**
@@ -234,10 +235,11 @@ export function ContactsEditor(props: { stores: StoreCardEdit[]; contacts: Conta
             </span>
           )}
         </span>
-        <span className={c.row}>
+        <span className={`${c.row} ${mob.mfix}`}>
           <a href="/pt#contactos" target="_blank" rel="noopener noreferrer" className={`${c.btn} ${c.sm}`}>
             <Icon name="eye" size={15} />
-            Pré-visualizar
+            <span className={mob.dOnly}>Pré-visualizar</span>
+            <span className={mob.mOnly}>Ver</span>
           </a>
           <button type="button" className={`${c.btnPrimary} ${c.sm}`} disabled={pending || !dirty} onClick={publish}>
             Publicar alterações

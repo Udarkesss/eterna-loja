@@ -9,6 +9,7 @@ import type { Localized } from "@/types";
 import c from "./AdminV3.module.css";
 import k from "./Collections.module.css";
 import d3 from "./Dashboard.module.css";
+import mob from "./Mobile.module.css";
 import { FieldEditor, MediaField } from "./FieldEditor";
 import { FrameButton } from "./FrameDialog";
 import { SeasonsPanel } from "./SeasonsPanel";
@@ -191,10 +192,11 @@ export function HomeContentEditor(props: {
             </span>
           )}
         </span>
-        <span className={c.row}>
+        <span className={`${c.row} ${mob.mfix}`}>
           <a href="/pt" target="_blank" rel="noopener noreferrer" className={`${c.btn} ${c.sm}`}>
             <Icon name="eye" size={15} />
-            Pré-visualizar
+            <span className={mob.dOnly}>Pré-visualizar</span>
+            <span className={mob.mOnly}>Ver</span>
           </a>
           <button type="button" className={`${c.btnPrimary} ${c.sm}`} disabled={pending || !dirty} onClick={publish}>
             Publicar alterações

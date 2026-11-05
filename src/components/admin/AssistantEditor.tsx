@@ -7,6 +7,7 @@ import { Icon } from "@/components/ui/Icon";
 import c from "./AdminV3.module.css";
 import k from "./Collections.module.css";
 import d3 from "./Dashboard.module.css";
+import mob from "./Mobile.module.css";
 
 /**
  * EN: "Gestão · Assistente: chat e WhatsApp" of design V3-G-Assistente. PT: Assistente do V3.
@@ -108,9 +109,11 @@ export function AssistantEditor(props: { settings: AssistantSettings; stats: Sta
             <Icon name="eye" size={15} />
             Experimentar
           </a>
-          <button type="button" className={`${c.btnPrimary} ${c.sm}`} disabled={pending || !dirty} onClick={() => save()}>
-            Guardar alterações
-          </button>
+          <span className={mob.mfix}>
+            <button type="button" className={`${c.btnPrimary} ${c.sm}`} disabled={pending || !dirty} onClick={() => save()}>
+              Guardar alterações
+            </button>
+          </span>
         </span>
       </div>
 

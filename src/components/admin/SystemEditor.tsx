@@ -9,6 +9,7 @@ import type { SystemSettings } from "@/server/admin/system";
 import c from "./AdminV3.module.css";
 import k from "./Collections.module.css";
 import d3 from "./Dashboard.module.css";
+import mob from "./Mobile.module.css";
 
 /**
  * EN: "Gestão · Definições" of design V3-G-Definicoes (only the Superadministrador changes them). PT: Definições do V3.
@@ -67,20 +68,22 @@ export function SystemEditor(props: { settings: SystemSettings; editable: boolea
             </span>
           )}
         </span>
-        <button
-          type="button"
-          className={`${c.btnPrimary} ${c.sm}`}
-          disabled={pending || !dirty}
-          onClick={() =>
-            start(async () => {
-              const out = await saveSystemAction(d);
-              setRes(out);
-              if (out.ok) setDirty(false);
-            })
-          }
-        >
-          Guardar alterações
-        </button>
+        <span className={mob.mfix}>
+          <button
+            type="button"
+            className={`${c.btnPrimary} ${c.sm}`}
+            disabled={pending || !dirty}
+            onClick={() =>
+              start(async () => {
+                const out = await saveSystemAction(d);
+                setRes(out);
+                if (out.ok) setDirty(false);
+              })
+            }
+          >
+            Guardar alterações
+          </button>
+        </span>
       </div>
 
       <div className={k.cols} style={{ gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", alignItems: "start" }}>
