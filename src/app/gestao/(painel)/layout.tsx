@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { AdminNav } from "@/components/admin/AdminNav";
-import { MobileTabs, MobileTop } from "@/components/admin/MobileChrome";
+import { MobileTables, MobileTabs, MobileTop } from "@/components/admin/MobileChrome";
 import s from "@/components/admin/admin.module.css";
 import { TopSearch } from "@/components/admin/TopSearch";
 import { Icon } from "@/components/ui/Icon";
@@ -73,6 +73,7 @@ export default async function PainelLayout({ children }: { children: ReactNode }
         <main id="main" className={s.main}>
           {children}
         </main>
+        <MobileTables />
         <MobileTabs items={items} />
       </div>
     </div>

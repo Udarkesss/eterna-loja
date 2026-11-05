@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import s from "@/components/admin/admin.module.css";
 import d3 from "@/components/admin/Dashboard.module.css";
+import m from "@/components/admin/Mobile.module.css";
 import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
 import { MarkReadyButton } from "@/components/admin/MarkReadyButton";
 import { DeliveryOffNote } from "@/components/admin/ModuleOffNote";
@@ -53,9 +54,15 @@ export default async function OrdersPage({ searchParams }: Props) {
         eyebrow={`${all.length} ${all.length === 1 ? "encomenda" : "encomendas"}${all.some((r) => r.order.isDemo) ? " · inclui dados de exemplo" : ""}`}
         title="Encomendas"
         actions={
-          <Link href="/gestao/clientes" className={s.btnOutline}>
-            Ver por cliente
-          </Link>
+          <>
+            <Link href="/gestao/clientes" className={s.btnOutline}>
+              Ver por cliente
+            </Link>
+            <Link href="/gestao/encomendas/exportar" className={`${s.btnOutline} ${m.mOnly}`}>
+              <Icon name="download" size={15} />
+              Exportar CSV
+            </Link>
+          </>
         }
       />
       {!delivery && <DeliveryOffNote />}
@@ -63,7 +70,7 @@ export default async function OrdersPage({ searchParams }: Props) {
       <section className={d3.panel}>
         <div className={d3.panelHead}>
           <h2>Encomendas</h2>
-          <Link href="/gestao/encomendas/exportar" className={`${s.btnOutline} ${s.small}`}>
+          <Link href="/gestao/encomendas/exportar" className={`${s.btnOutline} ${s.small} ${m.dOnly}`}>
             <Icon name="download" size={15} />
             Exportar CSV
           </Link>
@@ -106,7 +113,51 @@ export default async function OrdersPage({ searchParams }: Props) {
           {visible.length === 0 ? (
             <p className={d3.empty}>{p.q ? "Nenhuma encomenda encontrada." : `Nenhuma encomenda em “${ORDER_VIEWS[view]}”.`}</p>
           ) : (
-            <table className={d3.table}>
+            <>
+            {/* EN: Phone: one card per order (V3-M-G-Encomendas). PT: Telemóvel: um cartão por encomenda. */}
+            <div className={`${m.mOnly} ${m.mbody}`}>
+              {visible.map(({ order: o }) => {
+                const store = storeOf(o.pickupStoreId ?? null);
+                return (
+                  <section key={o.id} className={m.mcard}>
+                    <Link href={`/gestao/encomendas/${o.id}`} className={m.mli}>
+                      <span className={m.ic}>
+                        <Icon name="bag" size={18} />
+                      </span>
+                      <span className={m.t}>
+                        <b>{o.number}</b>
+                        <span>
+                          {when(o.createdAt)} · {o.contact.name}
+                        </span>
+                      </span>
+                      <span className={m.r}>
+                        <b>{mzn(o.total)}</b>
+                        <Chip tone={o.fulfillmentStatus === "pending" ? "warn" : ""}>{FULFILLMENT_LABEL[o.fulfillmentStatus]}</Chip>
+                      </span>
+                    </Link>
+                    <div className={m.mcardB} style={{ gap: 8, borderTop: "1px solid var(--line)" }}>
+                      <div className={m.mkv}>
+                        <span>Pagamento</span>
+                        <b>
+                          {o.paymentStatus === "paid" ? "Paga" : PAYMENT_LABEL[o.paymentStatus].label} · {METHOD_LABEL[o.paymentMethod]}
+                        </b>
+                      </div>
+                      <div className={m.mkv}>
+                        <span>Entrega</span>
+                        <b>{o.fulfillmentType === "pickup" ? `Levantamento · Loja ${store?.code ?? ""}` : `Entrega · ${FULFILLMENT_LABEL[o.fulfillmentStatus]}`}</b>
+                      </div>
+                      <div className={m.mrow2}>
+                        {canEdit && o.paymentStatus === "paid" && o.fulfillmentType === "pickup" && o.fulfillmentStatus === "pending" && <MarkReadyButton id={o.id} />}
+                        <Link href={`/gestao/encomendas/${o.id}`} className={s.btnOutline} style={{ gridColumn: "-2" }}>
+                          Detalhes
+                        </Link>
+                      </div>
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+            <table className={`${d3.table} ${m.dOnly}`}>
               <thead>
                 <tr>
                   <th>Encomenda</th>
@@ -167,6 +218,7 @@ export default async function OrdersPage({ searchParams }: Props) {
                 })}
               </tbody>
             </table>
+            </>
           )}
           <div className={d3.foot}>
             <span>

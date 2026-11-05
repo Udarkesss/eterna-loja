@@ -1086,6 +1086,25 @@
   .row3 {
     grid-template-columns: 1fr;
   }
+
+  /* EN: Page actions side by side, full width (V3-M-G .mhead .mrow2). PT: Acções lado a lado, largura toda. */
+  .top {
+    gap: 14px;
+  }
+
+  .top > .actions {
+    width: 100%;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 8px;
+  }
+
+  .top > .actions > * {
+    min-height: 40px;
+    padding: 0 10px;
+    width: 100%;
+  }
 }
 
 .grow {
@@ -1181,5 +1200,119 @@
     inset: 0;
     z-index: 40;
     overflow-y: auto;
+  }
+}
+
+/* EN: Phone: every table of the back-office becomes a list of cards (V3-M-G-*: .mli / .mcard). First cell = card title,
+       the others "label · value". PT: Telemóvel: toda a tabela da gestão vira lista de cartões; a 1.ª célula é o título. */
+@media (max-width: 860px) {
+  .main table:not([data-keep]) {
+    display: block;
+    width: 100%;
+    border: 0;
+    min-width: 0;
+  }
+
+  .main table:not([data-keep]) thead {
+    display: none;
+  }
+
+  .main table:not([data-keep]) tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .main table:not([data-keep]) tr {
+    display: block;
+    background: var(--raised, #fff);
+    border: 1px solid var(--line);
+    padding: 0;
+  }
+
+  .main table:not([data-keep]) td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    border: 0;
+    text-align: right;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .main table:not([data-keep]) td:empty {
+    display: none;
+  }
+
+  .main table:not([data-keep]) td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    max-width: 45%;
+    font-size: 12px;
+    color: var(--muted, #655047);
+    text-align: left;
+  }
+
+  .main table:not([data-keep]) td:first-child {
+    display: block;
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    font-weight: 500;
+  }
+
+  .main table:not([data-keep]) td:first-child::before {
+    content: none;
+  }
+}
+
+/* EN: Phone: columns that kept a minimum width collapse to one shrinkable column. PT: Colunas com largura mínima passam a uma só. */
+@media (max-width: 860px) {
+  .mainCol,
+  .main,
+  .main > * {
+    min-width: 0;
+  }
+
+  .split,
+  .split2,
+  .splitNarrow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 860px) {
+  .listItem {
+    flex-wrap: wrap;
+  }
+
+  /* EN: Safety net: the page never scrolls sideways; wide blocks scroll inside their own panel.
+     PT: Rede de segurança: a página nunca desliza para o lado; blocos largos deslizam dentro do painel. */
+  .mainCol {
+    overflow-x: clip;
+  }
+}
+
+@media (max-width: 860px) {
+  /* EN: Inline grids with a fixed-px column (sidebars of editors) stack on the phone. PT: Grelhas inline com coluna fixa empilham. */
+  .main div[style*="grid-template-columns"][style*="px"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+@media (max-width: 860px) {
+  /* EN: A first cell that only holds a checkbox is the card's select box, not its title. PT: 1.ª célula só com caixa de selecção. */
+  .main table:not([data-keep]) td:first-child:has(> input[type="checkbox"]) {
+    padding: 10px 16px 0;
+    border-bottom: 0;
+  }
+}
+
+@media (max-width: 860px) {
+  .main table:not([data-keep]) td[data-label=""]:not(:first-child) {
+    justify-content: flex-start;
+    text-align: left;
   }
 }

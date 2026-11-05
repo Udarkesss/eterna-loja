@@ -202,7 +202,7 @@ export function HomeContentEditor(props: {
         </span>
       </div>
 
-      <div className={k.cols} style={{ gridTemplateColumns: "minmax(0, 1fr) 380px" }}>
+      <div className={`${k.cols} ${k.cols380}`}>
         <div className={k.stack}>
           <section className={d3.panel}>
             <div className={d3.panelHead}>
