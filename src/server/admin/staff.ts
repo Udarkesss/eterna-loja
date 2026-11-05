@@ -78,6 +78,9 @@ export interface StaffInput {
   storeCodes: string[];
   vehicleType?: string;
   vehiclePlate?: string;
+  /** EN: Driver's own commission %; empty = the general value. PT: Comissão própria; vazio = valor geral. */
+  commissionPct?: number | null;
+  photoUrl?: string | null;
   sendWhatsapp: boolean;
   sendEmail: boolean;
 }
@@ -117,6 +120,8 @@ export async function createStaff(me: StaffContext, input: StaffInput) {
       passwordHash: await hashPassword(password),
       vehicleType: input.role === "entregador" ? input.vehicleType || null : null,
       vehiclePlate: input.role === "entregador" ? input.vehiclePlate || null : null,
+      commissionPct: input.role === "entregador" && input.commissionPct != null ? Math.min(100, Math.max(0, Math.round(input.commissionPct))) : null,
+      photoUrl: input.role === "entregador" ? input.photoUrl || null : null,
       createdById: me.id,
     })
     .returning();

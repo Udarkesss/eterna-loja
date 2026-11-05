@@ -49,7 +49,7 @@ export const ACCESS_OPTIONS: Record<string, string> = {
   T: "Total",
   L: "Só as suas lojas",
   V: "Só ver",
-  P: "Só as próprias",
+  P: "Só as próprias entregas",
   Pd: "Pedir aprovação",
   E: "Só dados da entrega",
   "—": "Sem acesso",

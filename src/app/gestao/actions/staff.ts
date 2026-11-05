@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createStaff, deleteStaff, endSessions, newTemporaryPassword, setSuspended, updateStaff, type StaffInput } from "@/server/admin/staff";
 import { saveMatrix } from "@/server/admin/roles";
 import { AppError } from "@/server/errors";
+import { savePrivateUpload } from "@/server/uploads";
 import { currentStaff, type StaffContext } from "@/server/staff/access";
 
 /**
@@ -36,9 +37,12 @@ async function run(fn: (s: StaffContext) => Promise<Partial<StaffResult> | void>
   }
 }
 
-export const createStaffAction = async (input: StaffInput) =>
+export const createStaffAction = async (input: StaffInput, photo?: FormData) =>
   run(async (s) => {
-    const r = await createStaff(s, input);
+    // EN: Driver photo (V3 "Foto"), kept private. PT: Foto do entregador, guardada em privado.
+    const file = photo?.get("photo");
+    const photoUrl = file instanceof File && file.size ? await savePrivateUpload(file, "entregador") : null;
+    const r = await createStaff(s, { ...input, photoUrl });
     return { password: r.password, text: r.message, whatsappUrl: r.whatsappUrl };
   }, "Utilizador criado. Palavra-passe temporária pronta a enviar.");
 

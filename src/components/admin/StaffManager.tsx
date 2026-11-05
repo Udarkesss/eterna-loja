@@ -51,7 +51,7 @@ export function StaffManager({ me, users, allowedRoles, stores }: { me: { id: st
   const [filter, setFilter] = useState({ q: "", role: "todos", store: "todas" });
   const [editing, setEditing] = useState<string | null>(null);
   const defaultRole = allowedRoles[allowedRoles.length - 1] ?? "atendedor";
-  const blank = { role: defaultRole, name: "", username: "", phone: "", email: "", stores: me.roleKey === "gestor" ? me.storeCodes : [stores[0]?.code].filter(Boolean) as string[], vehicleType: "Mota", vehiclePlate: "", sendWhatsapp: true, sendEmail: true };
+  const blank = { role: defaultRole, name: "", username: "", phone: "", email: "", stores: me.roleKey === "gestor" ? me.storeCodes : [stores[0]?.code].filter(Boolean) as string[], vehicleType: "Mota", vehiclePlate: "", ownCommission: false, commissionPct: "", photo: null as File | null, sendWhatsapp: true, sendEmail: true };
   const [f, setF] = useState(blank);
 
   const run = (fn: () => Promise<StaffResult>) => start(async () => setResult(await fn()));
@@ -255,6 +255,10 @@ export function StaffManager({ me, users, allowedRoles, stores }: { me: { id: st
             {f.role === "entregador" && (
               <div className={s.fieldset} style={{ padding: 12, background: "var(--ivory)", border: "1px solid var(--line)" }}>
                 <span className={s.legend}>Dados do entregador</span>
+                <label className={s.label}>
+                  Foto
+                  <input className={s.input} type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setF({ ...f, photo: e.target.files?.[0] ?? null })} />
+                </label>
                 <div className={s.row2}>
                   <label className={s.label}>
                     Veículo
@@ -269,6 +273,22 @@ export function StaffManager({ me, users, allowedRoles, stores }: { me: { id: st
                     <input className={s.input} value={f.vehiclePlate} onChange={(e) => setF({ ...f, vehiclePlate: e.target.value.toUpperCase() })} placeholder="AAA 000 MC" />
                   </label>
                 </div>
+                <fieldset className={s.fieldset}>
+                  <legend className={s.legend}>Comissão</legend>
+                  <div className={s.checks}>
+                    <label>
+                      <input type="radio" name="commission" checked={!f.ownCommission} onChange={() => setF({ ...f, ownCommission: false })} />
+                      Usa o valor geral
+                    </label>
+                    <label>
+                      <input type="radio" name="commission" checked={f.ownCommission} onChange={() => setF({ ...f, ownCommission: true })} />
+                      Valor próprio
+                    </label>
+                    {f.ownCommission && (
+                      <input className={s.input} style={{ width: 90 }} inputMode="numeric" aria-label="Comissão em %" placeholder="%" value={f.commissionPct} onChange={(e) => setF({ ...f, commissionPct: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
+                    )}
+                  </div>
+                </fieldset>
               </div>
             )}
             <fieldset className={s.fieldset}>
@@ -298,9 +318,14 @@ export function StaffManager({ me, users, allowedRoles, stores }: { me: { id: st
                     storeCodes: ["super", "admin"].includes(f.role) ? stores.map((st) => st.code) : f.stores,
                     vehicleType: f.vehicleType,
                     vehiclePlate: f.vehiclePlate,
+                    commissionPct: f.ownCommission && f.commissionPct ? Number(f.commissionPct) : null,
                     sendWhatsapp: f.sendWhatsapp,
                     sendEmail: f.sendEmail,
-                  });
+                  }, (() => {
+                    const fd = new FormData();
+                    if (f.photo) fd.set("photo", f.photo);
+                    return fd;
+                  })());
                   if (r.ok) setF(blank);
                   return r;
                 })
