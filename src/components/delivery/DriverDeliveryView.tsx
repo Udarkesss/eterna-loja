@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition, type FormEvent, type ReactNode } from "react";
 import dynamic from "next/dynamic";
@@ -158,6 +159,10 @@ export function DriverDeliveryView(props: {
           <button type="button" className={s.linkBtn} disabled={pending} onClick={noCode}>
             A cliente não tem o código
           </button>
+          {/* EN: Design V3-E-Em-Transito → V3-E-Falhou. PT: Não consegui entregar. */}
+          <Link href={`/gestao/entregador/${order.id}/falhou`} className={s.btnOutline}>
+            Não consegui entregar
+          </Link>
         </form>
       )}
 

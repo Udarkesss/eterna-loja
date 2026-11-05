@@ -2,8 +2,8 @@ import Link from "next/link";
 import s from "@/components/delivery/driver.module.css";
 import { Icon } from "@/components/ui/Icon";
 import { formatMZN } from "@/lib/format";
-import { formatLongDate, toMaputo, todayMaputo } from "@/lib/time";
-import { driverDashboard, paymentLine } from "@/server/delivery";
+import { addDays, formatLongDate, toMaputo, todayMaputo } from "@/lib/time";
+import { driverDashboard, driverEarnings, paymentLine } from "@/server/delivery";
 import { requireStaffPage } from "@/server/staff/access";
 
 type Props = { searchParams: Promise<{ tab?: string }> };
@@ -15,11 +15,23 @@ const STATUS: Record<string, [string, string]> = {
   confirmed: ["Confirmada", "done"],
 };
 
+const SHORT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const WEEK = ["Dom.", "Seg.", "Ter.", "Qua.", "Qui.", "Sex.", "Sáb."];
+/** EN: "Hoje, 29 out." · "Ontem, 28 out." · "Seg., 27 out.". PT: Rótulo do dia. */
+function dayLabel(date: string) {
+  const [y, m, d] = date.split("-").map(Number);
+  const today = todayMaputo();
+  const base = `${d} ${SHORT[m - 1]}.`;
+  if (date === today) return `Hoje, ${base}`;
+  if (date === addDays(today, -1)) return `Ontem, ${base}`;
+  return `${WEEK[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]}, ${base}`;
+}
+
 /** EN: "Entregador · As minhas entregas". PT: As minhas entregas (só as atribuídas a mim). */
 export default async function DriverHome({ searchParams }: Props) {
   const me = await requireStaffPage(undefined, { allowDriver: true });
   const tab = (await searchParams).tab === "historico" ? "historico" : (await searchParams).tab === "ganhos" ? "ganhos" : "hoje";
-  const d = await driverDashboard(me);
+  const [d, earn] = await Promise.all([driverDashboard(me), tab === "ganhos" ? driverEarnings(me) : Promise.resolve(null)]);
   const date = formatLongDate(todayMaputo(), "pt");
   const first = me.name.replace(/^\[[^\]]*\]\s*/, "").split(" ")[0];
   const list = tab === "historico" ? d.history : d.active;
@@ -79,21 +91,65 @@ export default async function DriverHome({ searchParams }: Props) {
         </Link>
       </nav>
 
-      {tab === "ganhos" ? (
-        <div className={s.section}>
-          <div className={s.footer} style={{ borderTop: 0, paddingTop: 0 }}>
-            <span className={s.muted}>Comissão</span>
-            <span>{d.pct}% do preço da entrega</span>
+      {tab === "ganhos" && earn ? (
+        // EN: "Os meus ganhos" of design V3-E-Ganhos. PT: Os meus ganhos do V3.
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div className={s.cardTop}>
+            <h2 className={s.title} style={{ fontSize: 28 }}>
+              Os meus <em>ganhos</em>
+            </h2>
+            <span className={s.chip}>Esta semana</span>
           </div>
-          <div className={s.footer}>
-            <span className={s.muted}>Hoje</span>
-            <span style={{ fontWeight: 500 }}>{formatMZN(d.earningsToday, "pt")}</span>
+          <div className={s.stats} style={{ gridTemplateColumns: "1fr 1fr" }}>
+            {(
+              [
+                ["Entregas", String(earn.week.count)],
+                ["Comissão", formatMZN(earn.week.commission, "pt").replace(",00", "")],
+                ["Dinheiro cobrado", formatMZN(earn.week.cash, "pt").replace(",00", "")],
+                ["A entregar na loja", formatMZN(earn.week.toStore, "pt").replace(",00", "")],
+              ] as const
+            ).map(([k, v]) => (
+              <div key={k} className={s.stat}>
+                <span className={s.statLabel}>{k}</span>
+                <span className={s.statValue} style={{ fontSize: 20 }}>
+                  {v}
+                </span>
+              </div>
+            ))}
           </div>
-          <div className={s.footer}>
-            <span className={s.muted}>Últimos 7 dias</span>
-            <span style={{ fontWeight: 500 }}>{formatMZN(d.weekEarnings, "pt")}</span>
+          <div className={s.notice}>
+            <Icon name="calendar" size={20} />
+            <span>
+              <strong>Próximo pagamento: sexta-feira</strong>
+              Comissão de {earn.pct}% do preço de cada entrega, definida pela gestão.
+            </span>
           </div>
-          <span className={s.muted}>A loja marca as comissões como pagas no relatório de ganhos. Enquanto os preços das entregas estiverem por definir, o valor é 0.</span>
+          <ul className={s.list}>
+            {earn.days.length === 0 && <li className={s.empty}>Ainda sem entregas feitas.</li>}
+            {earn.days.map((day) => (
+              <li key={day.date} className={s.card} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <span>
+                  <span className={s.number} style={{ fontSize: 15 }}>
+                    {dayLabel(day.date)}
+                  </span>
+                  <br />
+                  <span className={s.muted}>
+                    {day.count} {day.count === 1 ? "entrega" : "entregas"}
+                  </span>
+                </span>
+                <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                  <span style={{ fontWeight: 500 }}>{formatMZN(day.amount, "pt")}</span>
+                  <span className={s.chip} data-tone={day.paid ? "done" : "transit"}>
+                    {day.paid ? "Pago" : "Por pagar"}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <a href="/gestao/entregador/resumo" download className={s.btnOutline}>
+            <Icon name="download" size={18} />
+            Descarregar resumo
+          </a>
         </div>
       ) : (
         <ul className={s.list}>

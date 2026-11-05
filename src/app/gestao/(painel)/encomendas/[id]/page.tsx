@@ -151,7 +151,20 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                   <span className={s.muted}>{when(e.at).replace("Hoje, ", "")}</span>
                   <span className={s.two}>
                     <span>{eventLabel(e.type)}</span>
-                    {(e.detail || e.actorName) && <span className={s.muted}>{[e.detail, e.actorName].filter(Boolean).join(" · ")}</span>}
+                    {(e.detail || e.actorName) && (
+                      <span className={s.muted}>
+                        {[e.detail?.replace(/ · Foto: file:[0-9a-f-]{36}/, ""), e.actorName].filter(Boolean).join(" · ")}
+                        {/* EN: Door photo of a failed delivery. PT: Foto da porta de uma entrega não concluída. */}
+                        {e.detail?.match(/file:([0-9a-f-]{36})/) && (
+                          <>
+                            {" · "}
+                            <a href={`/gestao/ficheiro?encomenda=${o.id}&foto=${e.detail.match(/file:([0-9a-f-]{36})/)![1]}`} target="_blank" className={s.a}>
+                              Ver foto
+                            </a>
+                          </>
+                        )}
+                      </span>
+                    )}
                   </span>
                 </li>
               ))}

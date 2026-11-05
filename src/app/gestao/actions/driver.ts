@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { updateOwnProfile } from "@/server/admin/staff";
-import { finishDelivery, recordPosition, startDelivery } from "@/server/delivery";
+import { failDelivery, finishDelivery, recordPosition, startDelivery } from "@/server/delivery";
+import { savePrivateUpload } from "@/server/uploads";
 import { changeStaffPassword } from "@/server/staff/auth";
 import { AppError } from "@/server/errors";
 import { currentStaff, type StaffContext } from "@/server/staff/access";
@@ -41,6 +42,22 @@ export async function startDeliveryAction(orderId: string) {
 
 export async function finishDeliveryAction(orderId: string, code: string | null) {
   return run(orderId, (d) => finishDelivery(d, orderId, code));
+}
+
+/** EN: "Não consegui entregar" (optional private photo of the door). PT: Não entregue (foto da porta opcional, privada). */
+export async function failDeliveryAction(orderId: string, form: FormData) {
+  try {
+    const me = await driver();
+    const file = form.get("photo");
+    const photo = file instanceof File && file.size ? await savePrivateUpload(file, "porta") : null;
+    await failDelivery(me, orderId, String(form.get("reason") ?? ""), String(form.get("note") ?? ""), photo);
+    revalidatePath("/gestao/entregador");
+    revalidatePath("/gestao/entregas");
+    return { ok: true };
+  } catch (e) {
+    if (e instanceof AppError) return { ok: false, message: e.message === "Not active" ? "Esta entrega já não está activa." : e.message };
+    throw e;
+  }
 }
 
 /** EN: Called by the phone every ~15 s while in transit. PT: Chamado pelo telemóvel a cada ~15 s em trânsito. */

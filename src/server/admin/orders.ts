@@ -69,6 +69,7 @@ const EVENT_LABEL: Record<string, string> = {
   assigned: "Entregador atribuído",
   in_transit: "Saiu para entrega",
   delivered: "Entregue",
+  delivery_failed: "Entrega não concluída · voltou à loja",
   cancelled: "Encomenda cancelada",
   refund_requested: "Devolução pedida (a aguardar aprovação)",
   refund_approved: "Devolução aprovada",

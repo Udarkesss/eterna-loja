@@ -62,7 +62,7 @@ export function DeliveriesBoard({ rows, drivers, canAssign }: { rows: Row[]; dri
       const short = r.number.replace(/^ET-\d{4}-/, "ET-");
       const list: MapMarker[] = [];
       if (r.dest) {
-        const kind = r.status === "confirmed" || r.status === "delivered" ? "done" : r.status === "pending" ? "pending" : "destination";
+        const kind = r.status === "confirmed" || r.status === "delivered" ? "done" : r.status === "pending" || r.status === "ready" ? "pending" : "destination";
         list.push({ ...r.dest, kind, label: `${short} · ${STATUS[r.status]?.[0] ?? ""}` });
       }
       if (r.position) list.push({ lat: r.position.lat, lng: r.position.lng, kind: "driver", label: short });
@@ -78,7 +78,7 @@ export function DeliveriesBoard({ rows, drivers, canAssign }: { rows: Row[]; dri
       <section className={s.cardFlush}>
         <div className={s.cardHead}>
           <h2 className={s.h2}>Entregas de hoje</h2>
-          <span className={s.muted}>{rows.filter((r) => r.status === "pending").length} por atribuir</span>
+          <span className={s.muted}>{rows.filter((r) => r.status === "pending" || r.status === "ready").length} por atribuir</span>
         </div>
         {error && <div className={s.error} style={{ margin: 16 }}>{error}</div>}
         {rows.length === 0 ? (
@@ -97,7 +97,7 @@ export function DeliveriesBoard({ rows, drivers, canAssign }: { rows: Row[]; dri
             <tbody>
               {rows.map((r) => {
                 const st = STATUS[r.status] ?? [r.status, ""];
-                const editable = canAssign && r.canAssign && (r.status === "pending" || r.status === "assigned");
+                const editable = canAssign && r.canAssign && (r.status === "pending" || r.status === "ready" || r.status === "assigned");
                 return (
                   <tr key={r.id}>
                     <td>

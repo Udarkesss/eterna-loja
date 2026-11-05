@@ -310,6 +310,81 @@ export async function deliveryOrdersToday() {
   return db
     .select()
     .from(orders)
-    .where(and(eq(orders.fulfillmentType, "delivery"), or(gte(orders.createdAt, since), inArray(orders.fulfillmentStatus, ["pending", "assigned", "in_transit", "delivered"]))))
+    .where(and(eq(orders.fulfillmentType, "delivery"), or(gte(orders.createdAt, since), inArray(orders.fulfillmentStatus, ["pending", "ready", "assigned", "in_transit", "delivered"]))))
     .orderBy(asc(orders.createdAt));
+}
+
+
+// ── Driver app · Não entregue e ganhos (design V3-E-Falhou, V3-E-Ganhos) ──
+
+export const FAIL_REASONS = ["A cliente não atende", "A morada está errada", "A cliente pediu outro dia", "A cliente recusou a encomenda", "Outro motivo"] as const;
+
+/**
+ * EN: "Não consegui entregar": the order goes back to the store (to assign), without a driver, with the reason and the note in its
+ *     history; the back-office sees it again as "por atribuir" and sets another day with the customer.
+ * PT: "Não consegui entregar": a encomenda volta à loja, sem entregador, com o motivo e a nota no histórico; a gestão
+ *     volta a vê-la "por atribuir" e marca outro dia com a cliente.
+ */
+export async function failDelivery(driver: StaffContext, orderId: string, reason: string, note: string, photo: string | null) {
+  const o = await ownActive(driver, orderId);
+  if (!(ACTIVE as readonly string[]).includes(o.fulfillmentStatus)) throw new AppError("VALIDATION_ERROR", "Not active", 400);
+  if (!(FAIL_REASONS as readonly string[]).includes(reason)) throw new AppError("VALIDATION_ERROR", "Escolha o motivo.", 400);
+  const clean = note.trim().slice(0, 600);
+  const detail = [reason, clean, photo ? `Foto: ${photo}` : null].filter(Boolean).join(" · ");
+  const db = await getDb();
+  await db.transaction(async (tx) => {
+    await tx
+      .update(orders)
+      .set({
+        fulfillmentStatus: "pending",
+        driverId: null,
+        deliveryStartedAt: null,
+        deliveryEtaAt: null,
+        internalNotes: [o.internalNotes, `Entrega não concluída (${driver.name}): ${reason}${clean ? ` — ${clean}` : ""}`].filter(Boolean).join("\n"),
+      })
+      .where(eq(orders.id, orderId));
+    await tx.insert(orderEvents).values({ orderId, type: "delivery_failed", detail, actorName: driver.name });
+  });
+  await audit({ actor: actor(driver), action: "Entrega não concluída", detail: `${o.number} · ${reason}`, result: "warning" });
+}
+
+/** EN: "Os meus ganhos": this week and each day (paid or not). PT: Esta semana e cada dia (pago ou por pagar). */
+export async function driverEarnings(driver: StaffContext) {
+  const db = await getDb();
+  const since = fromMaputo(addDays(todayMaputo(), -60));
+  const [rows, payouts, pct] = await Promise.all([
+    db
+      .select()
+      .from(orders)
+      .where(and(eq(orders.driverId, driver.id), gte(orders.deliveredAt, since), or(eq(orders.fulfillmentStatus, "delivered"), eq(orders.fulfillmentStatus, "confirmed"))))
+      .orderBy(desc(orders.deliveredAt)),
+    db.select().from(driverPayouts).where(eq(driverPayouts.driverId, driver.id)),
+    loadDriver(driver.id).then(commissionPctFor),
+  ]);
+  const week = periodRange("week");
+  const inWeek = rows.filter((o) => o.deliveredAt! >= week.from && o.deliveredAt! < week.to);
+  const cash = (list: OrderRow[]) => list.filter((o) => o.paymentMethod === "cod").reduce((n, o) => n + o.total, 0);
+  const today = todayMaputo();
+  const paidAt = (d: Date) => payouts.some((p) => p.status === "paid" && d >= p.periodStart && d < p.periodEnd);
+  const days = new Map<string, { date: string; count: number; amount: number; paid: boolean }>();
+  for (const o of rows) {
+    const date = toMaputo(o.deliveredAt!).date;
+    const day = days.get(date) ?? { date, count: 0, amount: 0, paid: true };
+    day.count += 1;
+    day.amount += commissionOf(o.shippingFee, pct);
+    day.paid = day.paid && paidAt(o.deliveredAt!);
+    days.set(date, day);
+  }
+  return {
+    pct,
+    week: {
+      count: inWeek.length,
+      commission: inWeek.reduce((n, o) => n + commissionOf(o.shippingFee, pct), 0),
+      cash: cash(inWeek),
+      // EN: Cash is handed in at the store each day. PT: O dinheiro entrega-se na loja todos os dias.
+      toStore: cash(inWeek.filter((o) => toMaputo(o.deliveredAt!).date === today)),
+    },
+    days: [...days.values()],
+    rows,
+  };
 }
