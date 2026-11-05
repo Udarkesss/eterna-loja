@@ -219,6 +219,8 @@ export interface Customer {
   name: string;
   email?: string;
   phone?: string;
+  /** EN: Receipt and order code by WhatsApp (design V3 checkbox). PT: Recibo e código por WhatsApp. */
+  whatsapp?: boolean;
 }
 
 export interface OrderLine {
@@ -243,6 +245,8 @@ export interface OrderStatusDTO {
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   msisdnMasked: string | null; // "84 ••• 12"
+  /** EN: Where the receipt goes (WhatsApp number if chosen, or e-mail). PT: Para onde vai o recibo. */
+  receiptTo: { whatsapp: string | null; email: boolean };
   paymentExpiresAt: string | null;
   fulfillmentType: FulfillmentType;
   fulfillmentStatus: FulfillmentStatus;

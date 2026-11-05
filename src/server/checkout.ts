@@ -134,7 +134,7 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderStatusD
     {
       customerId: customer?.id ?? null,
       locale,
-      contact: { name: input.contact.name, email: input.contact.email || undefined, phone: msisdn ?? undefined },
+      contact: { name: input.contact.name, email: input.contact.email || undefined, phone: normalizeMsisdn(input.contact.phone ?? "") ?? msisdn ?? customer?.phone ?? undefined, whatsapp: input.contact.whatsapp },
       subtotal,
       discountCode: discount.code,
       discount: discount.amount,
@@ -219,7 +219,7 @@ async function createReservationOrder(input: CreateOrderInput): Promise<OrderSta
     {
       customerId: customer?.id ?? null,
       locale,
-      contact: { name: input.contact.name, email: input.contact.email || undefined, phone: msisdn ?? customer?.phone ?? undefined },
+      contact: { name: input.contact.name, email: input.contact.email || undefined, phone: normalizeMsisdn(input.contact.phone ?? "") ?? msisdn ?? customer?.phone ?? undefined, whatsapp: input.contact.whatsapp },
       subtotal: amounts.price,
       discount: amounts.discount,
       shippingFee: 0,
@@ -252,7 +252,7 @@ async function createReservationOrder(input: CreateOrderInput): Promise<OrderSta
   await db.insert(reservations).values({
     number: await nextReservationNumber(),
     customerId: customer?.id ?? null,
-    contact: { name: input.contact.name, email: input.contact.email || undefined, phone: msisdn ?? customer?.phone ?? undefined },
+    contact: { name: input.contact.name, email: input.contact.email || undefined, phone: normalizeMsisdn(input.contact.phone ?? "") ?? msisdn ?? customer?.phone ?? undefined },
     origin: "online",
     orderId: order.id,
     productId: product.id,

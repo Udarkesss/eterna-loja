@@ -23,6 +23,9 @@ export const cartLineSchema = z.object({
 export const contactSchema = z.object({
   name: z.string().trim().min(2).max(100),
   email: z.union([z.string().trim().email().max(150), z.literal("")]).optional(),
+  // EN: WhatsApp number (design V3) and the receipt opt-in. PT: Número de WhatsApp (V3) e o recibo por WhatsApp.
+  phone: z.string().trim().max(20).optional(),
+  whatsapp: z.boolean().optional(),
 });
 
 /** EN: "2. Entrega": pick up at Glória Mall or home delivery. PT: Levantar no Glória Mall ou entrega ao domicílio. */

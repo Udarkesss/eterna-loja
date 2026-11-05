@@ -103,12 +103,17 @@ export function CheckoutView({ reserve }: { reserve?: ReserveInfo } = {}) {
   const { customer } = useCustomer();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  // EN: WhatsApp for the receipt and the "pronta a levantar" notice (design V3). PT: WhatsApp para o recibo e os avisos.
+  const [wa, setWa] = useState("");
+  const [waReceipt, setWaReceipt] = useState(true);
+  const [waTouched, setWaTouched] = useState(false);
   const [terms, setTerms] = useState(false);
   // EN: Signed in: details already filled in (design V3). PT: Com sessão, dados já preenchidos.
   useEffect(() => {
     if (!customer) return;
     setName((n) => n || customer.name);
     setEmail((e) => e || customer.email || "");
+    setWa((w) => w || customer.phone || "");
   }, [customer]);
   // EN: Collection in store by default; home delivery only with the delivery module on. PT: Levantamento por defeito.
   const [delivery, setDelivery] = useState<"pickup" | "delivery">("pickup");
@@ -223,6 +228,9 @@ export function CheckoutView({ reserve }: { reserve?: ReserveInfo } = {}) {
 
   const shipLabel = delivery === "pickup" ? c.free : !known ? c.byZone : feeValue != null ? formatMZN(feeValue, locale) : c.feeToSet;
 
+  const waValid = !!normalizeMsisdn(wa.replace(/\D/g, ""));
+  const waError = waTouched && !waValid ? c.whatsappInvalid : "";
+
   // ── Phone checks (design) / Verificação do número ──
   const digits = phone.replace(/\D/g, "");
   const detected = methodFromMsisdn(digits);
@@ -332,7 +340,7 @@ export function CheckoutView({ reserve }: { reserve?: ReserveInfo } = {}) {
     const input = {
       locale,
       lines,
-      contact: { name, email },
+      contact: { name, email, phone: wa.replace(/\D/g, ""), whatsapp: waReceipt },
       fulfillment:
         reserve
           ? { type: "pickup" as const, storeCode: reserve.storeCode }
@@ -354,7 +362,12 @@ export function CheckoutView({ reserve }: { reserve?: ReserveInfo } = {}) {
   async function submit(event?: FormEvent) {
     event?.preventDefault();
     setTouched(true);
+    setWaTouched(true);
     setError(null);
+    if (!waValid) {
+      setError(c.whatsappInvalid);
+      return;
+    }
     if (!methodReady) {
       if (method === "card") setError(dict.errors.cardInvalid);
       if (method === "transfer") setError(dict.errors.fileMissing);
@@ -496,6 +509,32 @@ export function CheckoutView({ reserve }: { reserve?: ReserveInfo } = {}) {
                     <input className={styles.input} type="email" autoComplete="email" placeholder={c.emailPlaceholder} value={email} onChange={(e) => setEmail(e.target.value)} />
                   </label>
                 </div>
+                <label className={styles.field}>
+                  {c.whatsapp}
+                  <div className={`${styles.phone} ${waError ? styles.phoneError : ""}`}>
+                    <span className={styles.prefix}>+258</span>
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      autoComplete="tel-national"
+                      placeholder="84 123 4567"
+                      value={formatPhone(wa)}
+                      onChange={(e) => setWa(e.target.value)}
+                      onBlur={() => setWaTouched(true)}
+                      aria-invalid={!!waError}
+                      required
+                    />
+                  </div>
+                  {waError && (
+                    <span role="alert" className={styles.phoneErrorText}>
+                      {waError}
+                    </span>
+                  )}
+                </label>
+                <label className={styles.check}>
+                  <input type="checkbox" checked={waReceipt} onChange={(e) => setWaReceipt(e.target.checked)} />
+                  <span>{c.whatsappReceipt}</span>
+                </label>
               </fieldset>
 
               {/* 2. Entrega */}
@@ -815,7 +854,7 @@ export function CheckoutView({ reserve }: { reserve?: ReserveInfo } = {}) {
                     <RichText text={reserve ? r.terms : t(c.acceptTerms, { finalSale: dict.product.finalSale })} />
                   </span>
                 </label>
-                <button type="submit" className={styles.pay} disabled={!methodReady || !terms || submitting}>
+                <button type="submit" className={styles.pay} disabled={!methodReady || !terms || !waValid || submitting}>
                   {submitting ? c.sending : payLabel}
                 </button>
                 {!terms && <span className={styles.terms}>{c.acceptFirst}</span>}
@@ -1160,7 +1199,9 @@ function SuccessState({ order, totalLabel, hasProof }: { order: OrderStatusDTO; 
   const store = Number(order.pickupStore?.code ?? "2");
   const rows: [IconName, string][] = [];
   if (transfer) rows.push(["clock", hasProof ? k.transferProof : k.transferMissing]);
-  rows.push(["whatsapp", order.msisdnMasked ? t(k.receiptPhone, { phone: order.msisdnMasked }) : k.receipt]);
+  // EN: Only the channels the customer gave (design V3: "… por WhatsApp para +258 84 ••• 4567"). PT: Só os canais dados.
+  if (order.receiptTo.whatsapp) rows.push(["whatsapp", t(k.receiptPhone, { phone: order.receiptTo.whatsapp })]);
+  else if (order.receiptTo.email) rows.push(["mail", k.receiptEmail]);
   if (order.fulfillmentType === "pickup") rows.push(["store", t(k.pickup, { store, code: order.deliveryCode ?? "—" })]);
   else rows.push(["truck", t(k.delivery, { code: order.deliveryCode ?? "—" })]);
   if (m === "cod") rows.push(["cash", t(k.cod, { total: totalLabel })]);

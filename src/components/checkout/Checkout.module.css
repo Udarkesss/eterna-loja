@@ -1298,3 +1298,18 @@
     height: 128px;
   }
 }
+
+/* EN: "Receber o recibo … por WhatsApp" (design V3). PT: Recibo por WhatsApp (V3). */
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 20px;
+  cursor: pointer;
+}
+
+.check input {
+  margin-top: 3px;
+  accent-color: var(--ink);
+}

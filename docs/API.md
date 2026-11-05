@@ -47,7 +47,7 @@ POST /api/v1/orders
 {
   "locale": "pt",
   "lines": [{ "slug": "8g1l7", "variantId": "uuid", "quantity": 1 }],
-  "contact": { "name": "Ana", "email": "" },
+  "contact": { "name": "Ana", "email": "", "phone": "841234567", "whatsapp": true },
   "fulfillment": { "type": "pickup", "storeCode": "02" },
   "payment": { "method": "emola", "msisdn": "86 234 5678" },
   "discountCode": "OPTIONAL"
@@ -59,7 +59,7 @@ POST /api/v1/orders
 - Mobile numbers / Números: M-Pesa 84/85 · e-Mola 86/87 · mKesh 82/83. Card details are **never** sent to this API.
 
 `OrderStatusDTO`: `id`, `number` (`ET-2026-0001`), `total`, `paymentMethod`, `paymentStatus`
-(`pending` → `paid` | `failed` | `expired` | `refunded`), `msisdnMasked` (`86 ••• 78`), `paymentExpiresAt`,
+(`pending` → `paid` | `failed` | `expired` | `refunded`), `msisdnMasked` (`86 ••• 78`), `receiptTo` (`{ whatsapp: "84 ••• 67" | null, email: boolean }`), `paymentExpiresAt`,
 `fulfillmentType`, `fulfillmentStatus`, `pickupStore`.
 
 ## Customer accounts / Contas de cliente

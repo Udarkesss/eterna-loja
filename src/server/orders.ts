@@ -137,6 +137,10 @@ export async function toOrderStatusDTO(order: OrderRow): Promise<OrderStatusDTO>
     paymentMethod: order.paymentMethod,
     paymentStatus: order.paymentStatus,
     msisdnMasked: order.msisdn ? maskMsisdn(order.msisdn) : null,
+    receiptTo: {
+      whatsapp: order.contact.whatsapp === false ? null : order.contact.phone ? maskMsisdn(order.contact.phone) : order.msisdn ? maskMsisdn(order.msisdn) : null,
+      email: !!order.contact.email,
+    },
     paymentExpiresAt: order.paymentExpiresAt?.toISOString() ?? null,
     fulfillmentType: order.fulfillmentType,
     fulfillmentStatus: order.fulfillmentStatus,
