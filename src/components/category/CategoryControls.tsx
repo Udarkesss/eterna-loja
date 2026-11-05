@@ -153,14 +153,14 @@ export function CategoryToolbar({ total, inline = false }: { total: number; inli
  * PT: Filtros laterais do V3: Tamanho (letras + guia) · Cor (8 amostras com nome) · Preço · Disponibilidade · "Não
  *     encontra o que procura?" com WhatsApp.
  */
-export function CategoryFilters({ inSheet = false, color = true, price = true }: { inSheet?: boolean; color?: boolean; price?: boolean }) {
+export function CategoryFilters({ inSheet = false, color = true, price = true, reserved = true }: { inSheet?: boolean; color?: boolean; price?: boolean; reserved?: boolean }) {
   const { dict } = useI18n();
   return (
     <aside aria-label={dict.catalog.filters} className={inSheet ? styles.sheetBody : styles.aside}>
       <SizeFilter />
       {color && <ColorFilter />}
       {price && <PriceFilter />}
-      <SaleFilter />
+      <SaleFilter reserved={reserved} />
       {!inSheet && <HelpBox />}
     </aside>
   );
@@ -228,10 +228,12 @@ export function PriceFilter({ legend = true }: { legend?: boolean }) {
 }
 
 /** EN: "Em campanha". PT: "Em campanha". */
-export function SaleFilter({ legend = true }: { legend?: boolean }) {
+export function SaleFilter({ legend = true, reserved = false }: { legend?: boolean; reserved?: boolean }) {
   const { dict } = useI18n();
   const { update, params } = useFilterParams();
   const sale = params.get("sale") === "1";
+  // EN: "Mostrar peças reservadas" (design V3), on by default; only when Gestão lets them show. PT: Ligado por defeito.
+  const showReserved = params.get("reservadas") !== "0";
   return (
     <fieldset className={styles.fieldset}>
       <legend className={legend ? styles.legend : "visually-hidden"}>{dict.catalog.availability}</legend>
@@ -239,6 +241,12 @@ export function SaleFilter({ legend = true }: { legend?: boolean }) {
         <input type="checkbox" checked={sale} onChange={() => update({ sale: sale ? null : "1" })} />
         {dict.catalog.onSale}
       </label>
+      {reserved && (
+        <label className={styles.check}>
+          <input type="checkbox" checked={showReserved} onChange={() => update({ reservadas: showReserved ? "0" : null })} />
+          {dict.catalog.showReserved}
+        </label>
+      )}
     </fieldset>
   );
 }

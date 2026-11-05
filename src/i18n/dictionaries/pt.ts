@@ -135,6 +135,7 @@ export const pt = {
     priceRanges: { upTo15: "Até 15 000 MT", from15to30: "15 000 — 30 000 MT", over30: "Mais de 30 000 MT" },
     availability: "Disponibilidade",
     onSale: "Só peças em campanha",
+    showReserved: "Mostrar peças reservadas",
     onSaleShort: "Em campanha",
     collections: "Colecções",
     lines: "Linhas da colecção",

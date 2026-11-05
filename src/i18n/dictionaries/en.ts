@@ -132,6 +132,7 @@ export const en: Dictionary = {
     priceRanges: { upTo15: "Up to 15,000 MT", from15to30: "15,000 — 30,000 MT", over30: "Over 30,000 MT" },
     availability: "Availability",
     onSale: "Only pieces on sale",
+    showReserved: "Show reserved pieces",
     onSaleShort: "On sale",
     collections: "Collections",
     lines: "Collection lines",

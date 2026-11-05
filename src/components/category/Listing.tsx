@@ -79,7 +79,7 @@ export async function loadListing(source: ListingSource, query: Query, locale: L
   const [all, showPrice] = await Promise.all([listProducts({ ...source.filter, types: allowedTypes }, locale), cardPriceVisible()]);
   // EN: Without filters the list is the same: no second read. PT: Sem filtros a lista é a mesma: sem segunda leitura.
   const plain = !type && !sizeLetters.length && !colors.length && !onSale && sort === "recommended";
-  const hideReserved = source.settings?.filters?.reserved === false;
+  const hideReserved = source.settings?.filters?.reserved === false || query.reservadas === "0";
   const reserved = hideReserved ? await reservedProductIds() : new Set<string>();
   const filtered = arrange(
     (plain ? all : await listProducts({ ...source.filter, types, sizeLetters, colors, onSale, sort }, locale)).filter(

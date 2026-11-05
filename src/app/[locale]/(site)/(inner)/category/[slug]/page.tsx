@@ -67,7 +67,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       <CategoryToolbar total={listing.filtered.length} />
 
       <section className={`page-x ${styles.body}`}>
-        <CategoryFilters color={shown.color} price={shown.price} />
+        <CategoryFilters color={shown.color} price={shown.price} reserved={shown.reserved !== false} />
         <div className={styles.results}>
           <Results listing={listing} locale={locale} columns={3} />
           <div className={styles.phoneHelp}>
