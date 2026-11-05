@@ -373,3 +373,85 @@
   font-size: 13px;
   color: var(--muted);
 }
+
+/* EN: Phone (V3-M-G-*): list panels lose their frame, tabs become pills, filters stack, tables become cards (per page).
+   PT: Telemóvel do V3: os painéis de lista perdem a moldura, os separadores ficam pílulas, os filtros empilham e as
+       tabelas passam a cartões (em cada página). */
+@media (max-width: 860px) {
+  .panel:has(> .panelBody) {
+    background: none;
+    border: 0;
+    overflow: visible;
+  }
+
+  .panel:has(> .panelBody) > .panelHead {
+    padding: 0;
+    border: 0;
+    justify-content: flex-end;
+  }
+
+  .panel:has(> .panelBody) > .panelHead h2 {
+    display: none;
+  }
+
+  .panel:has(> .panelBody) > .panelHead:not(:has(> :not(h2))) {
+    display: none;
+  }
+
+  .panelBody {
+    padding: 0;
+  }
+
+  .tabs {
+    flex-wrap: nowrap;
+    gap: 8px;
+    overflow-x: auto;
+    border-bottom: 0;
+    margin-right: -16px;
+    padding-right: 16px;
+    scrollbar-width: none;
+  }
+
+  .tabs a {
+    flex-shrink: 0;
+    height: 36px;
+    padding: 0 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 13px;
+    background: var(--raised);
+    white-space: nowrap;
+    margin-bottom: 0;
+  }
+
+  .tabs a[aria-current="page"] {
+    background: var(--contrast, #1c1917);
+    color: var(--on-contrast, #faf7f2);
+    border-color: var(--contrast, #1c1917);
+  }
+
+  .tabs a[aria-current="page"]::after {
+    display: none;
+  }
+
+  .filterRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .filterRow > .search {
+    grid-column: 1 / -1;
+    height: 44px;
+    background: var(--raised);
+  }
+
+  .filterRow select {
+    width: 100%;
+  }
+
+  .foot {
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+  }
+}

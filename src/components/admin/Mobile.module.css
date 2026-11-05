@@ -1,0 +1,252 @@
+/*
+ * EN: Phone pieces of design V3-M-G-* (≤860px): card lists instead of tables. Desktop never shows .mOnly.
+ * PT: Peças do telemóvel do V3 (≤860px): listas de cartões em vez de tabelas. No computador .mOnly nunca aparece.
+ */
+.mOnly {
+  display: none !important;
+}
+
+@media (max-width: 860px) {
+  .mOnly {
+    display: flex !important;
+  }
+
+  .dOnly {
+    display: none !important;
+  }
+}
+
+.mbody {
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mrow2 {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.mrow2 > * {
+  width: 100%;
+  padding: 0 10px;
+  min-height: 40px;
+}
+
+.mkpis {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.kpi {
+  background: var(--raised);
+  border: 1px solid var(--line);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.kpi b {
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.label {
+  font-weight: 600;
+  font-size: 11px;
+  line-height: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.small {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--muted);
+}
+
+.mcard {
+  background: var(--raised);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+}
+
+.mcardH {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.mcardH h2,
+.mcardH h3 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 26px;
+}
+
+.mcardH a {
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.mcardB {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mli {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  color: inherit;
+}
+
+.mli:last-child {
+  border-bottom: 0;
+}
+
+.mli .t {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mli .t b {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.mli .t span {
+  font-size: 12px;
+  line-height: 17px;
+  color: var(--muted);
+}
+
+.mli .r {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  text-align: right;
+  flex-shrink: 0;
+  max-width: 50%;
+}
+
+.mli .r b {
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.ic {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--alt);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.thumb {
+  width: 48px;
+  height: 60px;
+  flex-shrink: 0;
+  background: var(--alt);
+  position: relative;
+  overflow: hidden;
+}
+
+.thumb img {
+  object-fit: cover;
+}
+
+.mkv {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.mkv > :first-child {
+  color: var(--muted);
+}
+
+.mkv > :last-child {
+  font-weight: 500;
+  text-align: right;
+}
+
+.mtabs {
+  display: flex !important;
+  gap: 8px;
+  overflow-x: auto;
+  margin-right: -16px;
+  padding-right: 16px;
+  scrollbar-width: none;
+}
+
+.mtabs > * {
+  flex-shrink: 0;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 13px;
+  background: var(--raised);
+  white-space: nowrap;
+  color: inherit;
+}
+
+.mtabs > [aria-current="page"],
+.mtabs > .on {
+  background: var(--contrast, #1c1917);
+  color: var(--on-contrast, #faf7f2);
+  border-color: var(--contrast, #1c1917);
+}
+
+.note {
+  font-size: 12px;
+  line-height: 17px;
+  color: var(--muted);
+}
+
+.empty {
+  padding: 16px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+@media (max-width: 860px) {
+  /* EN: Wide tables that stay on the phone scroll sideways inside their card.
+     PT: Tabelas largas que ficam no telemóvel deslizam para o lado dentro do cartão. */
+  .scrollX {
+    overflow-x: auto;
+    max-width: 100%;
+  }
+}

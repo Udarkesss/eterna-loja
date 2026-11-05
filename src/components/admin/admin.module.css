@@ -1086,6 +1086,25 @@
   .row3 {
     grid-template-columns: 1fr;
   }
+
+  /* EN: Page actions side by side, full width (V3-M-G .mhead .mrow2). PT: Acções lado a lado, largura toda. */
+  .top {
+    gap: 14px;
+  }
+
+  .top > .actions {
+    width: 100%;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 8px;
+  }
+
+  .top > .actions > * {
+    min-height: 40px;
+    padding: 0 10px;
+    width: 100%;
+  }
 }
 
 .grow {

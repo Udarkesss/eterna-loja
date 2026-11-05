@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import s from "@/components/admin/admin.module.css";
 import d3 from "@/components/admin/Dashboard.module.css";
+import m from "@/components/admin/Mobile.module.css";
 import { DeliveryOffNote } from "@/components/admin/ModuleOffNote";
 import { Chip, DemoTag, mzn, PageTop, when } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
@@ -48,17 +49,158 @@ export default async function DashboardPage() {
           </>
         }
         actions={
-          can(staff, "products.edit") && (
-            <Link href="/gestao/produtos/novo" className={s.btn}>
-              <Icon name="plus" size={16} />
-              Novo produto
-            </Link>
-          )
+          <>
+            {can(staff, "reservations") && (
+              <Link href="/gestao/reservas" className={`${s.btnOutline} ${m.mOnly}`}>
+                Nova reserva
+              </Link>
+            )}
+            {can(staff, "products.edit") && (
+              <Link href="/gestao/produtos/novo" className={s.btn}>
+                <Icon name="plus" size={16} />
+                Novo produto
+              </Link>
+            )}
+          </>
         }
       />
       <DemoTag show={hasDemo} />
 
-      <div className={d3.kpis}>
+      {/* EN: Phone (V3-M-G-Painel). PT: Telemóvel. */}
+      <div className={`${m.mOnly} ${m.mbody}`}>
+        <div className={m.mkpis}>
+          <div className={m.kpi}>
+            <span className={m.label}>Vendas de hoje</span>
+            <b>{mzn(d.salesToday)}</b>
+            <span className={m.small}>
+              {d.paidTodayCount} {d.paidTodayCount === 1 ? "encomenda" : "encomendas"}
+            </span>
+          </div>
+          <div className={m.kpi}>
+            <span className={m.label}>Por preparar</span>
+            <b>{d.toPrepare}</b>
+            <span className={m.small}>{d.toPrepareStores || "Tudo preparado"}</span>
+          </div>
+          <div className={m.kpi}>
+            <span className={m.label}>Pagamentos pendentes</span>
+            <b>{d.pendingCount}</b>
+            <span className={m.small}>{d.pendingHint}</span>
+          </div>
+          <div className={m.kpi}>
+            <span className={m.label}>Provas esta semana</span>
+            <b>{d.fittingsWeek}</b>
+            <span className={m.small}>{d.fittingRequests ? `${d.fittingRequests} por responder` : "Nenhum pedido"}</span>
+          </div>
+        </div>
+        {d.collection && (
+          <section className={m.mcard}>
+            <div className={m.mcardH}>
+              <h3>Colecção activa</h3>
+            </div>
+            <div className={m.mcardB}>
+              <div className={m.mli} style={{ padding: 0, border: 0 }}>
+                <span className={m.thumb}>{d.collection.imageUrl && <Image src={d.collection.imageUrl} alt="" fill sizes="48px" />}</span>
+                <span className={m.t}>
+                  {d.collection.edition && <span>{d.collection.edition}</span>}
+                  <b>{d.collection.name}</b>
+                </span>
+              </div>
+              <div className={m.mrow2}>
+                {d.collection.lines.slice(0, 2).map((l) => (
+                  <div key={l.name} className={m.kpi}>
+                    <b>{l.count}</b>
+                    <span className={m.small}>{l.name.replace(/^Roupa (de )?/, "")}</span>
+                  </div>
+                ))}
+              </div>
+              <span className={m.note}>{d.collection.soldOut} indisponíveis</span>
+              <div className={m.mrow2}>
+                {can(staff, "products.edit") && (
+                  <Link href="/gestao/produtos/novo" className={s.btnOutline}>
+                    Adicionar peças
+                  </Link>
+                )}
+                <Link href="/gestao/coleccoes" className={s.btnOutline}>
+                  Mudar colecção
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
+        <section className={m.mcard}>
+          <div className={m.mcardH}>
+            <h3>Encomendas recentes</h3>
+            <Link href="/gestao/encomendas">Ver todas</Link>
+          </div>
+          {d.recent.length === 0 ? (
+            <p className={m.empty}>Ainda não há encomendas.</p>
+          ) : (
+            d.recent.slice(0, 3).map(({ order: o }) => (
+              <Link key={o.id} href={`/gestao/encomendas/${o.id}`} className={m.mli}>
+                <span className={m.ic}>
+                  <Icon name="bag" size={18} />
+                </span>
+                <span className={m.t}>
+                  <b>{o.number}</b>
+                  <span>
+                    {o.contact.name} · {when(o.createdAt)}
+                  </span>
+                </span>
+                <span className={m.r}>
+                  <b>{mzn(o.total)}</b>
+                  <Chip tone={o.fulfillmentStatus === "pending" ? "warn" : ""}>{FULFILLMENT_LABEL[o.fulfillmentStatus]}</Chip>
+                </span>
+              </Link>
+            ))
+          )}
+        </section>
+        <section className={m.mcard}>
+          <div className={m.mcardH}>
+            <h3>Avisos</h3>
+          </div>
+          {notices.length === 0 ? (
+            <p className={m.empty}>Tudo em dia.</p>
+          ) : (
+            notices.map((n, i) => (
+              <Link key={i} href={n.href ?? "/gestao"} className={m.mli}>
+                <span className={m.ic}>
+                  <Icon name={n.icon} size={18} />
+                </span>
+                <span className={m.t}>
+                  <b>{n.title}</b>
+                  <span>{n.body}</span>
+                </span>
+              </Link>
+            ))
+          )}
+        </section>
+        {can(staff, "fittings") && d.fittingsToday.length > 0 && (
+          <section className={m.mcard}>
+            <div className={m.mcardH}>
+              <h3>Provas de hoje</h3>
+              <Link href="/gestao/provas">Agenda</Link>
+            </div>
+            {d.fittingsToday.map((f) => (
+              <Link key={f.id} href={`/gestao/provas?sel=${f.id}`} className={m.mli}>
+                <span className={m.t}>
+                  <b>
+                    {toMaputo(f.startsAt).time} · {f.clientName}
+                  </b>
+                  <span>
+                    {FITTING_KIND_LABELS[f.kind as FittingKind].pt} · Loja {f.storeCode}
+                  </span>
+                </span>
+                <span className={m.r}>
+                  <Chip tone={f.status === "confirmed" ? "ok" : "warn"}>{f.status === "confirmed" ? "Confirmada" : "Por confirmar"}</Chip>
+                </span>
+              </Link>
+            ))}
+          </section>
+        )}
+        {!d.delivery && <DeliveryOffNote />}
+      </div>
+
+      <div className={`${d3.kpis} ${m.dOnly}`}>
         <div className={d3.kpi}>
           <span className={d3.kpiLabel}>Vendas de hoje</span>
           <b>{mzn(d.salesToday)}</b>
@@ -83,7 +225,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className={d3.grid}>
+      <div className={`${d3.grid} ${m.dOnly}`}>
         <div className={d3.col}>
           {d.collection && (
             <section className={d3.panel}>
