@@ -207,7 +207,8 @@
 }
 @media (max-width: 1279px) {
   .cols {
-    grid-template-columns: minmax(0, 1fr);
+    /* EN: !important beats the inline column widths some editors set. PT: Ganha às larguras inline de alguns editores. */
+    grid-template-columns: minmax(0, 1fr) !important;
   }
   .grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -236,5 +237,21 @@
 @media (max-width: 767px) {
   .dates {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  .dates {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* EN: Content editor: 380px side column on the computer, one column below 1280px. PT: Coluna lateral de 380px só no computador. */
+.cols380 {
+  grid-template-columns: minmax(0, 1fr) 380px;
+}
+@media (max-width: 1279px) {
+  .cols380 {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

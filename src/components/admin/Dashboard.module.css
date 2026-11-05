@@ -455,3 +455,21 @@
     font-size: 12px;
   }
 }
+
+@media (max-width: 860px) {
+  /* EN: A panel that only holds a card list drops its frame (the cards have their own). PT: Painel só com cartões perde a moldura. */
+  .panel:has(table) {
+    background: none;
+    border: 0;
+    overflow: visible;
+  }
+
+  .panel:has(table) > .panelHead {
+    padding: 0 0 12px;
+    border: 0;
+  }
+
+  .panel:has(table) > .panelHead h2 {
+    font-size: 20px;
+  }
+}

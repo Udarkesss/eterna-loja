@@ -342,7 +342,7 @@ export function ProductEditor(props: {
                 <span className={c.xsMuted}>Escolha os tamanhos acima.</span>
               ) : (
                 <div style={{ overflowX: "auto" }}>
-                  <table className={e.matrix}>
+                  <table className={e.matrix} data-keep>
                     <thead>
                       <tr>
                         <th>Cor \ tamanho</th>

@@ -213,7 +213,7 @@ export function CampaignEditor(props: { data: CampaignFormData; pieces: Piece[];
                   Por peça
                 </button>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "160px 1fr", gap: 12, alignItems: "end" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "minmax(0,160px) minmax(0,1fr)", gap: 12, alignItems: "end" }}>
                 <label className={c.field}>
                   <span className={c.lbl}>Desconto</span>
                   <input className={`${c.input} ${c.num}`} inputMode="numeric" value={`${d.percent} %`} onChange={(e) => set({ percent: Math.min(90, Number(e.target.value.replace(/\D/g, "")) || 0) })} />

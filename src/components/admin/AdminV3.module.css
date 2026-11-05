@@ -553,3 +553,26 @@
   white-space: pre;
   overflow-x: auto;
 }
+
+/* EN: Phone (V3-M-G-*): button rows wrap, field pairs stack. PT: Telemóvel: linhas de botões quebram, pares de campos empilham. */
+@media (max-width: 860px) {
+  .row {
+    flex-wrap: wrap;
+  }
+
+  .pair,
+  .narrow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .btn,
+  .btnPrimary {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 860px) {
+  .half {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import type { NavItem } from "./AdminNav";
 import s from "./admin.module.css";
@@ -79,4 +79,34 @@ export function MobileTabs({ items }: { items: NavItem[] }) {
       </Link>
     </nav>
   );
+}
+
+/**
+ * EN: Phone lists (V3-M-G-*): tables become card lists by CSS (admin.module.css); this copies each column title onto its
+ *     cells as data-label so a card row reads "Total · 3 000,00 MT". Re-runs when client boards redraw. Tables with
+ *     data-keep (e.g. the size matrix) stay as tables.
+ * PT: Listas do telemóvel: as tabelas passam a cartões por CSS; aqui cada título de coluna vai para as células (data-label).
+ *     Repete quando os quadros de cliente se redesenham. Tabelas com data-keep (ex.: matriz de tamanhos) ficam tabelas.
+ */
+export function MobileTables() {
+  useEffect(() => {
+    const main = document.getElementById("main");
+    if (!main) return;
+    const label = () => {
+      main.querySelectorAll("table").forEach((t) => {
+        const heads = [...t.querySelectorAll("thead th")].map((h) => h.textContent?.trim() ?? "");
+        t.querySelectorAll("tbody tr").forEach((tr) => {
+          [...tr.children].forEach((c, i) => {
+            const v = i > 0 ? (heads[i] ?? "") : "";
+            if (c.getAttribute("data-label") !== v) c.setAttribute("data-label", v);
+          });
+        });
+      });
+    };
+    label();
+    const mo = new MutationObserver(label);
+    mo.observe(main, { childList: true, subtree: true });
+    return () => mo.disconnect();
+  }, []);
+  return null;
 }
