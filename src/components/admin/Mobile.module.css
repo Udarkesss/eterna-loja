@@ -358,3 +358,10 @@
     grid-template-columns: minmax(0, 1fr) !important;
   }
 }
+
+@media (max-width: 860px) {
+  /* EN: A cell holding only a desktop placeholder disappears. PT: Célula só com marcador do computador desaparece. */
+  :global(td):has(> .dOnly:only-child) {
+    display: none !important;
+  }
+}

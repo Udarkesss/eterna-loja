@@ -9,6 +9,7 @@ import type { MapMarker } from "@/components/delivery/LiveMap";
 import { Icon } from "@/components/ui/Icon";
 import { STORE_ORIGIN } from "@/lib/delivery";
 import s from "./admin.module.css";
+import mob from "./Mobile.module.css";
 
 const LiveMap = dynamic(() => import("@/components/delivery/LiveMap").then((m) => m.LiveMap), { ssr: false });
 
@@ -159,7 +160,7 @@ export function DeliveriesBoard({ rows, drivers, canAssign }: { rows: Row[]; dri
                           )}
                         </span>
                       ) : (
-                        <span className={s.muted}>—</span>
+                        <span className={`${s.muted} ${mob.dOnly}`}>—</span>
                       )}
                     </td>
                   </tr>
