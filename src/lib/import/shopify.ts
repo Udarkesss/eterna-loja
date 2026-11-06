@@ -199,7 +199,7 @@ const slugify = (s: string) =>
     .replace(/^_|_$/g, "");
 
 /** EN: "PRETO/BRANCO", "VERDE ESTAMPADO" → colour with swatch from the first part. PT: Cor com amostra da primeira parte. */
-function toColor(raw: string, unknown: Set<string>): ProductColor {
+export function toColor(raw: string, unknown: Set<string>): ProductColor {
   const v = raw.trim().toUpperCase().replace("STAMPADO", "ESTAMPADO").replace("ESTAMPAMP.", "ESTAMPADO").replace("EESTAMPADO", "ESTAMPADO");
   const one = (part: string): C | null => {
     if (COLORS[part]) return COLORS[part];
@@ -238,7 +238,7 @@ const US_SCALE: Record<string, string> = {
   "22": "22US/54EUR/XXL",
 };
 
-function toSize(raw: string): string {
+export function toSize(raw: string): string {
   const v = raw.trim().toUpperCase();
   if (!v || v === "OS" || v === "DEFAULT TITLE" || v === "ÚNICO") return "Único";
   if (US_SCALE[v]) return US_SCALE[v];
@@ -271,7 +271,7 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
  * PT: No Shopify o título é só a referência, por isso o nome é construído: "Vestido longo preto".
  *     As carteiras usam a primeira frase curta da descrição ("Carteira flor").
  */
-function buildName(type: string | null, text: string, colors: ProductColor[]): Localized {
+export function buildName(type: string | null, text: string, colors: ProductColor[]): Localized {
   const node = type ? CATS.get(type)?.node : null;
   const one = node?.singular ?? { pt: "Peça", en: "Piece" };
   const color = colors.length === 1 ? colors[0].name : null;

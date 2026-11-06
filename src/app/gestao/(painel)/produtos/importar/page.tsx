@@ -101,6 +101,10 @@ export default async function ImportPage() {
           <Link href="/gestao/produtos/importar/shopify" style={{ textDecoration: "underline" }}>
             Importar do Shopify (CSV)
           </Link>
+          . Para trocar as fotografias pelas da pasta da Eterna (Editadas / Não Editadas):{" "}
+          <Link href="/gestao/produtos/importar/fotos" style={{ textDecoration: "underline" }}>
+            Importar fotos de uma pasta
+          </Link>
           .
         </span>
       </div>

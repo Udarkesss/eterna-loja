@@ -102,7 +102,9 @@ async function syncPhotos(productId: string, slug: string, item: Item): Promise<
     .where(eq(productImages.productId, productId))
     .orderBy(asc(productImages.position));
   const same = current.length === item.images.length && current.every((c, i) => c.sourceUrl === item.images[i].url);
-  if (same || !item.images.length) return { downloaded: 0, total: current.length };
+  // EN: Photos imported from Eterna's own folder ("pasta:…") win over Shopify's. PT: As fotos da pasta da Eterna ficam.
+  const fromFolder = current.some((c) => c.sourceUrl?.startsWith("pasta:"));
+  if (same || fromFolder || !item.images.length) return { downloaded: 0, total: current.length };
 
   const saved = await Promise.all(
     item.images.map(async (img, i) => {

@@ -1,5 +1,5 @@
 import "server-only";
-import { asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray } from "drizzle-orm";
 import { sizeParts } from "@/lib/sizes";
 import type { ColorFamily, Localized, ProductColor, ProductStatus } from "@/types";
 import { audit } from "../audit";
@@ -250,7 +250,12 @@ export async function bulkProducts(staff: StaffContext, ids: string[], action: {
   const db = await getDb();
   if (action.kind !== "join") {
     if (accessOf(staff, "products.publish") !== "T") throw new AppError("FORBIDDEN", "NO_ACCESS", 403);
-    await db.update(products).set({ status: action.kind === "publish" ? "published" : "draft" }).where(inArray(products.id, ids));
+    // EN: Products without a price (e.g. created by the photo import, "no armazém") are never published.
+    // PT: Produtos sem preço (ex.: criados pela importação de fotos, "no armazém") nunca são publicados.
+    await db
+      .update(products)
+      .set({ status: action.kind === "publish" ? "published" : "draft" })
+      .where(action.kind === "publish" ? and(inArray(products.id, ids), gt(products.price, 0)) : inArray(products.id, ids));
   } else {
     const [collection] = await db.select().from(categories).where(eq(categories.id, action.collectionId));
     if (!collection || collection.kind !== "collection") throw new AppError("VALIDATION_ERROR", "Escolha a colecção.", 400);
