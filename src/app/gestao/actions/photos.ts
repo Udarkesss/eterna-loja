@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { AppError } from "@/server/errors";
-import { auditPhotoImport, commitPhotos, planInputSchema, planPhotoImport, readTables, savePhoto, type CommitInput, type PhotoGroup, type PhotoPlan, type TableRow } from "@/server/import/photos";
+import { auditPhotoImport, commitPhotos, planInputSchema, planPhotoImport, readTables, removeOrphans, savePhoto, type CommitInput, type PhotoGroup, type PhotoPlan, type TableRow } from "@/server/import/photos";
 import { requireStaffAction } from "@/server/staff/access";
 
 /**
@@ -13,10 +13,10 @@ import { requireStaffAction } from "@/server/staff/access";
 const message = (e: unknown, fallback: string) =>
   e instanceof AppError ? (e.message === "NO_ACCESS" ? "O seu papel não permite importar fotos." : e.message) : fallback;
 
-export async function planPhotoImportAction(groups: PhotoGroup[]): Promise<{ ok: true; plan: PhotoPlan } | { ok: false; message: string }> {
+export async function planPhotoImportAction(input: { groups: PhotoGroup[]; tableCodes: string[] }): Promise<{ ok: true; plan: PhotoPlan } | { ok: false; message: string }> {
   try {
     await requireStaffAction("products.edit");
-    return { ok: true, plan: await planPhotoImport(planInputSchema.parse(groups)) };
+    return { ok: true, plan: await planPhotoImport(planInputSchema.parse(input)) };
   } catch (e) {
     return { ok: false, message: message(e, "Não foi possível ler a lista de fotos.") };
   }
@@ -51,6 +51,18 @@ export async function commitImportPhotosAction(input: CommitInput): Promise<{ ok
     return { ok: true, result: await commitPhotos(staff, input) };
   } catch (e) {
     return { ok: false, message: message(e, "As fotos deste produto não foram gravadas.") };
+  }
+}
+
+export async function removeOrphansAction(ids: string[]): Promise<{ ok: true; deleted: number; archived: number } | { ok: false; message: string }> {
+  try {
+    const staff = await requireStaffAction("products.publish");
+    const r = await removeOrphans(staff, ids);
+    revalidatePath("/gestao/produtos");
+    revalidatePath("/", "layout");
+    return { ok: true, ...r };
+  } catch (e) {
+    return { ok: false, message: message(e, "Não foi possível retirar estes produtos.") };
   }
 }
 

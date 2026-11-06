@@ -1,13 +1,13 @@
 import "server-only";
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull } from "drizzle-orm";
 import { COLOR_FAMILIES } from "@/types";
 import sharp from "sharp";
 import { z } from "zod";
 import { audit } from "../audit";
 import { getDb } from "../db";
-import { categories, productCategories, productImages, productVariants, products, stores } from "../db/schema";
+import { categories, orderLines, productCategories, productImages, productVariants, products, reservations, stores } from "../db/schema";
 import { AppError } from "../errors";
-import { can, type StaffContext } from "../staff/access";
+import { accessOf, can, type StaffContext } from "../staff/access";
 import { deletePublicFile, savePublicBuffer } from "../uploads";
 import { readZip } from "../xlsx";
 
@@ -45,7 +45,11 @@ const groupSchema = z.object({
   edited: z.boolean(),
   sizes: z.array(z.string().trim().toUpperCase().regex(SIZE_TOKEN)).max(20),
 });
-export const planInputSchema = z.array(groupSchema).max(12_000);
+export const planInputSchema = z.object({
+  groups: z.array(groupSchema).max(12_000),
+  // EN: Codes of the Word tables ("lista de produtos"). PT: Códigos das tabelas Word.
+  tableCodes: z.array(z.string().trim().toUpperCase().regex(CODE)).max(20_000),
+});
 export type PhotoGroup = z.infer<typeof groupSchema>;
 
 export interface PhotoPlan {
@@ -57,6 +61,11 @@ export interface PhotoPlan {
   folders: Record<string, { typeId: string | null; typeSlug: string | null; typeName: string | null; store: string }>;
   /** EN: Store products that keep their photos (no file in the folder). PT: Produtos da loja sem nenhum ficheiro na pasta. */
   untouched: string[];
+  /**
+   * EN: Products that are not in Shopify, nor in the edited photos, nor in the tables (to remove, owner 2026-11-06).
+   * PT: Produtos que não estão no Shopify, nem nas fotos editadas, nem nas tabelas (a retirar, dona 06-11-2026).
+   */
+  orphans: { id: string; code: string; name: string; history: boolean }[];
 }
 
 const norm = (s: string) =>
@@ -74,9 +83,9 @@ export function baseCode(code: string): string {
   return b.length >= 3 && b !== code && /\d$/.test(b) ? b : code;
 }
 
-export async function planPhotoImport(groups: PhotoGroup[]): Promise<PhotoPlan> {
+export async function planPhotoImport({ groups, tableCodes }: z.infer<typeof planInputSchema>): Promise<PhotoPlan> {
   const db = await getDb();
-  const rows = await db.select({ id: products.id, code: products.code, name: products.name, typeId: products.typeId }).from(products);
+  const rows = await db.select({ id: products.id, code: products.code, name: products.name, typeId: products.typeId, sourceId: products.sourceId, status: products.status }).from(products);
   const byCode = new Map(rows.map((r) => [r.code.toUpperCase(), r]));
   const resolve = (code: string) => (byCode.has(code) ? code : byCode.has(baseCode(code)) ? baseCode(code) : null);
 
@@ -118,7 +127,21 @@ export async function planPhotoImport(groups: PhotoGroup[]): Promise<PhotoPlan> 
 
   const touched = new Set(found);
   const untouched = rows.filter((r) => !touched.has(r.code.toUpperCase())).map((r) => r.code);
-  return { resolved, products: out, folders, untouched };
+
+  // EN: Keep = from Shopify, or with an edited photo, or in a table (exact code or without the last letters).
+  // PT: Fica = vem do Shopify, ou tem foto editada, ou está numa tabela.
+  const edited = new Set(groups.filter((g) => g.edited).map((g) => resolved[g.code]).filter((c): c is string => !!c));
+  const listed = new Set(tableCodes.flatMap((c) => [c, baseCode(c)]));
+  const candidates = rows.filter((r) => {
+    const code = r.code.toUpperCase();
+    return r.status !== "archived" && !r.sourceId?.startsWith("shopify:") && !edited.has(code) && !listed.has(code) && !listed.has(baseCode(code));
+  });
+  const candidateIds = candidates.map((r) => r.id);
+  const sold = candidateIds.length ? await db.selectDistinct({ id: orderLines.productId }).from(orderLines).where(and(isNotNull(orderLines.productId), inArray(orderLines.productId, candidateIds))) : [];
+  const reserved = candidateIds.length ? await db.selectDistinct({ id: reservations.productId }).from(reservations).where(and(isNotNull(reservations.productId), inArray(reservations.productId, candidateIds))) : [];
+  const history = new Set([...sold, ...reserved].map((r) => r.id));
+  const orphans = candidates.map((r) => ({ id: r.id, code: r.code, name: r.name.pt, history: history.has(r.id) })).sort((a, b) => a.code.localeCompare(b.code));
+  return { resolved, products: out, folders, untouched, orphans };
 }
 
 // ── Tables / Tabelas ──────────────────────────────────────────────────
@@ -219,7 +242,9 @@ export const commitSchema = z.object({
         )
         .max(4),
       price: z.number().int().min(0).max(10_000_000),
-      variants: z.array(z.object({ size: z.string().trim().min(1).max(40), stock: z.number().int().min(0).max(999) })).max(20),
+      variants: z
+        .array(z.object({ size: z.string().trim().min(1).max(40), stock: z.number().int().min(0).max(999), color: z.string().regex(/^[a-z0-9_]{1,60}$/).nullable() }))
+        .max(40),
       // EN: Only complete products, and only for people who may publish. PT: Só completos e só quem pode publicar.
       publish: z.boolean(),
     })
@@ -241,9 +266,9 @@ export async function commitPhotos(staff: StaffContext, input: CommitInput): Pro
     if (!create) throw new AppError("VALIDATION_ERROR", `O produto ${code} não existe.`, 400);
     const type = create.typeId ? (await db.select({ id: categories.id }).from(categories).where(and(eq(categories.id, create.typeId), eq(categories.kind, "type"))))[0] : undefined;
     const [store] = await db.select({ id: stores.id }).from(stores).where(eq(stores.code, create.store));
-    const variants = [...new Map(create.variants.map((v) => [v.size, v])).values()];
+    const variants = [...new Map(create.variants.map((v) => [`${v.color ?? ""}|${v.size}`, v])).values()];
     const complete = create.price > 0 && !!type && variants.some((v) => v.stock > 0);
-    const color = create.colors.length === 1 ? create.colors[0].key : null;
+    const single = create.colors.length === 1 ? create.colors[0].key : null;
     product = await db.transaction(async (tx) => {
       const [p] = await tx
         .insert(products)
@@ -262,7 +287,17 @@ export async function commitPhotos(staff: StaffContext, input: CommitInput): Pro
       if (variants.length) {
         await tx
           .insert(productVariants)
-          .values(variants.map((v, position) => ({ productId: p.id, sku: `${slugOf(code)}-${slugOf(v.size)}`.toUpperCase(), color, size: v.size, storeId: store?.id ?? null, stock: v.stock, position })))
+          .values(
+            variants.map((v, position) => ({
+              productId: p.id,
+              sku: [slugOf(code), v.color && create.colors.length > 1 ? slugOf(v.color) : "", slugOf(v.size)].filter(Boolean).join("-").toUpperCase(),
+              color: v.color ?? single,
+              size: v.size,
+              storeId: store?.id ?? null,
+              stock: v.stock,
+              position,
+            })),
+          )
           .onConflictDoNothing();
       }
       return p;
@@ -279,6 +314,39 @@ export async function commitPhotos(staff: StaffContext, input: CommitInput): Pro
   const kept = new Set(photos.map((p) => p.url));
   for (const old of current) if (!kept.has(old.url)) await deletePublicFile(old.url).catch(() => undefined);
   return result;
+}
+
+/**
+ * EN: Removes the products listed as "orphans" (checked again here). Products with orders or reservations are archived
+ *     (they leave the store, their history stays); the others are deleted with their stored photos.
+ * PT: Retira os produtos da lista "a retirar" (verificados outra vez aqui). Os que têm encomendas ou reservas são
+ *     arquivados (saem da loja, o histórico fica); os outros são apagados com as fotos guardadas.
+ */
+export async function removeOrphans(staff: StaffContext, ids: string[]): Promise<{ deleted: number; archived: number }> {
+  if (accessOf(staff, "products.publish") !== "T") throw new AppError("FORBIDDEN", "NO_ACCESS", 403);
+  const list = z.array(z.string().uuid()).max(5000).parse(ids);
+  if (!list.length) return { deleted: 0, archived: 0 };
+  const db = await getDb();
+  const rows = (await db.select({ id: products.id, code: products.code, sourceId: products.sourceId }).from(products).where(inArray(products.id, list))).filter((r) => !r.sourceId?.startsWith("shopify:"));
+  const rowIds = rows.map((r) => r.id);
+  if (!rowIds.length) return { deleted: 0, archived: 0 };
+  const sold = await db.selectDistinct({ id: orderLines.productId }).from(orderLines).where(inArray(orderLines.productId, rowIds));
+  const reserved = await db.selectDistinct({ id: reservations.productId }).from(reservations).where(inArray(reservations.productId, rowIds));
+  const keep = new Set([...sold, ...reserved].map((r) => r.id));
+  const archive = rowIds.filter((id) => keep.has(id));
+  const remove = rowIds.filter((id) => !keep.has(id));
+  const photos = remove.length ? await db.select({ url: productImages.url }).from(productImages).where(inArray(productImages.productId, remove)) : [];
+  await db.transaction(async (tx) => {
+    if (archive.length) await tx.update(products).set({ status: "archived" }).where(inArray(products.id, archive));
+    if (remove.length) await tx.delete(products).where(inArray(products.id, remove));
+  });
+  for (const ph of photos) await deletePublicFile(ph.url).catch(() => undefined);
+  await audit({
+    actor: { type: "staff", id: staff.id, name: staff.name, role: staff.roleName },
+    action: "Produtos fora do Shopify retirados",
+    detail: `${remove.length} apagados, ${archive.length} arquivados: ${rows.map((r) => r.code).join(", ")}`.slice(0, 300),
+  });
+  return { deleted: remove.length, archived: archive.length };
 }
 
 export async function auditPhotoImport(staff: StaffContext, summary: string) {

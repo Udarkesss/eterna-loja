@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
-import { commitImportPhotosAction, finishPhotoImportAction, planPhotoImportAction, readTablesAction, uploadImportPhotoAction } from "@/app/gestao/actions/photos";
+import { commitImportPhotosAction, finishPhotoImportAction, planPhotoImportAction, readTablesAction, removeOrphansAction, uploadImportPhotoAction } from "@/app/gestao/actions/photos";
 import { buildName, toColor, toSize } from "@/lib/import/shopify";
 import type { PhotoGroup, PhotoPlan, TableRow } from "@/server/import/photos";
 import type { Localized, ProductColor } from "@/types";
@@ -32,12 +32,14 @@ interface Entry {
   folder: string;
   edited: boolean;
   sizes: string[];
+  /** EN: Colour written in the file name ("011911-BEGE", "012657 BROWN"). PT: Cor escrita no nome do ficheiro. */
+  color: string | null;
 }
 interface NewProduct {
   name: Localized;
   colors: ProductColor[];
   price: number;
-  variants: { size: string; stock: number }[];
+  variants: { size: string; stock: number; color: string | null }[];
   complete: boolean;
 }
 interface Task {
@@ -52,9 +54,42 @@ interface Task {
 }
 interface Info {
   desc: string;
-  color: string;
   price: number | null;
-  stock: Map<string, number>;
+  /** EN: colour (as written) + size → pieces. PT: cor (como escrita) + tamanho → peças. */
+  stock: Map<string, { color: string; size: string; n: number }>;
+}
+
+// EN: Colour words of the file names that are not Portuguese. PT: Cores dos nomes dos ficheiros que não estão em português.
+const COLOR_WORDS: Record<string, string> = {
+  BLACK: "PRETO",
+  BROWN: "CASTANHO",
+  WHITE: "BRANCO",
+  IVORY: "MARFIM",
+  MARFIL: "MARFIM",
+  RED: "VERMELHO",
+  BLUE: "AZUL",
+  GREEN: "VERDE",
+  PINK: "ROSA",
+  BEIGE: "BEGE",
+  GOLD: "DOURADO",
+  SILVER: "PRATEADO",
+  GREY: "CINZENTO",
+  GRAY: "CINZENTO",
+};
+const PHOTO_WORDS = /^(thumbnail|thimbnail|front|back|bk|side\d*|v\d+|f|ab|cl|scaled)$/i;
+
+/** EN: First word of the file name that is a known colour (a last letter "A"-"H" = other angle). PT: Cor no nome. */
+function colorWord(words: string[]): string | null {
+  for (const raw of words) {
+    if (PHOTO_WORDS.test(raw) || !/^[A-Za-zÀ-ú]{3,}$/.test(raw)) continue;
+    for (const w of [raw.toUpperCase(), raw.toUpperCase().replace(/[A-H]$/, "")]) {
+      const pt = COLOR_WORDS[w] ?? w;
+      const unknown = new Set<string>();
+      toColor(pt, unknown);
+      if (!unknown.size) return pt;
+    }
+  }
+  return null;
 }
 
 /** EN: Same rule as the server (src/server/import/photos.ts). PT: A mesma regra do servidor. */
@@ -122,6 +157,7 @@ function readFolder(files: File[]) {
       folder: parts[at + 1].trim(),
       edited,
       sizes: parts.slice(at + 2, -1).map((p) => p.trim().toUpperCase()).filter((p) => SIZE.test(p)),
+      color: colorWord(tail),
     });
   }
   return { entries, skipped, tables };
@@ -138,17 +174,19 @@ function readInfo(docs: { name: string; rows: TableRow[] }[]) {
   const sorted = [...docs].sort((a, b) => rank(a.name) - rank(b.name));
   const info = new Map<string, Info>();
   for (const doc of sorted) {
-    const counts = new Map<string, Map<string, number>>();
+    const counts = new Map<string, Info["stock"]>();
     for (const r of doc.rows) {
       const size = toSize(r.size);
-      const m = counts.get(r.code) ?? new Map<string, number>();
-      m.set(size, (m.get(size) ?? 0) + 1);
+      // EN: "NAVY DOURADO" and "NAVY/DOURADO" are the same colour. PT: Mesma cor escrita de duas formas.
+      const key = `${r.color.toUpperCase().replace(/[\s/]+/g, "")}|${size}`;
+      const m = counts.get(r.code) ?? new Map();
+      const cur0 = m.get(key);
+      m.set(key, { color: cur0?.color ?? r.color.trim(), size, n: (cur0?.n ?? 0) + 1 });
       counts.set(r.code, m);
       const cur = info.get(r.code);
-      if (!cur) info.set(r.code, { desc: r.desc, color: r.color, price: r.price, stock: new Map() });
+      if (!cur) info.set(r.code, { desc: r.desc, price: r.price, stock: new Map() });
       else {
         cur.desc ||= r.desc;
-        cur.color ||= r.color;
         cur.price ??= r.price;
       }
     }
@@ -188,9 +226,24 @@ function buildTasks(entries: Entry[], plan: PhotoPlan, info: Map<string, Info>) 
   for (const [code, list] of create) {
     const folder = plan.folders[list[0].folder];
     const i = info.get(code) ?? list.map((e) => info.get(e.code)).find(Boolean);
-    const colors = i?.color ? [toColor(i.color, new Set())] : [];
+    // EN: Variants only from what the edited folder shows (owner 2026-11-06): its size folders and the colours in the
+    //     file names. The tables give price and how many pieces each of those variants has (0 if not listed).
+    //     Nothing else is made up: without size folders the product has no variants (the team adds them).
+    // PT: Variantes só do que a pasta de editadas mostra (dona 06-11-2026): as pastas de tamanho e as cores nos nomes
+    //     dos ficheiros. As tabelas dão o preço e quantas peças tem cada variante (0 se não estiver lá).
+    //     Nada mais se inventa: sem pastas de tamanho o produto fica sem variantes (a equipa acrescenta).
+    const norm = (c: string) => c.toUpperCase().replace(/[\s/]+/g, "");
+    const rows = [...(i?.stock.values() ?? [])];
+    const sizes = sizesOf(list).map(toSize);
+    const fileColors = [...new Set(list.map((e) => e.color).filter((c): c is string => !!c))];
+    const colorNames = fileColors;
+    const colors = [...new Map(colorNames.map((c) => toColor(c, new Set())).map((c) => [c.key, c])).values()];
+    const stockOf = (size: string, color: string | null) =>
+      rows.filter((r) => r.size === size && (!color || colors.length < 2 || norm(r.color) === norm(color))).reduce((n, r) => n + r.n, 0);
     const price = i?.price ?? 0;
-    const variants = i?.stock.size ? [...i.stock].map(([size, stock]) => ({ size, stock })) : sizesOf(list).map((z) => ({ size: toSize(z), stock: 0 }));
+    const variants = (colors.length > 1 ? colorNames : [colorNames[0] ?? null]).flatMap((c) =>
+      sizes.map((size) => ({ size, stock: stockOf(size, c), color: c ? toColor(c, new Set()).key : null })),
+    );
     // EN: Without a piece type, the folder gives the name ("Modeladores" → "Modelador"). PT: Sem tipo, o nome vem da pasta.
     const one = list[0].folder.replace(/(õ)es$/i, "ão").replace(/([rlz])es$/i, "$1").replace(/s$/i, "");
     const name = folder?.typeSlug ? buildName(folder.typeSlug, i?.desc ?? "", colors) : { pt: one, en: one };
@@ -220,6 +273,8 @@ async function shrink(file: File): Promise<Blob> {
 }
 
 export function PhotoFolderImport({ canPublish }: { canPublish: boolean }) {
+  const [removed, setRemoved] = useState("");
+  const [removing, setRemoving] = useState(false);
   const [phase, setPhase] = useState<"pick" | "reading" | "review" | "running" | "done">("pick");
   const [error, setError] = useState("");
   const [read, setRead] = useState<ReturnType<typeof readFolder> | null>(null);
@@ -258,6 +313,7 @@ export function PhotoFolderImport({ canPublish }: { canPublish: boolean }) {
       else setFailures((f) => [...f, `${t.name}: ${res.message}`]);
     }
     const info = readInfo(docs);
+    const tableCodes = [...info.keys()];
     setTableNote(docs.length ? `${docs.length} tabelas lidas (${docs.map((d) => d.name.replace(/\.docx$/i, "")).join(", ")}) · ${info.size} códigos com preço e tamanhos` : "Sem tabelas Word: os produtos novos ficam sem preço.");
     const groups = new Map<string, PhotoGroup>();
     for (const x of r.entries) {
@@ -266,7 +322,7 @@ export function PhotoFolderImport({ canPublish }: { canPublish: boolean }) {
       g.sizes = [...new Set([...g.sizes, ...x.sizes])];
       groups.set(key, g);
     }
-    const res = await planPhotoImportAction([...groups.values()]);
+    const res = await planPhotoImportAction({ groups: [...groups.values()], tableCodes });
     if (!res.ok) {
       setError(res.message);
       setPhase("pick");
@@ -340,6 +396,21 @@ export function PhotoFolderImport({ canPublish }: { canPublish: boolean }) {
     await Promise.all(Array.from({ length: PARALLEL }, worker));
     await finishPhotoImportAction(`${c.replaced} produtos com fotos novas, ${c.created} criados no armazém, ${c.photos} fotos${c.failed ? `, ${c.failed} falharam` : ""}${stop.current ? " (parada)" : ""}`);
     setPhase("done");
+  }
+
+  async function removeOrphans() {
+    if (!plan?.orphans.length) return;
+    const n = plan.orphans.length;
+    if (!window.confirm(`Retirar da loja ${n} produtos que não estão no Shopify, nas fotos editadas nem nas tabelas? Os que já tiveram encomendas ou reservas ficam arquivados; os outros são apagados.`)) return;
+    setRemoving(true);
+    const r = await removeOrphansAction(plan.orphans.map((o) => o.id));
+    setRemoving(false);
+    if (!r.ok) {
+      setRemoved(r.message);
+      return;
+    }
+    setRemoved(`${r.deleted} apagados · ${r.archived} arquivados (tinham encomendas ou reservas).`);
+    setPlan({ ...plan, orphans: [] });
   }
 
   const todo = tasks.filter((t) => !t.done).length;
@@ -454,6 +525,34 @@ export function PhotoFolderImport({ canPublish }: { canPublish: boolean }) {
               return `${t.folder} · falta ${miss} · ${t.entries.length} fotos`;
             })}
           </details>
+          <section className={s.card}>
+            <h2 className={s.h2}>Fora do Shopify, das fotos editadas e das tabelas ({plan.orphans.length})</h2>
+            <p className={s.muted}>
+              Produtos da loja que não vêm do Shopify, não têm foto editada e não estão em nenhuma tabela. Os que já tiveram encomendas ou reservas ficam arquivados (saem da
+              loja, o histórico fica); os outros são apagados.
+            </p>
+            {plan.orphans.length > 0 && (
+              <ul className={s.list}>
+                {plan.orphans.slice(0, 300).map((o) => (
+                  <li key={o.id} className={s.listItem}>
+                    <span className={s.strong}>{o.code}</span>
+                    <span className={s.muted}>
+                      {o.name}
+                      {o.history ? " · fica arquivado" : ""}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {removed && <p className={s.hint}>{removed}</p>}
+            {canPublish && plan.orphans.length > 0 && (
+              <div className={s.actions}>
+                <button type="button" className={s.btnOutline} onClick={removeOrphans} disabled={removing}>
+                  {removing ? "A retirar…" : `Retirar ${plan.orphans.length} produtos`}
+                </button>
+              </div>
+            )}
+          </section>
           <details className={s.card}>
             <summary className={s.h2}>Produtos da loja sem foto na pasta ({plan.untouched.length})</summary>
             <p className={s.muted}>{plan.untouched.join(" · ")}</p>
