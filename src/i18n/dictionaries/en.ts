@@ -740,7 +740,7 @@ export const en: Dictionary = {
       "Photos and videos only with Eterna Bridal's permission.",
       "The booking is confirmed with the payment.",
     ],
-    termsPdf: "Read the full terms and conditions (PDF)",
+    termsPdf: "Read the Eterna Bridal terms and conditions",
     steps: ["Dresses", "Package", "Date and time", "Your details", "Payment"],
     dressesTitle: "Choose your dresses",
     dressesCount: "{n} of {max}",

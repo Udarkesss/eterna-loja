@@ -46,7 +46,6 @@ export default async function FittingPage({ params, searchParams }: Props) {
         cancelHours: settings.cancelHours,
         companions: settings.companions,
         requireTerms: settings.requireTerms,
-        termsUrl: settings.termsUrl,
       }}
       dresses={dresses.map((p) => ({ slug: p.slug, code: p.code, collection: p.collection?.name ?? "", image: p.images[0]?.url ?? null }))}
       days={days}

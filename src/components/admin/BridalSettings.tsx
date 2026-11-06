@@ -7,13 +7,12 @@ import type { BridalPackage, BridalSettings } from "@/data/bridal";
 import s from "./admin.module.css";
 import d3 from "./Dashboard.module.css";
 import b from "./BridalSettings.module.css";
-import { MediaField } from "./FieldEditor";
 
 /**
  * EN: "Provas ligadas" switch and "Pacotes de prova" / "Regras e agenda" of design V3. What is saved here is what the
  *     site shows and charges (packages, extra dresses, days, start times, rules, terms PDF).
  * PT: Interruptor "Provas ligadas" e "Pacotes de prova" / "Regras e agenda" do V3. O que se guarda aqui é o que o site
- *     mostra e cobra (pacotes, vestidos extra, dias, horas, regras, PDF dos termos).
+ *     mostra e cobra (pacotes, vestidos extra, dias, horas, regras).
  */
 
 const WEEKDAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
@@ -232,7 +231,6 @@ export function BridalSettingsEditor({ settings, canEdit }: { settings: BridalSe
             <input type="checkbox" checked={v.requireTerms} disabled={!canEdit} onChange={() => set({ requireTerms: !v.requireTerms })} />
             Pedir aceitação dos termos antes de pagar
           </label>
-          <MediaField name="Termos e condições da Eterna Bridal (PDF)" value={v.termsUrl ?? ""} onChange={(url) => set({ termsUrl: url || null })} />
         </div>
       </section>
 

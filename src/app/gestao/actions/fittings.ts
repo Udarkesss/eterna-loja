@@ -87,7 +87,6 @@ const bridalSchema = z.object({
   companions: z.number().int().min(0).max(10),
   noShowFee: z.boolean(),
   requireTerms: z.boolean(),
-  termsUrl: z.string().max(500).nullable(),
 });
 
 /** EN: Saves "Provas ligadas", packages and rules. PT: Guarda "Provas ligadas", pacotes e regras. */

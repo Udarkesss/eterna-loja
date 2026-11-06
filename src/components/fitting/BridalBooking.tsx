@@ -47,7 +47,6 @@ export function BridalBooking(props: {
     cancelHours: number;
     companions: number;
     requireTerms: boolean;
-    termsUrl: string | null;
   };
   dresses: { slug: string; code: string; collection: string; image: string | null }[];
   days: { date: string; open: boolean; times: { time: string; free: boolean }[] }[];
@@ -217,12 +216,11 @@ export function BridalBooking(props: {
                 </li>
               ))}
             </ul>
-            {S.termsUrl && (
-              <a href={S.termsUrl} target="_blank" rel="noopener noreferrer" className={styles.link}>
-                <Icon name="file" size={15} />
-                {b.termsPdf}
-              </a>
-            )}
+            {/* EN: The terms are a page of the site, not a PDF (owner 2026-11-06). PT: Os termos são uma página do site. */}
+            <Link href={`${href("/como-comprar")}#prova`} className={styles.link}>
+              <Icon name="file" size={15} />
+              {b.termsPdf}
+            </Link>
           </div>
         </div>
 

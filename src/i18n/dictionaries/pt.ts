@@ -746,7 +746,7 @@ export const pt = {
       "Fotografias e vídeos só com autorização da Eterna Bridal.",
       "A marcação fica confirmada com o pagamento.",
     ],
-    termsPdf: "Ler os termos e condições completos (PDF)",
+    termsPdf: "Ler os termos e condições da Eterna Bridal",
     steps: ["Vestidos", "Pacote", "Data e hora", "Os seus dados", "Pagamento"],
     dressesTitle: "Escolha os seus vestidos",
     dressesCount: "{n} de {max}",

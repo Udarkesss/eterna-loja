@@ -7,7 +7,6 @@ import { HOW_TO_BUY } from "@/data/help";
 import { getDictionary } from "@/i18n";
 import { localizePath } from "@/i18n/config";
 import { resolveLocale } from "@/i18n/params";
-import { bridalSettings } from "@/server/fittings";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -25,9 +24,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function HowToBuyPage({ params }: Props) {
   const locale = await resolveLocale(params);
   const dict = getDictionary(locale);
-  // EN: The terms PDF uploaded in Gestão → Provas → Pacotes e regras (design V3: "Termos e condições (PDF)").
-  // PT: O PDF dos termos carregado na gestão; sem PDF, abre a página dos termos.
-  const pdf = (await bridalSettings()).termsUrl;
   return (
     <section className={`page-x ${styles.page}`}>
       <nav aria-label={dict.nav.breadcrumb} className={styles.breadcrumb}>
@@ -44,15 +40,10 @@ export default async function HowToBuyPage({ params }: Props) {
         </h1>
         <p className={styles.muted}>
           {dict.help.intro}{" "}
-          {pdf ? (
-            <a href={pdf} target="_blank" rel="noopener noreferrer" className={styles.link}>
-              {dict.help.termsLink} (PDF)
-            </a>
-          ) : (
-            <Link href={localizePath(locale, "/info/termos")} className={styles.link}>
-              {dict.help.termsLink}
-            </Link>
-          )}
+          {/* EN: The terms are a page of the site, not a PDF (owner 2026-11-06). PT: Os termos são uma página do site. */}
+          <Link href={localizePath(locale, "/info/termos")} className={styles.link}>
+            {dict.help.termsLink}
+          </Link>
           .
         </p>
       </div>

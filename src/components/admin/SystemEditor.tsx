@@ -136,7 +136,7 @@ export function SystemEditor(props: { settings: SystemSettings; editable: boolea
               <div className={c.note}>
                 <Icon name="info" size={16} />
                 <span className={c.small} style={{ flex: 1 }}>
-                  Pacotes (Satin, Silk, Cashmere), valores, vestidos extra, dias, horas e o PDF dos termos editam-se em <b style={{ fontWeight: 500 }}>Provas · Bridal → Pacotes e regras</b>.
+                  Pacotes (Satin, Silk, Cashmere), valores, vestidos extra, dias e horas editam-se em <b style={{ fontWeight: 500 }}>Provas · Bridal → Pacotes e regras</b>.
                 </span>
                 <Link href="/gestao/provas" className={`${c.btn} ${c.xs}`}>
                   Abrir

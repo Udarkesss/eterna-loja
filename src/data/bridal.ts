@@ -35,7 +35,6 @@ export interface BridalSettings {
   companions: number;
   noShowFee: boolean;
   requireTerms: boolean;
-  termsUrl: string | null; // EN: PDF of the terms. PT: PDF dos termos.
 }
 
 export const BRIDAL_DEFAULT: BridalSettings = {
@@ -63,7 +62,6 @@ export const BRIDAL_DEFAULT: BridalSettings = {
   companions: 2,
   noShowFee: true,
   requireTerms: true,
-  termsUrl: null,
 };
 
 /** EN: Price of a fitting: package + extra dresses. PT: Valor da prova: pacote + vestidos extra. */
