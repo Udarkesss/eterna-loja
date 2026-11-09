@@ -50,7 +50,7 @@ export const CONTACTS_DEFAULT: ContactsSettings = {
     { kind: "phone", value: "+258 82 487 6300", label: "Loja", places: ["contacts", "footer"], on: true },
     { kind: "phone", value: "+258 82 487 6330", label: "Showroom Bridal", places: ["contacts", "footer"], on: true },
     { kind: "phone", value: "+258 84 073 3688", label: "WhatsApp", whatsapp: true, places: ["top", "contacts", "footer", "buttons"], on: true },
-    { kind: "email", value: "apoio@eterna.co.mz", label: "Apoio", places: ["contacts", "footer"], on: false },
+    { kind: "email", value: "apoio@eterna.co.mz", label: "Apoio", places: ["contacts", "footer"], on: true },
     { kind: "email", value: "support@eterna.co.mz", label: "Apoio (EN)", places: ["contacts", "footer"], on: false },
   ],
   social: [
