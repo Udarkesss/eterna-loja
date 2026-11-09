@@ -689,9 +689,11 @@
 }
 
 /* ── Noivas ── */
+/* EN: Like the hero: the whole screen below the sticky header (laptops 13"–16" at 100% / 125%, large screens).
+   PT: Como o topo: todo o ecrã abaixo do cabeçalho fixo (portáteis 13"–16" a 100% / 125%, ecrãs grandes). */
 .band {
   position: relative;
-  height: min(36vw, 520px);
+  height: calc(100svh - var(--header-h));
   min-height: 300px;
   overflow: hidden;
   background: #2a2523;
@@ -1739,5 +1741,10 @@
     height: auto;
     aspect-ratio: 16 / 9;
     object-fit: contain;
+  }
+
+  /* EN: The bridal band keeps the video's proportion (no blurred copy to fill). PT: A faixa Noivas mantém a proporção. */
+  .band {
+    height: 56.25vw;
   }
 }
