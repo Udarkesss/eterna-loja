@@ -746,10 +746,10 @@
   width: auto;
 }
 
-/* EN: Each card (photo only) fits the screen below the header: the photo is never taller than the screen minus
-       the header and a small margin (--bridal-text), and its width follows the 3:5 proportion.
-   PT: Cada cartão (só a foto) cabe no ecrã abaixo do cabeçalho: a foto nunca é mais alta que o ecrã menos o
-       cabeçalho e uma pequena margem (--bridal-text), e a largura segue a proporção 3:5. */
+/* EN: Each photo fits whole in the screen below the header (minus a small margin, --bridal-text); its width follows
+       the 3:5 proportion. The texts sit below it and are reached by scrolling (owner 2026-11-10).
+   PT: Cada foto cabe inteira no ecrã abaixo do cabeçalho (menos uma pequena margem, --bridal-text); a largura segue
+       a proporção 3:5. Os textos ficam por baixo e vêem-se ao descer (dona 10-11-2026). */
 .bridalCards {
   --bridal-text: 48px;
   width: 100%;
@@ -778,6 +778,12 @@
 
 .bridalImage img {
   object-fit: cover;
+}
+
+.bridalTitle {
+  font-family: var(--font-serif);
+  font-size: 34px;
+  line-height: 1.12;
 }
 
 
@@ -1437,6 +1443,9 @@
     aspect-ratio: 3 / 5;
   }
 
+  .bridalTitle {
+    font-size: 24px;
+  }
 
   .experience {
     padding-top: 56px;
