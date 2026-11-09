@@ -760,10 +760,12 @@
   color: var(--ink);
 }
 
+/* EN: Frame in the photos' own proportion (3:5, full-length bridal photos), so heads and feet are never cut.
+   PT: Moldura na proporção das fotos (3:5, noivas de corpo inteiro), para a cabeça e os pés nunca ficarem cortados. */
 .bridalImage {
   position: relative;
   display: block;
-  height: 500px;
+  aspect-ratio: 3 / 5;
   overflow: hidden;
   background: var(--alt);
 }
@@ -1201,7 +1203,7 @@
   }
 
   .bridalImage {
-    height: 420px;
+    aspect-ratio: 3 / 5;
   }
 }
 
@@ -1426,7 +1428,7 @@
   }
 
   .bridalImage {
-    height: 340px;
+    aspect-ratio: 3 / 5;
   }
 
   .bridalTitle {
