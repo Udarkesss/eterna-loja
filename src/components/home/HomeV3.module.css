@@ -413,8 +413,7 @@
 .cover {
   position: relative;
   display: block;
-  height: min(52.8vw, 760px);
-  min-height: 420px;
+  height: var(--coll-h);
   overflow: hidden;
   background: var(--alt);
 }
@@ -460,8 +459,11 @@
 }
 
 /* ── Colecção · revelar (computador e tablet) ── */
+/* EN: The cover and the two lines (Party / Business wear) fill the screen below the header, so each panel shows its
+       whole text and buttons on every laptop (owner 2026-11-10). PT: A capa e as duas linhas ocupam o ecrã abaixo do
+       cabeçalho, para cada painel mostrar o texto e os botões inteiros em qualquer portátil (dona 10-11-2026). */
 .stage {
-  --coll-h: max(420px, min(52.8vw, 760px));
+  --coll-h: max(420px, calc(100svh - var(--header-h)));
   position: relative;
 }
 
@@ -492,20 +494,9 @@
   }
 }
 
-@media (min-width: 768px) and (max-width: 1023px) {
-  .duoSticky {
-    top: 60px;
-  }
-
-  .stageMark {
-    scroll-margin-top: 60px;
-  }
-}
-
 .duoPanel {
   position: relative;
-  height: min(52.8vw, 760px);
-  min-height: 420px;
+  height: var(--coll-h);
   overflow: hidden;
   background: var(--alt);
 }
@@ -1780,5 +1771,10 @@
 
   .splitAlt {
     min-height: 460px;
+  }
+
+  /* EN: Collection cover and lines keep their design height on tall screens. PT: Capa e linhas mantêm a altura do design. */
+  .stage {
+    --coll-h: max(420px, min(52.8vw, 760px));
   }
 }
