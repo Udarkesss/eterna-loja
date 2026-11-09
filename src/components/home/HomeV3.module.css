@@ -272,12 +272,12 @@
 }
 
 /* ── Hero / Topo ── */
-/* EN: Never taller than the screen below the top bar (40px) and the header, so the title and button stay visible on
-       laptops (e.g. 14" at 125%: 1536×730). PT: Nunca mais alto que o ecrã abaixo da faixa (40px) e do cabeçalho, para o
-       título e o botão ficarem à vista em portáteis (ex.: 14" a 125%). */
+/* EN: Fills the whole screen below the sticky header, on every screen (the black top bar scrolls away), so there is
+       no white strip and the title and button are always visible. PT: Ocupa todo o ecrã abaixo do cabeçalho fixo, em
+       qualquer ecrã (a faixa preta sai ao descer): sem faixa branca e com o título e o botão sempre à vista. */
 .hero {
   position: relative;
-  height: min(56.25vw, 810px, calc(100svh - var(--header-h) - 40px));
+  height: calc(100svh - var(--header-h));
   min-height: 420px;
   overflow: hidden;
   background: var(--contrast);
@@ -1238,8 +1238,8 @@
   }
 
   .hero {
-    height: 620px;
-    min-height: 0;
+    height: calc(100svh - var(--header-h));
+    min-height: 560px;
   }
 
   .heroBlur {
@@ -1247,7 +1247,9 @@
   }
 
   .heroVideo {
-    top: 96px;
+    /* EN: A little above the middle of the full-height hero. PT: Um pouco acima do meio do topo em altura total. */
+    top: 40%;
+    transform: translateY(-50%);
     bottom: auto;
     height: auto;
     aspect-ratio: 16 / 9;
@@ -1257,7 +1259,8 @@
   .heroText {
     left: 16px;
     right: 16px;
-    bottom: 28px;
+    /* EN: 28px + the black top bar (32px) visible when the page opens. PT: 28px + a faixa preta (32px) ao abrir. */
+    bottom: 60px;
     gap: 12px;
   }
 
@@ -1559,7 +1562,7 @@
 /* ── Hero · slides (V3 "Início — hero em slides") ── */
 .slides {
   position: relative;
-  height: min(52.8vw, 760px, calc(100svh - var(--header-h) - 40px));
+  height: calc(100svh - var(--header-h));
   min-height: 460px;
   overflow: hidden;
   background: var(--alt);
@@ -1677,8 +1680,8 @@
 
 @media (max-width: 767px) {
   .slides {
-    height: 620px;
-    min-height: 0;
+    height: calc(100svh - var(--header-h));
+    min-height: 560px;
   }
 
   .slideText {
@@ -1718,5 +1721,23 @@
   .dash {
     flex: 1;
     width: auto;
+  }
+}
+
+/* EN: Screens taller than wide (portrait tablets): the whole video over its blurred copy, as on phones, instead of
+       cutting its sides. PT: Ecrãs mais altos que largos (tablets ao alto): o vídeo inteiro sobre a cópia desfocada,
+       como no telemóvel, em vez de cortar os lados. */
+@media (min-width: 768px) and (orientation: portrait) {
+  .heroBlur {
+    display: block;
+  }
+
+  .heroVideo {
+    top: 40%;
+    transform: translateY(-50%);
+    bottom: auto;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: contain;
   }
 }

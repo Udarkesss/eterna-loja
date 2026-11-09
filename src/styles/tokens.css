@@ -63,7 +63,21 @@
   /* Layout — EN: design canvas is 1440px wide with 80px margins. PT: canvas de 1440px com margens de 80px. */
   --page-x: clamp(16px, 5.56vw, 80px);
   --section-y: clamp(64px, 6.67vw, 96px);
-  --header-h: 125px;
+  --header-h: 125px; /* EN: sticky header (logo bar + menu). PT: cabeçalho fixo (logótipo + menu). */
+}
+
+/* EN: Header height per breakpoint (Header.module.css): no menu row below 1024px, smaller bar below 768px.
+   PT: Altura do cabeçalho por tamanho de ecrã: sem a linha do menu abaixo de 1024px, barra menor abaixo de 768px. */
+@media (max-width: 1023px) {
+  :root {
+    --header-h: 77px;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --header-h: 61px;
+  }
 }
 
 /* EN: Bridal theme (Noivas sections and pages). PT: Tema Bridal (secções e páginas de Noivas). */
