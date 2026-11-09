@@ -226,13 +226,12 @@ export function Noivas({ data, locale }: { data: BridalData; locale: Locale }) {
         </div>
         <div className={styles.bridalCards}>
           {data.cards.map((c) => (
-            <Link key={c.title} href={resolveHref(c.href, locale)} className={styles.bridalCard}>
+            // EN: Photos only (owner 2026-11-10); the title stays as the link's name for screen readers.
+            // PT: Só as fotos (dona 10-11-2026); o título fica como nome do link para leitores de ecrã.
+            <Link key={c.title} href={resolveHref(c.href, locale)} className={styles.bridalCard} aria-label={c.title}>
               <span className={styles.bridalImage}>
                 <Image src={c.image} alt={c.title} fill sizes="(min-width: 1024px) 33vw, 260px" style={{ objectPosition: c.position }} />
               </span>
-              <span className="eyebrow">{c.eyebrow}</span>
-              <span className={styles.bridalTitle}>{c.title}</span>
-              <span className={styles.ulink}>{c.cta}</span>
             </Link>
           ))}
         </div>
