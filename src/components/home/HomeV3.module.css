@@ -216,6 +216,12 @@
   padding-bottom: 96px;
 }
 
+/* EN: Reached from the menu (#ocasioes, #sobre, #contactos): the title lands ~40px below the header, not 96px.
+   PT: Vindo do menu: o título fica a ~40px do cabeçalho, e não a 96px. */
+.section[id] {
+  scroll-margin-top: calc(var(--header-h) - 56px);
+}
+
 .sectionHead {
   display: flex;
   justify-content: space-between;
@@ -1226,6 +1232,10 @@
   .section {
     padding-top: 56px;
     padding-bottom: 56px;
+  }
+
+  .section[id] {
+    scroll-margin-top: calc(var(--header-h) - 32px);
   }
 
   .sectionHead {

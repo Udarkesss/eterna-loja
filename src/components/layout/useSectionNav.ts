@@ -60,7 +60,10 @@ export function useSectionNav() {
       const el = id ? document.getElementById(id) : null;
       const wrapper = el?.closest<HTMLElement>("[data-reveal]");
       if (wrapper) wrapper.dataset.in = "";
-      const top = el ? pageTop(el) - headerHeight() + 1 : 0;
+      // EN: The section's own scroll-margin-top (CSS) when it has one, so menu clicks and #links land at the same place.
+      // PT: O scroll-margin-top da secção (CSS), para o clique no menu e os links com # pararem no mesmo sítio.
+      const margin = el ? parseFloat(getComputedStyle(el).scrollMarginTop) : 0;
+      const top = el ? pageTop(el) - (margin > 0 ? margin : headerHeight()) + 1 : 0;
       window.scrollTo({ top, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
       window.history.replaceState(null, "", id ? `#${id}` : window.location.pathname);
     },

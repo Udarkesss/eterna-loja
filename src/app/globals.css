@@ -23,14 +23,9 @@ html {
 }
 
 /* EN: Home sections reached from the menu land below the sticky header. PT: As secções ficam por baixo do cabeçalho. */
+/* EN: --header-h follows the header on each screen size (tokens.css). PT: --header-h acompanha o cabeçalho em cada ecrã. */
 main section[id] {
   scroll-margin-top: var(--header-h);
-}
-
-@media (max-width: 1023px) {
-  main section[id] {
-    scroll-margin-top: 60px;
-  }
 }
 
 /* ── Scroll effects of design V3 (src/components/layout/Effects.tsx) / Efeitos de scroll do V3 ── */
