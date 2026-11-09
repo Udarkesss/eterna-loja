@@ -876,15 +876,16 @@
 }
 
 /* ── Acessórios / Modeladores ── */
+/* EN: Each one fills the screen below the sticky header, like the hero and Noivas (min-height: longer text still fits).
+   PT: Cada uma ocupa o ecrã abaixo do cabeçalho fixo, como o topo e as Noivas (altura mínima: texto maior ainda cabe). */
 .split {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  min-height: 560px;
+  min-height: calc(100svh - var(--header-h));
 }
 
 .splitAlt {
   background: var(--alt);
-  min-height: 460px;
 }
 
 .splitImage {
@@ -1746,5 +1747,14 @@
   /* EN: The bridal band keeps the video's proportion (no blurred copy to fill). PT: A faixa Noivas mantém a proporção. */
   .band {
     height: 56.25vw;
+  }
+
+  /* EN: Side-by-side halves keep their design height on tall screens. PT: As metades lado a lado mantêm a altura do design. */
+  .split {
+    min-height: 560px;
+  }
+
+  .splitAlt {
+    min-height: 460px;
   }
 }
