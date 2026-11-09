@@ -272,9 +272,12 @@
 }
 
 /* ── Hero / Topo ── */
+/* EN: Never taller than the screen below the top bar (40px) and the header, so the title and button stay visible on
+       laptops (e.g. 14" at 125%: 1536×730). PT: Nunca mais alto que o ecrã abaixo da faixa (40px) e do cabeçalho, para o
+       título e o botão ficarem à vista em portáteis (ex.: 14" a 125%). */
 .hero {
   position: relative;
-  height: min(56.25vw, 810px);
+  height: min(56.25vw, 810px, calc(100svh - var(--header-h) - 40px));
   min-height: 420px;
   overflow: hidden;
   background: var(--contrast);
@@ -1556,7 +1559,7 @@
 /* ── Hero · slides (V3 "Início — hero em slides") ── */
 .slides {
   position: relative;
-  height: min(52.8vw, 760px);
+  height: min(52.8vw, 760px, calc(100svh - var(--header-h) - 40px));
   min-height: 460px;
   overflow: hidden;
   background: var(--alt);
