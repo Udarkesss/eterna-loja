@@ -227,12 +227,16 @@ export function Noivas({ data, locale }: { data: BridalData; locale: Locale }) {
         <div className={styles.bridalCards}>
           {data.cards.map((c) => (
             <Link key={c.title} href={resolveHref(c.href, locale)} className={styles.bridalCard}>
+              {/* EN: Texts over the lower part of the photo (owner 2026-11-13). PT: Textos sobre a parte de baixo da foto. */}
               <span className={styles.bridalImage}>
                 <Image src={c.image} alt={c.title} fill sizes="(min-width: 1024px) 33vw, 260px" style={{ objectPosition: c.position }} />
+                <span className={styles.bridalScrim} aria-hidden="true" />
+                <span className={styles.bridalText}>
+                  <span className={styles.eyebrowLight}>{c.eyebrow}</span>
+                  <span className={styles.bridalTitle}>{c.title}</span>
+                  <span className={`${styles.ulink} ${styles.bridalCta}`}>{c.cta}</span>
+                </span>
               </span>
-              <span className="eyebrow">{c.eyebrow}</span>
-              <span className={styles.bridalTitle}>{c.title}</span>
-              <span className={styles.ulink}>{c.cta}</span>
             </Link>
           ))}
         </div>

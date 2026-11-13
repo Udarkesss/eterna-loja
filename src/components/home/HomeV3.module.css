@@ -738,9 +738,9 @@
 }
 
 /* EN: Each photo fits whole in the screen below the header (minus a small margin, --bridal-text); its width follows
-       the 3:5 proportion. The texts sit below it and are reached by scrolling (owner 2026-11-10).
+       the 3:5 proportion. The texts sit over its lower part (owner 2026-11-13).
    PT: Cada foto cabe inteira no ecrã abaixo do cabeçalho (menos uma pequena margem, --bridal-text); a largura segue
-       a proporção 3:5. Os textos ficam por baixo e vêem-se ao descer (dona 10-11-2026). */
+       a proporção 3:5. Os textos ficam sobre a parte de baixo da foto (dona 13-11-2026). */
 .bridalCards {
   --bridal-text: 48px;
   width: 100%;
@@ -769,12 +769,81 @@
 
 .bridalImage img {
   object-fit: cover;
+  transition: transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* EN: Texts over the photo's lower part, on a dark gradient. On hover (computer): the photo zooms in slowly, the
+       gradient deepens, the texts rise a little and the link appears. On touch screens the link is always shown.
+   PT: Textos sobre a parte de baixo da foto, num degradê escuro. Ao passar o rato: a foto aproxima devagar, o
+       degradê escurece, os textos sobem um pouco e a ligação aparece. Em ecrãs de toque a ligação está sempre à vista. */
+.bridalScrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(28, 25, 23, 0) 45%, rgba(28, 25, 23, 0.68) 100%);
+  transition: opacity 0.5s ease;
+}
+
+.bridalScrim::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(28, 25, 23, 0) 25%, rgba(28, 25, 23, 0.82) 100%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.bridalText {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: var(--on-contrast);
+  transform: translateY(28px);
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 .bridalTitle {
   font-family: var(--font-serif);
-  font-size: 34px;
+  font-size: 30px;
   line-height: 1.12;
+}
+
+.bridalCta {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.bridalCard:hover .bridalImage img,
+.bridalCard:focus-visible .bridalImage img {
+  transform: scale(1.05);
+}
+
+.bridalCard:hover .bridalScrim::after,
+.bridalCard:focus-visible .bridalScrim::after {
+  opacity: 1;
+}
+
+.bridalCard:hover .bridalText,
+.bridalCard:focus-visible .bridalText {
+  transform: none;
+}
+
+.bridalCard:hover .bridalCta,
+.bridalCard:focus-visible .bridalCta {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .bridalText {
+    transform: none;
+  }
+
+  .bridalCta {
+    opacity: 1;
+  }
 }
 
 
@@ -1435,7 +1504,14 @@
   }
 
   .bridalTitle {
-    font-size: 24px;
+    font-size: 22px;
+  }
+
+  .bridalText {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    gap: 8px;
   }
 
   .experience {
