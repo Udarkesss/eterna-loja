@@ -7,7 +7,6 @@ import { useCustomer } from "@/components/account/CustomerProvider";
 import { useCart } from "@/components/cart/CartProvider";
 import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 import { Icon } from "@/components/ui/Icon";
-import { whatsappLink } from "@/data/site";
 import { t } from "@/i18n";
 import { useI18n } from "@/i18n/I18nProvider";
 import { api } from "@/lib/api-client";
@@ -63,7 +62,6 @@ export function ProductDetail({ product, eyebrow, badge, reserve, children }: { 
   const allSizes = sortSizes([...new Set(product.variants.map((v) => v.size))]);
   const [variantId, setVariantId] = useState<string | null>(inColor.find((v) => v.stock > 0)?.id ?? null);
   const [imageIndex, setImageIndex] = useState(0);
-  const [added, setAdded] = useState(false);
 
   const images = useMemo(() => {
     const forColor = product.images.filter((i) => !color || i.color === color || i.color === null);
@@ -79,7 +77,6 @@ export function ProductDetail({ product, eyebrow, badge, reserve, children }: { 
   function chooseColor(key: string) {
     setColor(key);
     setImageIndex(0);
-    setAdded(false);
     const first = product.variants.find((v) => v.color === key && v.stock > 0);
     setVariantId(first?.id ?? null);
   }
@@ -87,10 +84,10 @@ export function ProductDetail({ product, eyebrow, badge, reserve, children }: { 
   function handleAdd() {
     if (!selected || selected.stock <= 0) return;
     add({ slug: product.slug, variantId: selected.id, quantity: 1 });
-    setAdded(true);
   }
 
-  const addLabel = soldOut ? dict.product.soldOut : added ? t(dict.product.addedButton, { price: formatMZN(price, locale) }) : selected ? dict.product.addToCart : dict.product.chooseSize;
+  // EN: Adding opens the quick cart (design V3); the button keeps its text. PT: Adicionar abre o carrinho rápido; o botão mantém o texto.
+  const addLabel = soldOut ? dict.product.soldOut : selected ? dict.product.addToCart : dict.product.chooseSize;
   const canAdd = !soldOut && !!selected && selected.stock > 0;
   // EN: "Reservar · 6 412,50 MT" (design V3): deposit of the final price; 60 days for Bridal pieces (Loja 22).
   // PT: "Reservar · 6 412,50 MT" (V3): sinal do preço final; 60 dias nas peças da Bridal (Loja 22).
@@ -102,7 +99,8 @@ export function ProductDetail({ product, eyebrow, badge, reserve, children }: { 
   return (
     <section className={`page-x ${styles.layout}`}>
       <div className={styles.gallery}>
-        {images.length > 1 && (
+        {/* EN: Thumbnails even with one photo (design V3-Produto: "Fotos de Preto · 1"). PT: Miniaturas mesmo com uma foto. */}
+        {images.length > 0 && (
           <div className={styles.thumbs}>
             {images.map((img, i) => (
               <button
@@ -113,7 +111,7 @@ export function ProductDetail({ product, eyebrow, badge, reserve, children }: { 
                 aria-pressed={i === imageIndex}
                 onClick={() => setImageIndex(i)}
               >
-                <Image src={img.url} alt="" fill sizes="96px" className={styles.cover} />
+                <Image src={img.url} alt="" fill sizes="96px" loading="eager" className={styles.cover} />
               </button>
             ))}
             {colorName && (
@@ -126,7 +124,7 @@ export function ProductDetail({ product, eyebrow, badge, reserve, children }: { 
           </div>
         )}
         <div className={styles.main}>
-          {main && <Image src={main.url} alt={main.alt} fill priority sizes="(min-width: 1024px) 620px, 100vw" className={styles.coverTop} />}
+          {main && <Image src={main.url} alt={main.alt} fill priority sizes="(min-width: 1024px) 50vw, 100vw" className={styles.coverTop} />}
           {badge && <span className={styles.badge}>{badge}</span>}
           {colorName && <span className={styles.colorBadge}>{t(dict.product.colorBadge, { color: colorName })}</span>}
         </div>
@@ -207,7 +205,6 @@ export function ProductDetail({ product, eyebrow, badge, reserve, children }: { 
                   onClick={() => {
                     if (!v) return;
                     setVariantId(v.id);
-                    setAdded(false);
                   }}
                 >
                   <b>{p.letter === "Único" ? dict.product.oneSize : p.letter}</b>
@@ -219,13 +216,11 @@ export function ProductDetail({ product, eyebrow, badge, reserve, children }: { 
           {/* EN: Stock of the chosen size (design V3). PT: Stock do tamanho escolhido (V3). */}
           {selected && selected.stock > 0 && (
             <span className={styles.stock} data-last={selected.stock === 1 ? "" : undefined}>
+              <Icon name={selected.stock === 1 ? "alert" : "check"} size={16} />
               {selected.stock === 1 ? dict.product.lastOne : dict.product.available}
             </span>
           )}
           {struck && <span className={styles.note}>{dict.product.sizesStruck}</span>}
-          <a href={whatsappLink(t(dict.product.otherSizeMessage, { code: product.code }))} target="_blank" rel="noopener noreferrer" className={styles.otherSize}>
-            {dict.product.otherSize}
-          </a>
         </div>
 
         <div className={styles.actions}>
@@ -246,15 +241,6 @@ export function ProductDetail({ product, eyebrow, badge, reserve, children }: { 
             )}
             <FavoriteButton slug={product.slug} code={product.code} variant="square" />
           </div>
-          {added && (
-            <div role="status" className={styles.added}>
-              <Icon name="check" size={18} />
-              <span className={styles.grow}>{dict.product.added}</span>
-              <Link href={href("/cart")} className={styles.addedLink}>
-                {dict.product.viewCartPay}
-              </Link>
-            </div>
-          )}
         </div>
 
         {children}
