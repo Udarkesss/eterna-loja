@@ -523,28 +523,36 @@
   line-height: 1.12;
 }
 
-/* EN: The button shows only on hover: it rises from below into its place and goes back down when the mouse leaves;
-       its place is kept, so the texts never move. Touch screens always show it.
-   PT: O botão só aparece ao passar o rato: sobe de baixo para o seu lugar e volta a descer quando o rato sai; o lugar
-       fica reservado, por isso os textos nunca se mexem. Em ecrãs de toque está sempre à vista. */
+/* EN: At rest the texts sit low, with no empty space for the button (owner 2026-11-13). On hover the button rises
+       from below and the texts lift just enough to make room; when the mouse leaves it goes back down. Touch screens
+       always show it.
+   PT: Em repouso os textos ficam em baixo, sem espaço vazio para o botão (dona 13-11-2026). Ao passar o rato o botão
+       sobe de baixo e os textos sobem só o necessário para lhe dar lugar; quando o rato sai, volta a descer. Em ecrãs
+       de toque está sempre à vista. */
 .duoLinks {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 6px;
+  max-height: 0;
+  margin-top: -12px;
   opacity: 0;
-  transform: translateY(18px);
-  transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transform: translateY(24px);
+  transition: max-height 0.5s cubic-bezier(0.2, 0.7, 0.2, 1), margin-top 0.5s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.4s ease,
+    transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 .duoPanel:hover .duoLinks,
 .duoPanel:focus-within .duoLinks {
+  max-height: 60px;
+  margin-top: 6px;
   opacity: 1;
   transform: none;
 }
 
 @media (hover: none) {
   .duoLinks {
+    max-height: none;
+    margin-top: 6px;
     opacity: 1;
     transform: none;
   }

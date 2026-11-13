@@ -130,7 +130,7 @@ export const homeSections: SectionSeed[] = [
           image: V3("s-festa"),
           position: "center 22%",
           links: [
-            { label: L("Novidades", "New in"), href: "category:essenza?linha=roupa-de-festa" },
+            { label: L("Ver a colecção", "View the collection"), href: "category:essenza?linha=roupa-de-festa" },
             { label: L("Vestidos de festa", "Party dresses"), href: "category:roupa-de-festa" },
           ],
         },
@@ -140,7 +140,7 @@ export const homeSections: SectionSeed[] = [
           image: V3("t-blazers"),
           position: "center 0%",
           links: [
-            { label: L("Novidades", "New in"), href: "category:essenza?linha=roupa-executiva" },
+            { label: L("Ver a colecção", "View the collection"), href: "category:essenza?linha=roupa-executiva" },
             { label: L("Fatos e blazers", "Suits and blazers"), href: "category:roupa-executiva" },
           ],
         },
