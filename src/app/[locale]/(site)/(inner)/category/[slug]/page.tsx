@@ -64,10 +64,10 @@ export default async function CategoryPage({ params, searchParams }: Props) {
         {shown.types && <TypeBar tiles={listing.tiles} label={dict.catalog.types} />}
       </section>
 
-      <CategoryToolbar total={listing.filtered.length} />
+      <CategoryToolbar total={listing.filtered.length} types={listing.types} />
 
       <section className={`page-x ${styles.body}`}>
-        <CategoryFilters color={shown.color} price={shown.price} reserved={shown.reserved !== false} />
+        <CategoryFilters types={listing.types} color={shown.color} price={shown.price} reserved={shown.reserved !== false} />
         <div className={styles.results}>
           <Results listing={listing} locale={locale} columns={3} />
           <div className={styles.phoneHelp}>

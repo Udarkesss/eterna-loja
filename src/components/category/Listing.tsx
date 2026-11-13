@@ -108,12 +108,14 @@ export async function loadListing(source: ListingSource, query: Query, locale: L
       return { href: typeLink(s), label: c?.name ?? s, images: photo ? [photo] : [], current: type === s };
     }),
   ];
+  // EN: The types with pieces here, for the side filter "Tipo de peça". PT: Os tipos com peças aqui, para o filtro lateral.
+  const typeOptions = [...byType.keys()].map((s, i) => ({ slug: s, label: typeCats[i]?.name ?? s }));
   const moreLink = () => {
     const q = new URLSearchParams(Object.entries(query).filter((e): e is [string, string] => typeof e[1] === "string"));
     q.set("n", String(shown + PAGE_SIZE));
     return link(q);
   };
-  return { all, filtered, shown, tiles, moreLink, showPrice };
+  return { all, filtered, shown, tiles, types: typeOptions, moreLink, showPrice };
 }
 
 /**

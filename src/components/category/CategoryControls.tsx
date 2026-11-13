@@ -26,13 +26,21 @@ const COLOR_ORDER: ColorFamily[] = ["black", "off_white", "beige", "fuchsia", "r
 
 const SORT_KEYS = ["recommended", "newest", "price_asc", "price_desc"] as const;
 
+/** EN: A garment type with pieces in this list. PT: Um tipo de peça com peças nesta lista. */
+export interface TypeOption {
+  slug: string;
+  label: string;
+}
+
+const CLEAR = { size: null, color: null, price: null, sale: null, type: null };
+
 /**
  * EN: Bar above the grid (design V3): "Filtros" + active filters + "Limpar tudo" · count · "Ordenar". On phones:
  *     "Filtrar" (opens the filters as a full-screen panel) and the sort button.
  * PT: Barra por cima da grelha: "Filtros" + filtros activos · contagem · "Ordenar". No telemóvel: "Filtrar" (abre os
  *     filtros em ecrã inteiro) e o botão de ordenar.
  */
-export function CategoryToolbar({ total, inline = false }: { total: number; inline?: boolean }) {
+export function CategoryToolbar({ total, inline = false, types = [] }: { total: number; inline?: boolean; types?: TypeOption[] }) {
   const { dict } = useI18n();
   const { values, update, toggle, params } = useFilterParams();
   const [open, setOpen] = useState(false);
@@ -40,7 +48,9 @@ export function CategoryToolbar({ total, inline = false }: { total: number; inli
   const colors = values("color") as ColorFamily[];
   const prices = values("price") as PriceRange[];
   const sale = params.get("sale") === "1";
+  const type = types.find((x) => x.slug === params.get("type"));
   const chips = [
+    ...(type ? [{ key: "type", value: type.slug, label: type.label }] : []),
     ...sizes.map((s) => ({ key: "size", value: s, label: s })),
     ...colors.map((c) => ({ key: "color", value: c, label: dict.catalog.colors[c] ?? c })),
     ...prices.map((p) => ({ key: "price", value: p, label: dict.catalog.priceRanges[p] ?? p })),
@@ -87,7 +97,7 @@ export function CategoryToolbar({ total, inline = false }: { total: number; inli
                 key={`${c.key}-${c.value}`}
                 type="button"
                 className={styles.activeChip}
-                onClick={() => (c.key === "sale" ? update({ sale: null }) : toggle(c.key, c.value))}
+                onClick={() => (c.key === "sale" || c.key === "type" ? update({ [c.key]: null }) : toggle(c.key, c.value))}
                 aria-label={t(dict.catalog.removeFilter, { name: c.label })}
               >
                 {c.label}
@@ -95,7 +105,7 @@ export function CategoryToolbar({ total, inline = false }: { total: number; inli
               </button>
             ))}
             {chips.length > 0 && (
-              <button type="button" className={styles.clear} onClick={() => update({ size: null, color: null, price: null, sale: null })}>
+              <button type="button" className={styles.clear} onClick={() => update(CLEAR)}>
                 {dict.catalog.clearAll}
               </button>
             )}
@@ -132,9 +142,9 @@ export function CategoryToolbar({ total, inline = false }: { total: number; inli
               <Icon name="close" size={22} />
             </button>
           </div>
-          <CategoryFilters inSheet />
+          <CategoryFilters inSheet types={types} />
           <div className={styles.sheetBottom}>
-            <button type="button" className={styles.clear} onClick={() => update({ size: null, color: null, price: null, sale: null })}>
+            <button type="button" className={styles.clear} onClick={() => update(CLEAR)}>
               {dict.catalog.clearAll}
             </button>
             <button type="button" className={styles.sheetApply} onClick={() => setOpen(false)}>
@@ -148,21 +158,52 @@ export function CategoryToolbar({ total, inline = false }: { total: number; inli
 }
 
 /**
- * EN: Side filters of design V3: Tamanho (letters + size guide) · Cor (8 swatches with names) · Preço · Disponibilidade
+ * EN: Side filters of design V3: Tipo de peça (when there are 2 or more types) · Tamanho (letters + size guide) · Cor (8 swatches with names) · Preço · Disponibilidade
  *     ("em campanha") · "Não encontra o que procura?" with WhatsApp.
  * PT: Filtros laterais do V3: Tamanho (letras + guia) · Cor (8 amostras com nome) · Preço · Disponibilidade · "Não
  *     encontra o que procura?" com WhatsApp.
  */
-export function CategoryFilters({ inSheet = false, color = true, price = true, reserved = true }: { inSheet?: boolean; color?: boolean; price?: boolean; reserved?: boolean }) {
+export function CategoryFilters({
+  inSheet = false,
+  types = [],
+  color = true,
+  price = true,
+  reserved = true,
+}: {
+  inSheet?: boolean;
+  types?: TypeOption[];
+  color?: boolean;
+  price?: boolean;
+  reserved?: boolean;
+}) {
   const { dict } = useI18n();
   return (
     <aside aria-label={dict.catalog.filters} className={inSheet ? styles.sheetBody : styles.aside}>
+      {types.length > 1 && <TypeFilter types={types} />}
       <SizeFilter />
       {color && <ColorFilter />}
       {price && <PriceFilter />}
       <SaleFilter reserved={reserved} />
       {!inSheet && <HelpBox />}
     </aside>
+  );
+}
+
+/** EN: One garment type at a time (same as the round type bar). PT: Um tipo de cada vez (igual à barra redonda de tipos). */
+export function TypeFilter({ types }: { types: TypeOption[] }) {
+  const { dict } = useI18n();
+  const { update, params } = useFilterParams();
+  const current = params.get("type");
+  return (
+    <fieldset className={styles.fieldset}>
+      <legend className={styles.legend}>{dict.catalog.types}</legend>
+      {types.map((x) => (
+        <label key={x.slug} className={styles.check}>
+          <input type="checkbox" checked={current === x.slug} onChange={() => update({ type: current === x.slug ? null : x.slug })} />
+          {x.label}
+        </label>
+      ))}
+    </fieldset>
   );
 }
 
@@ -307,7 +348,7 @@ export function CategoryEmpty() {
     <div role="status" className={styles.empty}>
       <span className={styles.emptyTitle}>{dict.catalog.emptyTitle}</span>
       <span className={styles.emptyBody}>{dict.catalog.emptyBody}</span>
-      <button type="button" className={styles.emptyButton} onClick={() => update({ size: null, color: null, price: null, sale: null, type: null })}>
+      <button type="button" className={styles.emptyButton} onClick={() => update(CLEAR)}>
         {dict.catalog.clearFilters}
       </button>
     </div>

@@ -209,12 +209,41 @@
   align-items: start;
 }
 
+/* EN: The side filters scroll on their own when taller than the screen (the page keeps scrolling the pieces), with a
+       thin brand scrollbar: a hairline track and a champagne thumb that turns darker on hover.
+   PT: Os filtros laterais têm scroll próprio quando são mais altos que o ecrã (a página continua a descer as peças),
+       com uma scrollbar fina da marca: um fio como calha e um cursor champanhe que escurece ao passar o rato. */
 .aside {
   display: flex;
   flex-direction: column;
   gap: 28px;
   position: sticky;
-  top: 140px;
+  top: calc(var(--header-h) + 16px);
+  max-height: calc(100svh - var(--header-h) - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin-right: -16px;
+  padding-right: 16px;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--champagne) transparent;
+}
+
+.aside::-webkit-scrollbar {
+  width: 6px;
+}
+
+.aside::-webkit-scrollbar-track {
+  background: linear-gradient(var(--line), var(--line)) center / 1px 100% no-repeat;
+}
+
+.aside::-webkit-scrollbar-thumb {
+  background: var(--champagne);
+  border-radius: 999px;
+}
+
+.aside::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-ink);
 }
 
 .fieldset {
