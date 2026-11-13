@@ -50,7 +50,9 @@ const actor = (s: StaffContext) => ({ type: "staff" as const, id: s.id, name: s.
 export async function listSections(page: "home" | "info") {
   const db = await getDb();
   const rows = await db.select().from(contentSections).where(eq(contentSections.page, page)).orderBy(asc(contentSections.position));
-  if (page === "home") return rows;
+  // EN: The announcement bar always offers its mode (data saved before 2026-11-13 has none: "fixed").
+  // PT: A barra de anúncio mostra sempre o modo (dados guardados antes de 13-11-2026 não o têm: "fixed").
+  if (page === "home") return rows.map((r) => (r.key === "announcement" && !("mode" in r.data) ? { ...r, data: { mode: "fixed", ...r.data } } : r));
   // EN: Info pages that were never edited appear empty. PT: Páginas nunca editadas aparecem vazias.
   return [...infoPages, ...legalPages].map(
     (slug, position) =>

@@ -8,9 +8,12 @@ import { siteCampaign } from "@/server/campaigns";
 import { activeSeason } from "@/server/seasons";
 import { getSection } from "@/server/content";
 import type { Locale } from "@/types";
+import { AutoHideBar } from "./AutoHideBar";
 import styles from "./AnnouncementBar.module.css";
 
 interface AnnouncementData {
+  /** EN: fixed (default) · auto (hides going down, returns going up) · off. PT: fixa · esconde ao descer · desligada. */
+  mode?: "fixed" | "auto" | "off";
   messages: string[];
   startsAt: string | null;
   endsAt: string | null;
@@ -23,6 +26,14 @@ interface AnnouncementData {
  *     opcionais para campanhas como Saldos). No telemóvel aparece só a primeira, como no design.
  */
 export async function AnnouncementBar({ locale }: { locale: Locale }) {
+  const data = await getSection<AnnouncementData>("home", "announcement", locale);
+  const mode = data?.mode ?? "fixed";
+  if (mode === "off") return null;
+  const bar = await content(locale, data);
+  return bar && mode === "auto" ? <AutoHideBar>{bar}</AutoHideBar> : bar;
+}
+
+async function content(locale: Locale, data: AnnouncementData | null) {
   // EN: A running campaign takes the bar (design V3: "Black Friday · até −30% … · Ver campanha"). PT: A campanha ocupa a faixa.
   const campaign = await siteCampaign(locale);
   if (campaign?.topBar) {
@@ -76,7 +87,6 @@ export async function AnnouncementBar({ locale }: { locale: Locale }) {
       </div>
     );
   }
-  const data = await getSection<AnnouncementData>("home", "announcement", locale);
   if (!data?.messages?.length) return null;
   const now = Date.now();
   if ((data.startsAt && Date.parse(data.startsAt) > now) || (data.endsAt && Date.parse(data.endsAt) < now)) return null;

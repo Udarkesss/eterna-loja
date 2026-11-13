@@ -18,6 +18,21 @@
   color: var(--champagne);
 }
 
+/* EN: "auto" mode (AutoHideBar.tsx): floats over the page and slides up when hidden.
+   PT: Modo "auto": flutua sobre a página e sobe quando se esconde. */
+.auto {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 25;
+  transition: transform 0.3s ease;
+}
+
+.autoHidden {
+  transform: translateY(-100%);
+}
+
 @media (max-width: 767px) {
   .bar {
     min-height: 32px;

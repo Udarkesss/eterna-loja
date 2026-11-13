@@ -70,6 +70,9 @@ export const homeSections: SectionSeed[] = [
   {
     key: "announcement",
     data: {
+      // EN: fixed = above the header, scrolls away · auto = over the page, hides going down and returns going up · off.
+      // PT: fixed = por cima do cabeçalho, sai ao descer · auto = sobre a página, esconde ao descer e volta ao subir · off.
+      mode: "fixed",
       messages: [
         L("Cartão, M-Pesa, e-Mola ou mKesh", "Card, M-Pesa, e-Mola or mKesh"),
         L("Glória Mall · loja e showroom Bridal", "Glória Mall · store and Bridal showroom"),

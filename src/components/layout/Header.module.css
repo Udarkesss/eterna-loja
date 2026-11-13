@@ -2,7 +2,9 @@
 
 .header {
   position: sticky;
-  top: 0;
+  /* EN: Below the announcement bar while it shows in "auto" mode (AutoHideBar). PT: Debaixo da barra no modo "auto". */
+  top: var(--ann-offset, 0px);
+  transition: top 0.3s ease;
   z-index: 20;
   background: var(--surface);
   border-bottom: 1px solid var(--line);

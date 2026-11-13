@@ -29,6 +29,7 @@ const LABELS: Record<string, string> = {
   alt: "Texto alternativo",
   badge: "Selo sobre a imagem",
   messages: "Mensagens",
+  mode: "Comportamento da barra",
   startsAt: "Mostrar a partir de",
   endsAt: "Até",
   cards: "Cartões",
@@ -102,6 +103,15 @@ const HIDDEN = new Set([
   "reveal",
   "scrollbar",
 ]);
+
+// EN: Fields with a fixed set of choices (shown as a list). PT: Campos com escolhas fixas (lista).
+const CHOICES: Record<string, [string, string][]> = {
+  mode: [
+    ["fixed", "Fixa: em cima do cabeçalho, sai ao descer a página (actual)"],
+    ["auto", "Esconde ao descer e volta ao subir (por cima da página, sem a aumentar)"],
+    ["off", "Desligada (nunca aparece, nem com campanhas ou épocas)"],
+  ],
+};
 
 type Json = unknown;
 const isLocalized = (v: Json): v is { pt: string; en: string } =>
@@ -190,6 +200,21 @@ export function FieldEditor({ name, value, onChange }: { name: string; value: Js
       <label className={s.check}>
         <input type="checkbox" checked={value} onChange={() => onChange(!value)} />
         {label(name)}
+      </label>
+    );
+  }
+
+  if (CHOICES[name] && typeof value === "string") {
+    return (
+      <label className={s.label}>
+        {label(name)}
+        <select className={s.input} value={value} onChange={(e) => onChange(e.target.value)}>
+          {CHOICES[name].map(([v, text]) => (
+            <option key={v} value={v}>
+              {text}
+            </option>
+          ))}
+        </select>
       </label>
     );
   }
