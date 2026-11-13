@@ -9,13 +9,32 @@
   align-items: start;
 }
 
+/* EN: Computers (design V3-Produto: photo + 480px information column, gap 72px). The photo is never taller than the
+       screen below the header (max 860px as in the design) and keeps 3:4, so the whole piece is seen without
+       scrolling; the block is centred on wide screens.
+   PT: Computador (V3-Produto: foto + coluna de informação de 480px, espaço 72px). A foto nunca é mais alta que o ecrã
+       abaixo do cabeçalho (máx. 860px como no design) e mantém 3:4, para a peça se ver inteira sem descer; o bloco fica
+       centrado em ecrãs largos. */
+@media (min-width: 1280px) {
+  .layout {
+    grid-template-columns: auto 480px;
+    justify-content: center;
+  }
+
+  .main {
+    height: min(860px, calc(100svh - var(--header-h) - 48px));
+    width: auto;
+    aspect-ratio: 3 / 4;
+  }
+}
+
 /* ── Gallery / Galeria ── */
 .gallery {
   display: grid;
   grid-template-columns: 96px minmax(0, 1fr);
   gap: 16px;
   position: sticky;
-  top: 140px;
+  top: calc(var(--header-h) + 24px);
 }
 
 .thumbs {
@@ -98,7 +117,7 @@
 .info {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 26px;
 }
 
 .titles {
@@ -286,7 +305,14 @@
 .actions {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+}
+
+/* EN: Full-height button in the column (flex: 1 squashed it to the text, e.g. "Adicionado · …"). PT: Botão com a
+   altura certa na coluna (o flex: 1 esmagava-o à altura do texto, ex.: "Adicionado · …"). */
+.actions > .add {
+  flex: none;
+  height: 56px;
 }
 
 .actionRow {
