@@ -31,7 +31,9 @@ export function AutoHideBar({ children }: { children: ReactNode }) {
   useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty("--ann-offset", shown ? `${ref.current?.offsetHeight ?? 0}px` : "0px");
-    return () => root.style.removeProperty("--ann-offset");
+    return () => {
+      root.style.removeProperty("--ann-offset");
+    };
   }, [shown]);
 
   return (
