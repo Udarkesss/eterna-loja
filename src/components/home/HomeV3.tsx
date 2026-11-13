@@ -232,8 +232,8 @@ export function Noivas({ data, locale }: { data: BridalData; locale: Locale }) {
                 <Image src={c.image} alt={c.title} fill sizes="(min-width: 1024px) 33vw, 260px" style={{ objectPosition: c.position }} />
                 <span className={styles.bridalScrim} aria-hidden="true" />
                 <span className={styles.bridalText}>
-                  <span className={styles.eyebrowLight}>{c.eyebrow}</span>
                   <span className={styles.bridalTitle}>{c.title}</span>
+                  <span className={`${styles.eyebrowLight} ${styles.bridalDesc}`}>{c.eyebrow}</span>
                   <span className={`${styles.ulink} ${styles.bridalCta}`}>{c.cta}</span>
                 </span>
               </span>
