@@ -800,14 +800,10 @@
   transition: transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-/* EN: Texts over the photo's lower part, on a dark gradient: title, description, link, in a block of the same
-       height on the three cards (titles on one line, links on one line). On hover: the photo zooms in slowly, the
-       gradient deepens and the link appears (its place is kept, so
-       nothing moves). On touch screens the link is always shown.
-   PT: Textos sobre a parte de baixo da foto, num degradê escuro: título, descrição e ligação, num bloco com a mesma
-       altura nos três cartões (títulos alinhados, ligações alinhadas). Ao passar o rato: a foto aproxima devagar, o
-       degradê escurece e a ligação aparece (o lugar
-       dela fica reservado, nada se mexe). Em ecrãs de toque a ligação está sempre à vista. */
+/* EN: Texts over the photo's lower part, on a dark gradient: title, description and (on hover) the link. On hover
+       the photo zooms in slowly and the gradient deepens. On touch screens the link is always shown.
+   PT: Textos sobre a parte de baixo da foto, num degradê escuro: título, descrição e (ao passar o rato) a ligação. Ao
+       passar o rato a foto aproxima devagar e o degradê escurece. Em ecrãs de toque a ligação está sempre à vista. */
 .bridalScrim {
   position: absolute;
   inset: 0;
@@ -829,7 +825,6 @@
   left: 24px;
   right: 24px;
   bottom: 24px;
-  height: 128px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -842,18 +837,25 @@
   line-height: 1.12;
 }
 
+/* EN: Two lines always, so the titles of the three cards stay aligned. PT: Sempre duas linhas, títulos alinhados. */
 .bridalDesc {
+  min-height: 32px;
   opacity: 0.92;
 }
 
+/* EN: Same as the Festa / Executiva panels: at rest the texts sit low with no empty space; on hover the link rises
+       from below and the texts lift just enough. PT: Igual aos painéis Festa / Executiva: em repouso os textos ficam em
+       baixo sem espaço vazio; ao passar o rato a ligação sobe de baixo e os textos sobem só o necessário. */
 .bridalCta {
-  margin-top: auto;
+  max-height: 0;
+  margin-top: -10px;
   color: var(--on-contrast);
   border-bottom-color: transparent;
   background: linear-gradient(currentColor, currentColor) left bottom / 40% 1px no-repeat;
   opacity: 0;
-  transform: translateY(14px);
-  transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1), background-size 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transform: translateY(20px);
+  transition: max-height 0.5s cubic-bezier(0.2, 0.7, 0.2, 1), margin-top 0.5s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.4s ease,
+    transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1), background-size 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 .bridalCard:hover .bridalImage img,
@@ -868,6 +870,8 @@
 
 .bridalCard:hover .bridalCta,
 .bridalCard:focus-visible .bridalCta {
+  max-height: 40px;
+  margin-top: 6px;
   opacity: 1;
   transform: none;
   background-size: 100% 1px;
@@ -875,6 +879,8 @@
 
 @media (hover: none) {
   .bridalCta {
+    max-height: none;
+    margin-top: 6px;
     opacity: 1;
     transform: none;
     background-size: 100% 1px;
@@ -1546,7 +1552,6 @@
     left: 16px;
     right: 16px;
     bottom: 16px;
-    height: 104px;
     gap: 8px;
   }
 
