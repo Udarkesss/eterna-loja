@@ -84,8 +84,10 @@ export function Colecao({ data, collection, locale }: { data: { cue: string; lin
             <div className={styles.duoText}>
               <span className={styles.eyebrowLight}>{line.eyebrow}</span>
               <span className={styles.duoTitle}>{line.title}</span>
+              {/* EN: One button only (owner 2026-11-13): the first link of the line in Gestão → Conteúdo → Colecção activa.
+                  PT: Só um botão (dona 13-11-2026): a primeira ligação da linha na gestão. */}
               <div className={styles.duoLinks}>
-                {line.links.map((l) => (
+                {line.links.slice(0, 1).map((l) => (
                   <Link key={l.href} href={resolveHref(l.href, locale)} className={styles.btnLine}>
                     {l.label}
                   </Link>

@@ -523,11 +523,31 @@
   line-height: 1.12;
 }
 
+/* EN: The button shows only on hover: it rises from below into its place and goes back down when the mouse leaves;
+       its place is kept, so the texts never move. Touch screens always show it.
+   PT: O botão só aparece ao passar o rato: sobe de baixo para o seu lugar e volta a descer quando o rato sai; o lugar
+       fica reservado, por isso os textos nunca se mexem. Em ecrãs de toque está sempre à vista. */
 .duoLinks {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 6px;
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.duoPanel:hover .duoLinks,
+.duoPanel:focus-within .duoLinks {
+  opacity: 1;
+  transform: none;
+}
+
+@media (hover: none) {
+  .duoLinks {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* ── Ocasiões ── */
@@ -824,7 +844,7 @@
   border-bottom-color: transparent;
   background: linear-gradient(currentColor, currentColor) left bottom / 40% 1px no-repeat;
   opacity: 0;
-  transform: translateY(6px);
+  transform: translateY(14px);
   transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1), background-size 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
