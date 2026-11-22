@@ -30,6 +30,20 @@ const SHOES: Record<string, [eu: number, cm: number]> = {
   "11": [43, 28],
 };
 
+/**
+ * EN: Letter-only sizes (e.g. "XL"), from the Eterna size guide (Informações → Tamanhos); XXS from the catalogue scale.
+ * PT: Tamanhos só com letra (ex. "XL"), da tabela da Eterna (Informações → Tamanhos); XXS da escala do catálogo.
+ */
+const LETTER_SIZES: Record<string, string> = {
+  XXS: "00–0 US · 30–32 EU",
+  XS: "2 US · 32–34 EU",
+  S: "4–6 US · 36–38 EU",
+  M: "8–10 US · 40–42 EU",
+  L: "12–14 US · 44–46 EU",
+  XL: "16–18 US · 48–50 EU",
+  XXL: "20 US · 52 EU",
+};
+
 export function sizeParts(size: string): SizeParts {
   const parts = size.split("/");
   if (parts.length === 3) {
@@ -40,7 +54,7 @@ export function sizeParts(size: string): SizeParts {
   // PT: Sapatos ("7.5" = US): o tamanho europeu em grande, US e cm por baixo, como na roupa (dona 22-11-2026).
   const shoe = SHOES[size];
   if (shoe) return { letter: `${shoe[0]} EU`, detail: `${size} US · ${shoe[1]} cm` };
-  return { letter: size === "Tamanho único" ? "Único" : size, detail: null };
+  return { letter: size === "Tamanho único" ? "Único" : size, detail: LETTER_SIZES[size.toUpperCase()] ?? null };
 }
 
 const LETTERS = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL"];
