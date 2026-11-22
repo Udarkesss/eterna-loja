@@ -7,11 +7,16 @@
   gap: 28px;
 }
 
+/* EN: Title and text centred, like the circular type bar below (owner 2026-11-22). PT: Título e texto ao centro, como a
+   barra de tipos por baixo (dona 22-11-2026). */
 .titleBox {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 10px;
   max-width: 720px;
+  margin-inline: auto;
+  text-align: center;
 }
 
 .title {
