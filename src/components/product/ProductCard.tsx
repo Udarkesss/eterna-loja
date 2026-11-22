@@ -66,15 +66,17 @@ export function ProductCard({
           {colors.length > 0 && (
             <span className={styles.swatches}>
               {colors.map((c, i) => (
+                // EN: Only the dot; the colour's name shows on hover (owner 2026-11-22). PT: Só o ponto; o nome aparece ao passar o rato.
                 <span
                   key={c.key}
+                  role="img"
+                  aria-label={c.name}
+                  data-name={c.name}
                   className={`${styles.swatch} ${i === 0 && product.colors.length > 1 ? styles.ring : ""}`}
                   style={{ background: c.hex ?? "var(--alt)" }}
-                  title={c.name}
                 />
               ))}
               {product.colors.length > 5 && <span className={styles.more}>+{product.colors.length - 5}</span>}
-              <span className={styles.colorName}>{colors[0].name}</span>
             </span>
           )}
           {inStock.length > 0 && (

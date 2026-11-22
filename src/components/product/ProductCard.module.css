@@ -61,11 +61,14 @@
   color: var(--danger);
 }
 
+/* EN: Code, colours and sizes centred under the photo (owner 2026-11-22). PT: Referência, cores e tamanhos ao centro. */
 .body {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 6px;
   min-height: 104px;
+  text-align: center;
 }
 
 .code {
@@ -77,6 +80,7 @@
 
 .prices {
   display: flex;
+  justify-content: center;
   gap: 8px;
   align-items: baseline;
 }
@@ -101,36 +105,64 @@
 
 .swatches {
   display: flex;
-  gap: 6px;
+  justify-content: center;
+  gap: 8px;
   align-items: center;
   margin-top: 2px;
 }
 
 .swatch {
+  position: relative;
   width: 16px;
   height: 16px;
   flex-shrink: 0;
   border: 1px solid rgba(0, 0, 0, 0.18);
   border-radius: var(--radius-full);
+  transition: transform 0.2s ease;
+}
+
+/* EN: The colour's name in a small label above the dot, on hover. PT: O nome da cor numa etiqueta por cima do ponto. */
+.swatch::after {
+  content: attr(data-name);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translate(-50%, 4px);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--contrast);
+  color: var(--on-contrast);
+  font-size: 11px;
+  line-height: 14px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 2;
+}
+
+.swatch:hover {
+  transform: scale(1.15);
+}
+
+.swatch:hover::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 .ring {
   box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--ink);
 }
 
-.more,
-.colorName {
+.more {
   font-size: 12px;
   color: var(--muted);
-}
-
-.colorName {
-  margin-left: 4px;
 }
 
 .sizes {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 6px;
   margin-top: 4px;
 }
