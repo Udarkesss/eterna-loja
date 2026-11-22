@@ -98,6 +98,10 @@ function StoreCard({ s, onChange }: { s: StoreCardEdit; onChange: (p: Partial<St
         <span>{bridal ? "Mostrar horário (só por marcação: sem horário)" : "Mostrar horário"}</span>
       </label>
       {s.showHours && <input className={c.input} aria-label={`Horário de ${s.label}`} value={s.hours} onChange={(e) => onChange({ hours: e.target.value })} />}
+      <label className={c.field}>
+        <span className={c.lbl}>“Como chegar” · ligação do Google Maps</span>
+        <input className={c.input} inputMode="url" placeholder="Vazio: procura o nome e a morada no Google Maps" value={s.mapsUrl} onChange={(e) => onChange({ mapsUrl: e.target.value })} />
+      </label>
     </div>
   );
 }

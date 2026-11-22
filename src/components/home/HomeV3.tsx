@@ -447,7 +447,7 @@ export function Sobre({ data, social }: { data: AboutData; social: SocialLink[] 
 interface ContactData {
   eyebrow: string;
   title: string;
-  stores: { code: string; image: string; eyebrow: string; name: string; description: string; action: "whatsapp" | "call" | "fitting"; showHours?: boolean }[];
+  stores: { code: string; image: string; eyebrow: string; name: string; description: string; action: "whatsapp" | "call" | "fitting"; showHours?: boolean; mapsUrl?: string }[];
   mapsUrl: string;
 }
 
@@ -473,6 +473,12 @@ export function Contactos({ data, stores, contacts, locale }: { data: ContactDat
           //     loja, para os dois cartões terem as mesmas linhas (dona 22-11-2026).
           const showHours = card.showHours ?? card.action !== "fitting";
           const shopHours = stores.find((s) => s.hours && s.code !== card.code)?.hours;
+          // EN: "How to get there" opens this store on Google Maps: its own link (Gestão → Contactos) or a search for its
+          //     name and address (owner 2026-11-22). PT: "Como chegar" abre esta loja no Google Maps: a ligação dela
+          //     (Gestão → Contactos) ou uma pesquisa pelo nome e morada (dona 22-11-2026).
+          const mapsUrl =
+            card.mapsUrl ||
+            (store ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${card.name.replace(/·/g, " ")} ${store.location}`.replace(/\s+/g, " "))}` : data.mapsUrl);
           const hours = showHours ? store?.hours : card.action === "fitting" && shopHours ? dict.home.byAppointmentHours.replace("{hours}", shopHours) : null;
           const wa = (
             <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className={card.action === "whatsapp" ? styles.btnDarkSmall : styles.btnSmall}>
@@ -531,7 +537,7 @@ export function Contactos({ data, stores, contacts, locale }: { data: ContactDat
                       {call}
                     </>
                   )}
-                  <a href={data.mapsUrl} target="_blank" rel="noopener noreferrer" className={styles.btnText}>
+                  <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className={styles.btnText}>
                     <Icon name="pin" size={16} />
                     {dict.home.howToGetThere}
                   </a>

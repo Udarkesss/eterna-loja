@@ -29,9 +29,10 @@ export interface StoreCardEdit {
   action: "whatsapp" | "call" | "fitting";
   showHours: boolean;
   hours: string;
+  mapsUrl: string;
 }
 
-type Card = { code: string; image: string; eyebrow: Localized; name: Localized; description: Localized; action: string; showHours?: boolean };
+type Card = { code: string; image: string; eyebrow: Localized; name: Localized; description: Localized; action: string; showHours?: boolean; mapsUrl?: string };
 
 export async function contactsPage(): Promise<{ stores: StoreCardEdit[]; contacts: ContactsSettings }> {
   const db = await getDb();
@@ -56,6 +57,7 @@ export async function contactsPage(): Promise<{ stores: StoreCardEdit[]; contact
         action: card.action === "fitting" || card.action === "call" ? card.action : "whatsapp",
         showHours: card.showHours ?? card.action !== "fitting",
         hours: r.hours?.pt ?? "",
+        mapsUrl: card.mapsUrl ?? "",
       };
     }),
   };
@@ -71,6 +73,7 @@ const storeSchema = z.object({
   action: z.enum(["whatsapp", "call", "fitting"]),
   showHours: z.boolean(),
   hours: z.string().trim().max(160),
+  mapsUrl: z.union([z.literal(""), z.string().trim().url().max(500)]),
 });
 
 export async function publishContacts(staff: StaffContext, input: { stores: unknown; contacts: unknown }) {
@@ -85,7 +88,7 @@ export async function publishContacts(staff: StaffContext, input: { stores: unkn
       if (!e) return card;
       // EN: Portuguese is edited here; English follows when it was the same text. PT: Edita-se o português.
       const tr = (v: Localized, pt: string): Localized => ({ pt, en: v.en === v.pt || !v.en ? pt : v.en });
-      return { ...card, image: e.image || card.image, name: tr(card.name, e.name), description: tr(card.description, e.text), action: e.action, showHours: e.showHours };
+      return { ...card, image: e.image || card.image, name: tr(card.name, e.name), description: tr(card.description, e.text), action: e.action, showHours: e.showHours, mapsUrl: e.mapsUrl || undefined };
     });
     if (section) await tx.update(contentSections).set({ data: { ...section.data, stores: cards }, publishedAt: new Date() }).where(eq(contentSections.id, section.id));
     for (const e of parsed.data) {
