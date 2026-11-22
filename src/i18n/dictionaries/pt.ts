@@ -48,6 +48,7 @@ export const pt = {
     changesEvery: "Troca a cada {s}s",
     bookFitting: "Marcar prova",
     bookFittingShort: "Agendar prova",
+    byAppointmentHours: "Por marcação · {hours}",
     fittingMessage: "Olá, gostaria de marcar uma prova na Eterna Bridal.",
     phone: "Telefone",
     carousel: "carrossel",

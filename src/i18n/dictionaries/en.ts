@@ -46,6 +46,7 @@ export const en: Dictionary = {
     changesEvery: "Changes every {s}s",
     bookFitting: "Book a fitting",
     bookFittingShort: "Book a fitting",
+    byAppointmentHours: "By appointment · {hours}",
     fittingMessage: "Hello, I would like to book a fitting at Eterna Bridal.",
     phone: "Phone",
     carousel: "carousel",

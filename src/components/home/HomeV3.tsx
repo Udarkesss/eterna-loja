@@ -467,8 +467,13 @@ export function Contactos({ data, stores, contacts, locale }: { data: ContactDat
         {data.stores.map((card) => {
           const store = stores.find((s) => s.code === card.code);
           const phone = store?.phone ?? contacts.phones[0]?.value ?? "";
-          // EN: Bridal is by appointment only: no hours unless switched on. PT: A Bridal é só por marcação.
+          // EN: Bridal is by appointment only: unless its own hours are switched on, it shows "By appointment" within the
+          //     shop's hours, so both cards keep the same rows (owner 2026-11-22).
+          // PT: A Bridal é só por marcação: se o horário dela estiver desligado, mostra "Por marcação" no horário da
+          //     loja, para os dois cartões terem as mesmas linhas (dona 22-11-2026).
           const showHours = card.showHours ?? card.action !== "fitting";
+          const shopHours = stores.find((s) => s.hours && s.code !== card.code)?.hours;
+          const hours = showHours ? store?.hours : card.action === "fitting" && shopHours ? dict.home.byAppointmentHours.replace("{hours}", shopHours) : null;
           const wa = (
             <a href={whatsappLink()} target="_blank" rel="noopener noreferrer" className={card.action === "whatsapp" ? styles.btnDarkSmall : styles.btnSmall}>
               <Icon name="whatsapp" size={16} />
@@ -495,10 +500,10 @@ export function Contactos({ data, stores, contacts, locale }: { data: ContactDat
                     <Icon name="pin" size={18} />
                     {store?.location ?? "Glória Mall, Maputo"}
                   </li>
-                  {showHours && store?.hours && (
+                  {hours && (
                     <li>
                       <Icon name="clock" size={18} />
-                      {store.hours}
+                      {hours}
                     </li>
                   )}
                   <li>
