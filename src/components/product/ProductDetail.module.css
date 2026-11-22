@@ -9,17 +9,16 @@
   align-items: start;
 }
 
-/* EN: Computers (design V3-Produto): the photo takes the site width on the left, the information column is 480px,
-       gap 72px. The photo keeps 3:4 up to the design's 860px height.
-   PT: Computador (V3-Produto): a foto ocupa a largura do site à esquerda, a coluna de informação tem 480px, espaço
-       72px. A foto mantém 3:4 até à altura do design, 860px. */
+/* EN: Computers (design V3-Produto): photo column on the left, 480px information column, gap 72px. The photo shows the
+       whole piece, legs and feet included (3:5 like the product photos), up to the design's 860px height; the block
+       keeps the design's 72px gap and sits centred.
+   PT: Computador (V3-Produto): coluna da foto à esquerda, coluna de informação de 480px, espaço 72px. A foto mostra a
+       peça inteira, com pernas e pés (3:5 como as fotos das peças), até à altura do design (860px); o bloco mantém o
+       espaço de 72px do design e fica ao centro. */
 @media (min-width: 1280px) {
   .layout {
-    grid-template-columns: minmax(0, 1fr) 480px;
-  }
-
-  .main {
-    max-height: 860px;
+    grid-template-columns: minmax(0, 628px) 480px;
+    justify-content: center;
   }
 }
 
@@ -71,7 +70,7 @@
 .main {
   position: relative;
   grid-column: 2;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 3 / 5;
   background: var(--alt);
   overflow: hidden;
 }
@@ -439,7 +438,7 @@
   .slide {
     position: relative;
     flex: 0 0 100%;
-    aspect-ratio: 3 / 4;
+    aspect-ratio: 3 / 5;
     scroll-snap-align: start;
     background: var(--alt);
   }
