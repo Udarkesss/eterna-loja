@@ -6,6 +6,7 @@ import { CategoryFilters, CategoryToolbar, HelpBox } from "@/components/category
 import styles from "@/components/category/Category.module.css";
 import { loadListing, Results, type Query } from "@/components/category/Listing";
 import { TypeBar } from "@/components/category/TypeBar";
+import { Parallax } from "@/components/home/Parallax";
 import { getDictionary } from "@/i18n";
 import { resolveLocale } from "@/i18n/params";
 import { categoryHref } from "@/lib/links";
@@ -95,8 +96,14 @@ async function CollectionPage({ category, query, locale }: { category: CategoryD
   return (
     <>
       {category.imageUrl && (
+        // EN: Cover photo with the home page's effect (owner 2026-11-22): it settles in slowly on arrival and moves slower
+        //     than the page while scrolling. PT: Foto de capa com o efeito do Início (dona 22-11-2026): assenta devagar
+        //     ao chegar e move-se mais devagar do que a página ao descer.
         <div className={styles.cover}>
-          <Image src={category.imageUrl} alt={category.name} fill priority sizes="100vw" />
+          <div className={styles.coverLayer} data-parallax="">
+            <Image src={category.imageUrl} alt={category.name} fill priority sizes="100vw" />
+          </div>
+          <Parallax />
         </div>
       )}
       <section className={`page-x ${styles.collectionHead}`}>

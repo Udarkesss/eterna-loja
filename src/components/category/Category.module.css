@@ -613,9 +613,36 @@
   overflow: hidden;
 }
 
+.coverLayer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -12%;
+  height: 124%;
+  will-change: transform;
+}
+
 .cover img {
   object-fit: cover;
   object-position: center 38%;
+  animation: coverSettle 2.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes coverSettle {
+  from {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cover img {
+    animation: none;
+  }
 }
 
 .collectionHead {
