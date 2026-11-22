@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { CartView } from "@/components/cart/CartView";
 import styles from "@/components/favorites/Favorites.module.css";
 import { getDictionary } from "@/i18n";
-import { localizePath } from "@/i18n/config";
 import { resolveLocale } from "@/i18n/params";
 import { loyaltySettings } from "@/server/loyalty";
 
@@ -21,11 +19,6 @@ export default async function CartPage({ params }: Props) {
   const dict = getDictionary(locale);
   return (
     <section className={`page-x ${styles.page}`}>
-      <nav aria-label={dict.nav.breadcrumb} className={styles.breadcrumb}>
-        <Link href={localizePath(locale)}>{dict.nav.homeCrumb}</Link>
-        <span aria-hidden="true">/</span>
-        <span aria-current="page">{dict.cart.title}</span>
-      </nav>
       <div className={styles.head}>
         <h1 className={styles.display}>{dict.cart.title}</h1>
         <span className={styles.small}>{dict.cart.intro}</span>

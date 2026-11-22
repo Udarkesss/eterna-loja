@@ -1,22 +1,3 @@
-.breadcrumb {
-  min-height: 56px;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  color: var(--ink-muted);
-}
-
-.breadcrumb a:hover {
-  color: var(--ink);
-}
-
-.breadcrumb [aria-current="page"] {
-  color: var(--ink);
-}
-
 .related {
   padding-bottom: var(--section-y);
   display: flex;

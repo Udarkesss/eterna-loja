@@ -7,14 +7,6 @@
   gap: 28px;
 }
 
-.crumbs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--muted);
-}
-
 .head {
   display: flex;
   justify-content: space-between;

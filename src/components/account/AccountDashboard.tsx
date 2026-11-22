@@ -96,11 +96,6 @@ export function AccountDashboard(props: { customer: CustomerDTO; orders: MyOrder
 
   return (
     <div className={`page-x ${styles.page}`}>
-      <nav aria-label={dict.nav.breadcrumb} className={styles.breadcrumb}>
-        <Link href={href("/")}>{dict.nav.homeCrumb}</Link>
-        <span aria-hidden="true">/</span>
-        <span aria-current="page">{a.dashboardEyebrow}</span>
-      </nav>
       <h1 className={styles.display}>
         <span className={styles.onWide}>
           <RichText text={a.title} />

@@ -7,20 +7,6 @@
   gap: 28px;
 }
 
-.breadcrumb {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  color: var(--muted);
-}
-
-.breadcrumb [aria-current] {
-  font-weight: 500;
-  color: var(--ink);
-}
-
 .titleBox {
   display: flex;
   flex-direction: column;

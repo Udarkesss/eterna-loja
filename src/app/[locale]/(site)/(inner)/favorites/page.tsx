@@ -6,7 +6,6 @@ import { ProductGrid } from "@/components/product/ProductGrid";
 import { RichText } from "@/components/ui/RichText";
 import { mainNav } from "@/data/site";
 import { getDictionary, t } from "@/i18n";
-import { localizePath } from "@/i18n/config";
 import { resolveLocale } from "@/i18n/params";
 import { categoryHref, resolveHref } from "@/lib/links";
 import { findCategory, listProducts } from "@/server/catalog";
@@ -58,11 +57,6 @@ export default async function FavoritesPage({ params }: Props) {
 
   return (
     <section className={`page-x ${styles.page}`}>
-      <nav aria-label={dict.nav.breadcrumb} className={styles.breadcrumb}>
-        <Link href={localizePath(locale)}>{dict.nav.homeCrumb}</Link>
-        <span aria-hidden="true">/</span>
-        <span aria-current="page">{dict.nav.favorites}</span>
-      </nav>
       <FavoritesView showPrice={showPrice} companions={companions} exploreHref={resolveHref(mainNav[0].href, locale)} />
     </section>
   );

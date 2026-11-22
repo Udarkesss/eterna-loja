@@ -9,7 +9,6 @@ import { Icon } from "@/components/ui/Icon";
 import { PaymentLogos } from "@/components/ui/PaymentLogos";
 import { RichText } from "@/components/ui/RichText";
 import { getDictionary, t } from "@/i18n";
-import { localizePath } from "@/i18n/config";
 import { resolveLocale } from "@/i18n/params";
 import { categoryHref, resolveHref } from "@/lib/links";
 import { findCategory, findProduct, relatedProducts } from "@/server/catalog";
@@ -30,10 +29,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /**
- * EN: Product page of design V3 ("Loja · Produto: cor, tamanho e reserva"): crumbs collection / line / reference,
+ * EN: Product page of design V3 ("Loja · Produto: cor, tamanho e reserva"):
  *     the interactive block, the information lines (secure payment, free collection, final sales), the panels and
  *     "Complete o look".
- * PT: Página da peça do V3: caminho colecção / linha / referência, o bloco interactivo, as linhas de informação
+ * PT: Página da peça do V3: o bloco interactivo, as linhas de informação
  *     (pagamento seguro, levantamento grátis, vendas finais), os painéis e "Complete o look".
  */
 export default async function ProductPage({ params }: Props) {
@@ -64,23 +63,6 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <>
-      <nav aria-label={dict.nav.breadcrumb} className={`page-x ${styles.breadcrumb}`}>
-        <Link href={localizePath(locale)}>{dict.nav.homeCrumb}</Link>
-        {product.collection && (
-          <>
-            <span aria-hidden="true">/</span>
-            <Link href={categoryHref(product.collection.slug, locale)}>{product.collection.name}</Link>
-          </>
-        )}
-        {line && (
-          <>
-            <span aria-hidden="true">/</span>
-            <Link href={categoryHref(line.slug, locale)}>{line.name}</Link>
-          </>
-        )}
-        <span aria-hidden="true">/</span>
-        <span aria-current="page">{product.code}</span>
-      </nav>
 
       <ProductDetail product={product} eyebrow={eyebrow} badge={badge} reserve={{ depositPct: rules.depositPct, days: rules.days, bridalDays: rules.bridalDays }}>
         <ul className={detail.trust}>

@@ -7,7 +7,6 @@ import styles from "@/components/category/Category.module.css";
 import { loadListing, Results, type Query } from "@/components/category/Listing";
 import { TypeBar } from "@/components/category/TypeBar";
 import { getDictionary } from "@/i18n";
-import { localizePath } from "@/i18n/config";
 import { resolveLocale } from "@/i18n/params";
 import { categoryHref } from "@/lib/links";
 import { formatLongDate, todayMaputo } from "@/lib/time";
@@ -26,9 +25,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /**
- * EN: Category page of design V3 ("Loja · Categoria com barra de tipos"): crumbs, title, circular type bar, filters
+ * EN: Category page of design V3 ("Loja · Categoria com barra de tipos"): title, circular type bar, filters
  *     bar, side filters and a 3-column grid. A collection with lines (Essenza) uses the collection page instead.
- * PT: Página de categoria do V3: caminho, título, barra de tipos em círculo, barra de filtros, filtros laterais e
+ * PT: Página de categoria do V3: título, barra de tipos em círculo, barra de filtros, filtros laterais e
  *     grelha de 3 colunas. Uma colecção com linhas (Essenza) usa a página da colecção.
  */
 export default async function CategoryPage({ params, searchParams }: Props) {
@@ -45,17 +44,6 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   return (
     <>
       <section className={`page-x ${styles.head}`}>
-        <nav aria-label={dict.nav.breadcrumb} className={styles.breadcrumb}>
-          <Link href={localizePath(locale)}>{dict.nav.homeCrumb}</Link>
-          {category.parent && (
-            <>
-              <span aria-hidden="true">/</span>
-              <Link href={categoryHref(category.parent.slug, locale)}>{category.parent.name}</Link>
-            </>
-          )}
-          <span aria-hidden="true">/</span>
-          <span aria-current="page">{category.name}</span>
-        </nav>
         <div className={styles.titleBox}>
           {category.parent && <span className="eyebrow">{category.parent.name}</span>}
           <h1 className={styles.title}>{category.name}</h1>
@@ -112,13 +100,6 @@ async function CollectionPage({ category, query, locale }: { category: CategoryD
         </div>
       )}
       <section className={`page-x ${styles.collectionHead}`}>
-        <nav aria-label={dict.nav.breadcrumb} className={styles.breadcrumb}>
-          <Link href={localizePath(locale)}>{dict.nav.homeCrumb}</Link>
-          <span aria-hidden="true">/</span>
-          <span>{dict.catalog.collections}</span>
-          <span aria-hidden="true">/</span>
-          <span aria-current="page">{category.name}</span>
-        </nav>
         <div className={styles.collectionTitle}>
           {category.details?.edition && <span className={styles.edition}>{category.details.edition}</span>}
           <h1 className={styles.title}>{category.name}</h1>

@@ -7,7 +7,6 @@ import { useCustomer } from "@/components/account/CustomerProvider";
 import { useFavorites } from "@/components/favorites/FavoritesProvider";
 import { Icon } from "@/components/ui/Icon";
 import { RichText } from "@/components/ui/RichText";
-import { mainNav } from "@/data/site";
 import { plural, t } from "@/i18n";
 import { useI18n } from "@/i18n/I18nProvider";
 import { ApiClientError, api } from "@/lib/api-client";
@@ -189,13 +188,6 @@ export function BridalBooking(props: {
   return (
     <div data-theme="bridal" className={styles.theme}>
       <section className={`page-x ${styles.page}`}>
-        <nav aria-label={dict.nav.breadcrumb} className={styles.breadcrumb}>
-          <Link href={href("/")}>{dict.nav.homeCrumb}</Link>
-          <span aria-hidden="true">/</span>
-          <Link href={`${href("/")}#noivas`}>{mainNav[2].label[locale]}</Link>
-          <span aria-hidden="true">/</span>
-          <span aria-current="page">{b.crumb}</span>
-        </nav>
 
         <div className={styles.intro}>
           <div className={styles.introText}>

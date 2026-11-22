@@ -140,12 +140,6 @@
   flex-direction: column;
   gap: 28px;
 }
-.crumbs {
-  display: flex;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--muted);
-}
 .info {
   display: flex;
   gap: 12px;

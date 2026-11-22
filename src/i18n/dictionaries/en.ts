@@ -29,8 +29,6 @@ export const en: Dictionary = {
     favorites: "Favourites",
     cart: { one: "Bag, 1 item", other: "Bag, {count} items" },
     language: "Language",
-    breadcrumb: "Breadcrumb",
-    homeCrumb: "Home",
     activeCollection: "Current collection",
     accountShort: "Account",
     talkToUs: "Talk to us",

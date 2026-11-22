@@ -26,13 +26,6 @@ export default async function HowToBuyPage({ params }: Props) {
   const dict = getDictionary(locale);
   return (
     <section className={`page-x ${styles.page}`}>
-      <nav aria-label={dict.nav.breadcrumb} className={styles.breadcrumb}>
-        <Link href={localizePath(locale)}>{dict.nav.homeCrumb}</Link>
-        <span aria-hidden="true">/</span>
-        <span>{dict.help.eyebrow}</span>
-        <span aria-hidden="true">/</span>
-        <span aria-current="page">{dict.footer.howToBuy}</span>
-      </nav>
       <div className={styles.head}>
         <span className="eyebrow">{dict.help.eyebrow}</span>
         <h1 className={styles.display}>

@@ -31,8 +31,6 @@ export const pt = {
     favorites: "Favoritos",
     cart: { one: "Carrinho, 1 peça", other: "Carrinho, {count} peças" },
     language: "Idioma",
-    breadcrumb: "Caminho",
-    homeCrumb: "Início",
     activeCollection: "Colecção activa",
     accountShort: "Conta",
     talkToUs: "Fale connosco",

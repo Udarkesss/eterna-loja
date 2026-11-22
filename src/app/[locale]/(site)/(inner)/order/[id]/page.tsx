@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { OrderAutoRefresh } from "@/components/checkout/OrderAutoRefresh";
@@ -10,9 +9,7 @@ import { RichText } from "@/components/ui/RichText";
 import { whatsappLink } from "@/data/site";
 import { getDictionary, plural, t } from "@/i18n";
 import { resolveLocale } from "@/i18n/params";
-import { localizePath } from "@/i18n/config";
 import { toMaputo } from "@/lib/time";
-import { currentCustomer } from "@/server/accounts";
 import { getOrderStatus } from "@/server/checkout";
 import { getDb } from "@/server/db";
 import { orderEvents, orderLines, stores } from "@/server/db/schema";
@@ -40,11 +37,10 @@ export default async function OrderPage({ params }: Props) {
   const dict = getDictionary(locale);
   const o = dict.order;
   const db = await getDb();
-  const [events, lines, [store], customer] = await Promise.all([
+  const [events, lines, [store]] = await Promise.all([
     db.select().from(orderEvents).where(eq(orderEvents.orderId, order.id)).orderBy(asc(orderEvents.at)),
     db.select({ quantity: orderLines.quantity }).from(orderLines).where(eq(orderLines.orderId, order.id)),
     order.pickupStoreId ? db.select().from(stores).where(and(eq(stores.id, order.pickupStoreId))) : Promise.resolve([]),
-    currentCustomer(),
   ]);
   const at = (type: string) => events.find((e) => e.type === type)?.at ?? null;
   const time = (d: Date | null) => (d ? toMaputo(d).time : null);
@@ -78,17 +74,6 @@ export default async function OrderPage({ params }: Props) {
   return (
     <div className={`page-x ${styles.page}`}>
       {status.paymentStatus === "pending" && <OrderAutoRefresh />}
-      <nav aria-label={dict.nav.breadcrumb} className={styles.crumbs}>
-        {customer && (
-          <>
-            <Link href={localizePath(locale, "/account")}>{o.myAccount}</Link>
-            <span>/</span>
-            <Link href={`${localizePath(locale, "/account")}#encomendas`}>{o.orders}</Link>
-            <span>/</span>
-          </>
-        )}
-        <span aria-current="page">{order.number}</span>
-      </nav>
 
       <div className={styles.head}>
         <div>

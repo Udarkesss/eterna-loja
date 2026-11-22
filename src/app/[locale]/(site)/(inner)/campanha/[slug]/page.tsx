@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { campaignEyebrow } from "@/components/campaign/CampaignBand";
 import styles from "@/components/campaign/Campaign.module.css";
@@ -8,7 +7,6 @@ import { Countdown } from "@/components/campaign/Countdown";
 import { ProductCard } from "@/components/product/ProductCard";
 import { Icon } from "@/components/ui/Icon";
 import { getDictionary, plural } from "@/i18n";
-import { localizePath } from "@/i18n/config";
 import { resolveLocale } from "@/i18n/params";
 import { campaignBySlug } from "@/server/campaigns";
 import { listProducts } from "@/server/catalog";
@@ -57,13 +55,6 @@ export default async function CampaignPage({ params }: Props) {
         </div>
       </section>
       <section className={`page-x ${styles.body}`}>
-        <nav aria-label={dict.nav.breadcrumb} className={styles.crumbs}>
-          <Link href={localizePath(locale)}>{dict.nav.homeCrumb}</Link>
-          <span>/</span>
-          <span>{dict.campaign.crumb}</span>
-          <span>/</span>
-          <span aria-current="page">{campaign.name}</span>
-        </nav>
         <div className={styles.info}>
           <Icon name="info" size={18} />
           <span>{dict.campaign.levelNote}</span>
