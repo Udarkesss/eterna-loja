@@ -84,6 +84,9 @@ body {
   color: var(--ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  /* EN: Lining figures everywhere, as in design V3 (codes like 7G187 in Cormorant keep the same height).
+     PT: Algarismos alinhados em todo o lado, como no V3 (códigos como 7G187 em Cormorant ficam da mesma altura). */
+  font-variant-numeric: lining-nums;
 }
 
 h1,
