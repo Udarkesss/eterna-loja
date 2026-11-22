@@ -12,17 +12,19 @@
   color: var(--ink);
 }
 
+/* EN: 3:5 like the product photos (full length, as on the old eterna.co.mz), so the feet are never cut.
+   PT: 3:5 como as fotos das peças (corpo inteiro, como no eterna.co.mz antigo), para os pés nunca ficarem cortados. */
 .media {
   position: relative;
   display: block;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 3 / 5;
   background: var(--alt);
   overflow: hidden;
 }
 
 .image {
   object-fit: cover;
-  object-position: center 18%;
+  object-position: center top;
   transition: transform 0.6s ease;
 }
 
