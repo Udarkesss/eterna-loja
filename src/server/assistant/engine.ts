@@ -58,8 +58,8 @@ const STATUS: Record<string, [string, string]> = {
 export const greeting = (locale: Locale) =>
   L(
     locale,
-    "Olá! Sou o assistente da Eterna. Posso ajudar com preços, tamanhos, reservas, pagamentos, provas de noiva, horário e encomendas. A qualquer momento pode falar com uma pessoa da equipa.",
-    "Hello! I'm the Eterna assistant. I can help with prices, sizes, reservations, payments, bridal fittings, opening hours and orders. You can talk to a person from the team at any time.",
+    "Olá! Bem-vinda à ETERNA. Posso ajudar com as nossas colecções, tamanhos, reservas, pagamentos, provas de noiva, horário e encomendas. Será também um prazer recebê-la na nossa loja no Glória Mall. A qualquer momento pode falar com uma pessoa da equipa.",
+    "Hello! Welcome to ETERNA. I can help with our collections, sizes, reservations, payments, bridal fittings, opening hours and orders. We'd also love to welcome you at our store in Glória Mall. You can talk to a person from the team at any time.",
   );
 
 export const humanText = (s: AssistantSettings, locale: Locale) =>
@@ -96,15 +96,21 @@ async function pieceAnswer(code: string, locale: Locale, withStock: boolean): Pr
   const href = productHref(p.slug, locale);
   if (!sizes.length)
     return {
-      text: L(locale, `O ${p.code}${type} custa ${price}, mas neste momento está esgotado. A equipa pode avisar quando voltar.`, `${p.code}${type} costs ${price}, but it is sold out right now. The team can let you know when it is back.`),
+      text: L(
+        locale,
+        `O ${p.code}${type} custa ${price}, mas neste momento está esgotado. Como as nossas peças são únicas, não há reposição garantida; a nossa equipa terá todo o prazer em sugerir alternativas.`,
+        `${p.code}${type} costs ${price}, but it is sold out right now. As our pieces are unique, a restock is not guaranteed; our team will be happy to suggest alternatives.`,
+      ),
       action: { label: L(locale, "Ver a peça", "See the piece"), href },
     };
   const colorLine = colors.length ? L(locale, ` Existe em ${colors.join(", ")}`, ` It comes in ${colors.join(", ")}`) : "";
   const sizeLine = L(locale, `${colorLine ? "," : " Existe em"} tamanhos ${sizes.join(", ")}.`, `${colorLine ? "," : " Sizes"} ${sizes.join(", ")}.`);
+  const unique = L(locale, " Como as nossas peças são únicas, a disponibilidade pode mudar rapidamente: confirme com a equipa ou visite-nos.", " As our pieces are unique, availability can change quickly: check with the team or visit us.");
   return {
-    text: withStock
+    text:
+      (withStock
       ? L(locale, `O ${p.code}${type} tem em stock os tamanhos ${sizes.join(", ")}${colors.length ? `, em ${colors.join(", ")}` : ""}. Custa ${price}.`, `${p.code}${type} is in stock in ${sizes.join(", ")}${colors.length ? `, in ${colors.join(", ")}` : ""}. It costs ${price}.`)
-      : L(locale, `O ${p.code}${type} custa ${price}.${colorLine}${sizeLine} Com o seu desconto de cliente, paga menos no checkout.`, `${p.code}${type} costs ${price}.${colorLine}${sizeLine} With your customer discount you pay less at checkout.`),
+      : L(locale, `O ${p.code}${type} custa ${price}.${colorLine}${sizeLine}`, `${p.code}${type} costs ${price}.${colorLine}${sizeLine}`)) + unique,
     action: { label: L(locale, "Ver a peça", "See the piece"), href },
   };
 }
@@ -130,8 +136,8 @@ async function topicAnswer(t: Topic, text: string, locale: Locale): Promise<Answ
       return {
         text: L(
           locale,
-          "S = 4–6 US · 36–38 EU, M = 8–10 US · 40–42 EU, L = 12–14 US · 44–46 EU, XL = 16 US · 48 EU. Se estiver entre dois tamanhos, a equipa ajuda-a a escolher. Diga-me a referência da peça e vejo os tamanhos em stock.",
-          "S = 4–6 US · 36–38 EU, M = 8–10 US · 40–42 EU, L = 12–14 US · 44–46 EU, XL = 16 US · 48 EU. If you're between two sizes, the team will help you choose. Tell me the piece reference and I'll check the sizes in stock.",
+          "Recomendamos que consulte o guia de tamanhos e compare as suas medidas de busto, cintura e anca. Se estiver entre dois tamanhos, a recomendação geral é escolher o maior; o corte e o tecido também influenciam o ajuste. Temos tamanhos do XS ao XXL, mas como as peças são únicas variam de peça para peça: diga-me a referência e vejo os tamanhos no site. A melhor forma de confirmar é experimentar na loja.",
+          "We recommend checking the size guide and comparing your bust, waist and hip measurements. If you are between two sizes, the general advice is to choose the larger one; cut and fabric also affect the fit. We carry XS to XXL, but as pieces are unique sizes vary per piece: tell me the reference and I'll check the sizes on the site. The best way to be sure is to try it on in store.",
         ),
         action: { label: L(locale, "Guia de tamanhos", "Size guide"), href: `/${locale}/info/tamanhos` },
       };
@@ -140,8 +146,8 @@ async function topicAnswer(t: Topic, text: string, locale: Locale): Promise<Answ
       return {
         text: L(
           locale,
-          `Sim. Pague ${r.depositPct}% do valor como sinal e a peça fica separada em seu nome ${r.days} dias (${r.bridalDays} nos vestidos de noiva e peças da Bridal). No levantamento paga o restante. Fora do prazo, o sinal não é reembolsável.`,
-          `Yes. Pay ${r.depositPct}% as a deposit and the piece is kept in your name for ${r.days} days (${r.bridalDays} for bridal pieces). You pay the rest when you collect it. After the deadline the deposit is not refundable.`,
+          `Sim. A reserva faz-se com um sinal de ${r.depositPct}% do valor e a peça fica reservada em seu nome até ${r.days} dias (${r.bridalDays} nos vestidos de noiva e peças da Bridal). O restante paga-se no levantamento. Se a peça não for levantada no prazo, a reserva termina automaticamente. O sinal não é reembolsável e a reserva não pode ser transferida para outro artigo.`,
+          `Yes. You reserve with a ${r.depositPct}% deposit and the piece is kept in your name for up to ${r.days} days (${r.bridalDays} for bridal pieces). You pay the rest when you collect it. If it is not collected in time, the reservation ends automatically. The deposit is not refundable and the reservation cannot be moved to another piece.`,
         ),
         action: { label: L(locale, "Como reservar", "How to reserve"), href: `/${locale}/como-comprar` },
       };
@@ -166,8 +172,8 @@ async function topicAnswer(t: Topic, text: string, locale: Locale): Promise<Answ
       return {
         text: L(
           locale,
-          `As provas são no showroom Eterna Bridal (Loja 22), só por marcação e com 48 horas de antecedência. ${pk}. O valor desconta no vestido se comprar em ${b.discountDays} dias.`,
-          `Fittings are at the Eterna Bridal showroom (Store 22), by appointment only, booked 48 hours ahead. ${pk}. The fee is deducted from the dress if you buy within ${b.discountDays} days.`,
+          `A ETERNA Bridal Showroom (Glória Mall, Loja 22) funciona exclusivamente mediante marcação, feita no nosso website com pelo menos ${b.advanceHours} horas de antecedência; fica confirmada depois do pagamento do pacote. ${pk}. Pode trazer até ${b.companions} acompanhantes e juntar até ${b.extraMax} vestidos extra a ${formatMZN(b.extraPrice, locale).replace(",00", "")} cada. O valor da prova é descontado no vestido se o comprar em ${b.discountDays} dias.`,
+          `The ETERNA Bridal Showroom (Glória Mall, Store 22) works by appointment only, booked on our website at least ${b.advanceHours} hours ahead and confirmed once the package is paid. ${pk}. You can bring up to ${b.companions} companions and add up to ${b.extraMax} extra dresses at ${formatMZN(b.extraPrice, locale).replace(",00", "")} each. The fitting fee is deducted from the dress if you buy it within ${b.discountDays} days.`,
         ),
         action: { label: L(locale, "Agendar prova", "Book a fitting"), href: `/${locale}/fitting` },
       };
@@ -175,7 +181,10 @@ async function topicAnswer(t: Topic, text: string, locale: Locale): Promise<Answ
     case "hours": {
       const stores = await listStores(locale);
       const lines = stores.map((s) => `${s.location}${s.hours ? ` · ${s.hours}` : ""}`).join(". ");
-      return { text: L(locale, `Estamos no Glória Mall, em Maputo. ${lines}.`, `We're at Glória Mall, Maputo. ${lines}.`), action: { label: L(locale, "Como chegar", "Directions"), href: `/${locale}#contactos` } };
+      return {
+        text: L(locale, `Estamos no Glória Mall, em Maputo. ${lines}. Será um prazer recebê-la!`, `We're at Glória Mall, Maputo. ${lines}. We look forward to welcoming you!`),
+        action: { label: L(locale, "Como chegar", "Directions"), href: `/${locale}#contactos` },
+      };
     }
     case "order":
       return { text: L(locale, "Diga-me o número da encomenda (começa por ET-, por exemplo ET-2026-0024) e vejo como está.", "Tell me the order number (it starts with ET-, e.g. ET-2026-0024) and I'll check it.") };
@@ -234,7 +243,15 @@ export async function answer(text: string, locale: Locale, channel: "site" | "wh
       text: L(locale, "Olá! Em que posso ajudar? Pode perguntar por preços, tamanhos, reservas, pagamentos, provas de noiva ou encomendas.", "Hello! How can I help? You can ask about prices, sizes, reservations, payments, bridal fittings or orders."),
     };
 
-  return { miss: true, text: L(locale, "Não tenho a certeza da resposta a essa pergunta. Prefere falar com uma pessoa da equipa?", "I'm not sure about the answer to that. Would you like to talk to a person from the team?") };
+  // EN: Hand-off message of the owner's guide. PT: Mensagem de encaminhamento do guia da dona.
+  return {
+    miss: true,
+    text: L(
+      locale,
+      "Para lhe dar uma informação correcta, será necessário confirmar este detalhe com a nossa equipa. Será um prazer ajudá-la: prefere falar com uma pessoa?",
+      "To give you the right information, we need to confirm this with our team. We'll be happy to help: would you like to talk to a person?",
+    ),
+  };
 }
 
 /** EN: Is the team working now (Maputo time)? PT: A equipa está a trabalhar agora (hora de Maputo)? */

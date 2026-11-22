@@ -1,4 +1,5 @@
 import { and, count, eq, inArray, isNull, notInArray } from "drizzle-orm";
+import { GUIDE_TOPICS, TOPICS_BEFORE_GUIDE, type Topic } from "@/data/assistant";
 import { CATEGORY_IMAGES, COLLECTION_DETAILS, categoryTree, type CategorySeed } from "@/data/catalog";
 import { HOME_KEYS, heroSlides, homeSections, occasionTiles as tileSeeds } from "@/data/content";
 import { infoSeeds } from "@/data/pages";
@@ -307,6 +308,26 @@ const DATA_MIGRATIONS: { name: string; run: (db: Database) => Promise<void> }[] 
           },
         })
         .where(eq(categories.id, row.id));
+    },
+  },
+  {
+    // EN: Assistant answers of the owner's chatbot guide (2026-11-22). A question the team never edited takes the new
+    //     text; edited ones and the team's own questions stay as they are; new questions are added at the end.
+    // PT: Respostas do assistente do guia da dona (22-11-2026). Uma pergunta que a equipa nunca editou recebe o texto
+    //     novo; as editadas e as criadas pela equipa ficam como estão; as perguntas novas juntam-se no fim.
+    name: "assistente-guia",
+    run: async (db) => {
+      const [row] = await db.select().from(settings).where(eq(settings.key, "assistant"));
+      const saved = row?.value as { topics?: Topic[] } | undefined;
+      if (!saved?.topics) return; // EN: never saved: the new defaults apply. PT: nunca guardado: valem os novos.
+      const same = (a: Topic, b: Topic) => a.name === b.name && a.kind === b.kind && a.text === b.text && a.keywords.join("·") === b.keywords.join("·");
+      const topics = saved.topics.map((t) => {
+        const before = TOPICS_BEFORE_GUIDE.find((x) => x.id === t.id);
+        const guide = GUIDE_TOPICS.find((x) => x.id === t.id);
+        return before && guide && same(t, before) ? { ...guide, on: t.on, site: t.site, whatsapp: t.whatsapp } : t;
+      });
+      for (const g of GUIDE_TOPICS) if (!topics.some((t) => t.id === g.id)) topics.push(g);
+      await db.update(settings).set({ value: { ...saved, topics }, updatedAt: new Date() }).where(eq(settings.key, "assistant"));
     },
   },
 ];
