@@ -43,6 +43,12 @@
   padding: 6px 4px 2px;
 }
 
+/* EN: Many circles (e.g. the 10 occasions + "Todos"): a smaller gap so they fit on one line on a computer.
+   PT: Muitos círculos (ex. as 10 ocasiões + "Todos"): espaço menor para caberem numa linha no computador. */
+.typeBarDense {
+  gap: clamp(16px, 1.3vw, 28px);
+}
+
 .typeBar::-webkit-scrollbar {
   display: none;
 }

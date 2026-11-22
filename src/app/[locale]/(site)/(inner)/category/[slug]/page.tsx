@@ -9,9 +9,10 @@ import { TypeBar } from "@/components/category/TypeBar";
 import { Parallax } from "@/components/home/Parallax";
 import { getDictionary } from "@/i18n";
 import { resolveLocale } from "@/i18n/params";
-import { categoryHref } from "@/lib/links";
+import { categoryHref, resolveHref } from "@/lib/links";
 import { formatLongDate, todayMaputo } from "@/lib/time";
 import { findCategory } from "@/server/catalog";
+import { getOccasionTiles } from "@/server/content";
 import type { CategoryDTO, Locale } from "@/types";
 
 type Props = {
@@ -41,6 +42,20 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const dict = getDictionary(locale);
   const listing = await loadListing({ filter: { category: slug }, path: categoryHref(slug, locale), settings: category.listing }, query, locale);
   const shown = { color: true, price: true, types: true, ...(category.listing?.filters ?? {}) };
+  // EN: The Occasions page shows the same occasions as the home page (Gestão → Conteúdo → Ocasiões), not piece types
+  //     (owner 2026-11-23). PT: A página Ocasiões mostra as mesmas ocasiões do Início, não os tipos de peça (dona 23-11-2026).
+  const occasions = category.children.some((c) => c.kind === "occasion") ? await getOccasionTiles(locale) : [];
+  const tiles = occasions.length
+    ? [
+        listing.tiles[0],
+        ...occasions.map((t) => ({
+          href: t.href ? resolveHref(`category:${t.href}`, locale) : categoryHref(slug, locale),
+          label: t.name,
+          images: [t.imageUrl],
+          current: false,
+        })),
+      ]
+    : listing.tiles;
 
   return (
     <>
@@ -50,7 +65,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           <h1 className={styles.title}>{category.name}</h1>
           {category.description && <p className={styles.description}>{category.description}</p>}
         </div>
-        {shown.types && <TypeBar tiles={listing.tiles} label={dict.catalog.types} />}
+        {(occasions.length > 0 || shown.types) && <TypeBar tiles={tiles} label={occasions.length ? category.name : dict.catalog.types} />}
       </section>
 
       <CategoryToolbar total={listing.filtered.length} types={listing.types} />

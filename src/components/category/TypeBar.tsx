@@ -19,9 +19,9 @@ export function TypeBar({ tiles, label, min = 3 }: { tiles: TypeTile[]; label: s
   // EN: "Todos" + at least two types (search: one is enough, design V3-Pesquisa). PT: Na pesquisa basta um tipo (V3).
   if (tiles.length < min) return null;
   return (
-    <nav aria-label={label} className={styles.typeBar}>
+    <nav aria-label={label} className={`${styles.typeBar} ${tiles.length > 8 ? styles.typeBarDense : ""}`}>
       {tiles.map((tile) => (
-        <Link key={tile.href} href={tile.href} className={styles.typeItem} aria-current={tile.current ? "page" : undefined} scroll={false}>
+        <Link key={`${tile.href} ${tile.label}`} href={tile.href} className={styles.typeItem} aria-current={tile.current ? "page" : undefined} scroll={false}>
           <span className={tile.images.length > 1 ? styles.typeAll : styles.typeImage}>
             {tile.images.slice(0, tile.images.length > 1 ? 4 : 1).map((src, i) => (
               <Image key={i} src={src} alt="" width={tile.images.length > 1 ? 48 : 96} height={tile.images.length > 1 ? 48 : 96} />
