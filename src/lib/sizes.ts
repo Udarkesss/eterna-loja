@@ -10,12 +10,36 @@ export interface SizeParts {
   detail: string | null; // "6 US · 38 EU" or null
 }
 
+/**
+ * EN: Women's shoe sizes (US → EU, cm), from the Eterna size guide (Informações → Tamanhos); half sizes as usual.
+ * PT: Tamanhos de sapatos de senhora (US → EU, cm), da tabela da Eterna (Informações → Tamanhos); meios números habituais.
+ */
+const SHOES: Record<string, [eu: number, cm: number]> = {
+  "5": [35, 22],
+  "5.5": [35.5, 22.5],
+  "6": [36, 23],
+  "6.5": [37, 23.5],
+  "7": [37.5, 24],
+  "7.5": [38, 24.5],
+  "8": [38.5, 25],
+  "8.5": [39, 25.5],
+  "9": [40, 26],
+  "9.5": [41, 26.5],
+  "10": [42, 27],
+  "10.5": [42.5, 27.5],
+  "11": [43, 28],
+};
+
 export function sizeParts(size: string): SizeParts {
   const parts = size.split("/");
   if (parts.length === 3) {
     const us = parts[0].replace(/US$/, " US").replace(/^(\d+)P$/, "$1 P");
     return { letter: parts[2], detail: `${us} · ${parts[1].replace(/EUR$/, " EU")}` };
   }
+  // EN: Shoes ("7.5" = US): the EU size large, US and cm below, like clothes (owner 2026-11-22).
+  // PT: Sapatos ("7.5" = US): o tamanho europeu em grande, US e cm por baixo, como na roupa (dona 22-11-2026).
+  const shoe = SHOES[size];
+  if (shoe) return { letter: `${shoe[0]} EU`, detail: `${size} US · ${shoe[1]} cm` };
   return { letter: size === "Tamanho único" ? "Único" : size, detail: null };
 }
 
