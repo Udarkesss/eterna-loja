@@ -40,7 +40,7 @@ const CLEAR = { size: null, color: null, price: null, sale: null, type: null };
  * PT: Barra por cima da grelha: "Filtros" + filtros activos · contagem · "Ordenar". No telemóvel: "Filtrar" (abre os
  *     filtros em ecrã inteiro) e o botão de ordenar.
  */
-export function CategoryToolbar({ total, inline = false, types = [] }: { total: number; inline?: boolean; types?: TypeOption[] }) {
+export function CategoryToolbar({ total, types = [] }: { total: number; types?: TypeOption[] }) {
   const { dict } = useI18n();
   const { values, update, toggle, params } = useFilterParams();
   const [open, setOpen] = useState(false);
@@ -86,31 +86,27 @@ export function CategoryToolbar({ total, inline = false, types = [] }: { total: 
 
   return (
     <>
-      <div className={`page-x ${styles.toolbar} ${inline ? styles.toolbarInline : ""}`}>
-        {inline ? (
-          <InlineFilters />
-        ) : (
-          <div className={styles.chips}>
-            <span className={styles.label}>{dict.catalog.filters}</span>
-            {chips.map((c) => (
-              <button
-                key={`${c.key}-${c.value}`}
-                type="button"
-                className={styles.activeChip}
-                onClick={() => (c.key === "sale" || c.key === "type" ? update({ [c.key]: null }) : toggle(c.key, c.value))}
-                aria-label={t(dict.catalog.removeFilter, { name: c.label })}
-              >
-                {c.label}
-                <Icon name="close" size={14} />
-              </button>
-            ))}
-            {chips.length > 0 && (
-              <button type="button" className={styles.clear} onClick={() => update(CLEAR)}>
-                {dict.catalog.clearAll}
-              </button>
-            )}
-          </div>
-        )}
+      <div className={`page-x ${styles.toolbar}`}>
+        <div className={styles.chips}>
+          <span className={styles.label}>{dict.catalog.filters}</span>
+          {chips.map((c) => (
+            <button
+              key={`${c.key}-${c.value}`}
+              type="button"
+              className={styles.activeChip}
+              onClick={() => (c.key === "sale" || c.key === "type" ? update({ [c.key]: null }) : toggle(c.key, c.value))}
+              aria-label={t(dict.catalog.removeFilter, { name: c.label })}
+            >
+              {c.label}
+              <Icon name="close" size={14} />
+            </button>
+          ))}
+          {chips.length > 0 && (
+            <button type="button" className={styles.clear} onClick={() => update(CLEAR)}>
+              {dict.catalog.clearAll}
+            </button>
+          )}
+        </div>
         <div className={styles.toolbarRight}>
           <span className={styles.count}>{plural(dict.catalog.count, total)}</span>
           <label className={styles.sortLabel}>
@@ -289,39 +285,6 @@ export function SaleFilter({ legend = true, reserved = false }: { legend?: boole
         </label>
       )}
     </fieldset>
-  );
-}
-
-/**
- * EN: Inline filters of the collection page (design V3 "Colecção"): Tamanho ▾ · Cor ▾ · Preço ▾ · Em campanha, each
- *     opening a small panel; count and "Ordenar" on the right. Tablets and phones use the "Filtrar" panel instead.
- * PT: Filtros em linha da página da colecção: Tamanho ▾ · Cor ▾ · Preço ▾ · Em campanha, cada um abre um pequeno
- *     painel; contagem e "Ordenar" à direita. Tablet e telemóvel usam o painel "Filtrar".
- */
-export function InlineFilters() {
-  const { dict } = useI18n();
-  const { values, update, params } = useFilterParams();
-  const sale = params.get("sale") === "1";
-  const n = (k: string) => values(k).length;
-  const drop = (label: string, count: number, body: React.ReactNode) => (
-    <details className={styles.drop}>
-      <summary className={`${styles.dropButton} ${count ? styles.dropOn : ""}`}>
-        {label}
-        {count > 0 && <span className={styles.dropCount}>{count}</span>}
-        <Icon name="chevronDown" size={14} />
-      </summary>
-      <div className={styles.dropPanel}>{body}</div>
-    </details>
-  );
-  return (
-    <div className={styles.inline}>
-      {drop(dict.catalog.size, n("size"), <SizeFilter legend={false} />)}
-      {drop(dict.catalog.color, n("color"), <ColorFilter legend={false} />)}
-      {drop(dict.catalog.price, n("price"), <PriceFilter legend={false} />)}
-      <button type="button" className={`${styles.dropButton} ${sale ? styles.dropOn : ""}`} aria-pressed={sale} onClick={() => update({ sale: sale ? null : "1" })}>
-        {dict.catalog.onSaleShort}
-      </button>
-    </div>
   );
 }
 

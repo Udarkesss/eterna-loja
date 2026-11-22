@@ -128,7 +128,6 @@ export const en: Dictionary = {
     availability: "Availability",
     onSale: "Only pieces on sale",
     showReserved: "Show reserved pieces",
-    onSaleShort: "On sale",
     collections: "Collections",
     lines: "Collection lines",
     filterButton: "Filter",

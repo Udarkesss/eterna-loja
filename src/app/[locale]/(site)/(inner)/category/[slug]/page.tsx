@@ -81,9 +81,9 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
 /**
  * EN: Collection page of design V3 ("Loja · Colecção Essenza (Festa / Executiva)"): cover, edition and season,
- *     the lines as tabs (?linha=), the line's type bar, inline filters and a 4-column grid.
+ *     the lines as tabs (?linha=), the line's type bar, side filters and a 3-column grid like every piece list.
  * PT: Página da colecção do V3: capa, edição e época, as linhas em separadores (?linha=), a barra de tipos da linha,
- *     filtros em linha e grelha de 4 colunas.
+ *     filtros laterais e grelha de 3 colunas como todas as listas de peças.
  */
 async function CollectionPage({ category, query, locale }: { category: CategoryDTO; query: Query; locale: Locale }) {
   const dict = getDictionary(locale);
@@ -137,11 +137,17 @@ async function CollectionPage({ category, query, locale }: { category: CategoryD
         <TypeBar tiles={listing.tiles} label={dict.catalog.types} />
       </section>
 
-      <CategoryToolbar total={listing.filtered.length} inline />
+      {/* EN: Same presentation as every piece list (owner 2026-11-22): side filters with "Tipos de peça" and 3 columns.
+          PT: A mesma apresentação de todas as listas de peças (dona 22-11-2026): filtros laterais e 3 colunas. */}
+      <CategoryToolbar total={listing.filtered.length} types={listing.types} />
 
-      <section className={`page-x ${styles.body} ${styles.bodyFull}`}>
+      <section className={`page-x ${styles.body}`}>
+        <CategoryFilters types={listing.types} reserved={category.listing?.filters?.reserved !== false} />
         <div className={styles.results}>
-          <Results listing={listing} locale={locale} columns={4} />
+          <Results listing={listing} locale={locale} columns={3} />
+          <div className={styles.phoneHelp}>
+            <HelpBox />
+          </div>
         </div>
       </section>
 

@@ -131,7 +131,6 @@ export const pt = {
     availability: "Disponibilidade",
     onSale: "Só peças em campanha",
     showReserved: "Mostrar peças reservadas",
-    onSaleShort: "Em campanha",
     collections: "Colecções",
     lines: "Linhas da colecção",
     filterButton: "Filtrar",
