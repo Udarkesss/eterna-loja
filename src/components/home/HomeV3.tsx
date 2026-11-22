@@ -78,23 +78,10 @@ export function Colecao({ data, collection, locale }: { data: { cue: string; lin
       <div className={styles.duoSticky}>
       <div className={styles.duo}>
         {data.lines.map((line) => (
-          <div key={line.eyebrow} className={styles.duoPanel}>
-            <Image src={line.image} alt={line.eyebrow} fill sizes="(min-width: 768px) 50vw, 100vw" style={{ objectPosition: line.position }} />
-            <span className={styles.scrim} aria-hidden="true" />
-            <div className={styles.duoText}>
-              <span className={styles.eyebrowLight}>{line.eyebrow}</span>
-              <span className={styles.duoTitle}>{line.title}</span>
-              {/* EN: One button only (owner 2026-11-13): the first link of the line in Gestão → Conteúdo → Colecção activa.
-                  PT: Só um botão (dona 13-11-2026): a primeira ligação da linha na gestão. */}
-              <div className={styles.duoLinks}>
-                {line.links.slice(0, 1).map((l) => (
-                  <Link key={l.href} href={resolveHref(l.href, locale)} className={styles.btnLine}>
-                    {l.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
+          // EN: The whole panel opens the line (owner 2026-11-22), like the Bridal cards: one button only, the first link
+          //     of the line in Gestão → Conteúdo → Colecção activa (owner 2026-11-13).
+          // PT: O painel inteiro abre a linha (dona 22-11-2026), como nas Noivas: só um botão, a primeira ligação da linha.
+          <DuoPanel key={line.eyebrow} line={line} locale={locale} />
         ))}
       </div>
       </div>
@@ -289,6 +276,33 @@ export function Noivas({ data, locale }: { data: BridalData; locale: Locale }) {
   );
 }
 
+function DuoPanel({ line, locale }: { line: Line; locale: Locale }) {
+  const first = line.links[0];
+  const inner = (
+    <>
+      <Image src={line.image} alt={line.eyebrow} fill sizes="(min-width: 768px) 50vw, 100vw" style={{ objectPosition: line.position }} />
+      <span className={styles.scrim} aria-hidden="true" />
+      <span className={styles.photoShade} aria-hidden="true" />
+      <span className={styles.duoText}>
+        <span className={styles.eyebrowLight}>{line.eyebrow}</span>
+        <span className={styles.duoTitle}>{line.title}</span>
+        {first && (
+          <span className={styles.duoLinks}>
+            <span className={styles.btnLine}>{first.label}</span>
+          </span>
+        )}
+      </span>
+    </>
+  );
+  return first ? (
+    <Link href={resolveHref(first.href, locale)} className={`${styles.duoPanel} ${styles.photoLink}`}>
+      {inner}
+    </Link>
+  ) : (
+    <div className={styles.duoPanel}>{inner}</div>
+  );
+}
+
 // ── Acessórios / Modeladores ──────────────────────────────────────────
 export function Acessorios({ data }: { data: { eyebrow: string; title: string; seconds?: number; tabs: AccessoryTab[] } }) {
   return <AccessoriesTabs eyebrow={data.eyebrow} title={data.title} tabs={data.tabs} seconds={data.seconds ?? 10} />;
@@ -307,11 +321,15 @@ export function Modeladores({ data, locale }: { data: { eyebrow: string; title: 
           {data.linkLabel}
         </Link>
       </div>
-      <div className={styles.splitImage}>
-        <div className={styles.parallaxLayer} data-parallax="">
-          <Image src={data.image} alt={data.eyebrow} fill sizes="(min-width: 768px) 50vw, 100vw" style={{ objectPosition: "center 30%" }} />
-        </div>
-      </div>
+      {/* EN: The photo opens the page too, with the Bridal hover (owner 2026-11-22). PT: A foto também abre a página, com
+          o efeito das Noivas (dona 22-11-2026). */}
+      <Link href={resolveHref(data.href, locale)} className={`${styles.splitImage} ${styles.photoLink}`} tabIndex={-1} aria-hidden="true">
+        <span className={styles.parallaxLayer} data-parallax="">
+          <Image src={data.image} alt="" fill sizes="(min-width: 768px) 50vw, 100vw" style={{ objectPosition: "center 30%" }} />
+        </span>
+        <span className={styles.photoShade} />
+        <span className={styles.photoCta}>{data.linkLabel}</span>
+      </Link>
     </section>
   );
 }

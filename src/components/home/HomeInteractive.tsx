@@ -280,7 +280,9 @@ export function AccessoriesTabs({ eyebrow, title, tabs, seconds }: { eyebrow: st
   const tab = tabs[current];
   return (
     <section id="acessorios" className={styles.split}>
-      <div className={styles.splitImage}>
+      {/* EN: The photo opens the tab's page, with the Bridal hover (owner 2026-11-22). PT: A foto abre a página do
+          separador, com o efeito das Noivas (dona 22-11-2026). */}
+      <Link href={resolveHref(tab.href, locale)} className={`${styles.splitImage} ${styles.photoLink}`} tabIndex={-1} aria-hidden="true">
         {tabs.map((t, i) => (
           <Image
             key={t.image}
@@ -292,7 +294,9 @@ export function AccessoriesTabs({ eyebrow, title, tabs, seconds }: { eyebrow: st
             style={{ opacity: i === current ? 1 : 0 }}
           />
         ))}
-      </div>
+        <span className={styles.photoShade} />
+        <span className={styles.photoCta}>{tab.linkLabel}</span>
+      </Link>
       <div className={styles.splitText}>
         <span className="eyebrow">{eyebrow}</span>
         <h2 className={styles.title44}>

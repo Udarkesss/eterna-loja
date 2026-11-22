@@ -505,6 +505,73 @@
   object-fit: cover;
 }
 
+/* EN: Photos that open a page (Collection lines, Accessories, Shapewear), with the Bridal cards' hover: the photo
+       zooms in slowly, the gradient deepens and the link rises from below. Touch screens always show the link.
+   PT: Fotos que abrem uma página (linhas da Colecção, Acessórios, Modeladores), com o efeito das Noivas: a foto
+       aproxima devagar, o degradê escurece e a ligação sobe de baixo. Em ecrãs de toque a ligação está sempre à vista. */
+.photoLink {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.photoLink img {
+  transition: transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.7s ease;
+}
+
+.photoShade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(28, 25, 23, 0) 25%, rgba(28, 25, 23, 0.7) 100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+.photoCta {
+  position: absolute;
+  left: 40px;
+  bottom: 40px;
+  padding-bottom: 4px;
+  color: var(--on-contrast);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: linear-gradient(currentColor, currentColor) left bottom / 40% 1px no-repeat;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1), background-size 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.photoLink:hover img,
+.photoLink:focus-visible img {
+  transform: scale(1.05);
+}
+
+.photoLink:hover .photoShade,
+.photoLink:focus-visible .photoShade {
+  opacity: 1;
+}
+
+.photoLink:hover .photoCta,
+.photoLink:focus-visible .photoCta {
+  opacity: 1;
+  transform: none;
+  background-size: 100% 1px;
+}
+
+@media (hover: none) {
+  .photoCta {
+    opacity: 1;
+    transform: none;
+    background-size: 100% 1px;
+  }
+  .photoShade {
+    opacity: 0.6;
+  }
+}
+
 .duoText {
   position: absolute;
   left: 40px;
