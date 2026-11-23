@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useRef, useState, type FormEvent } from "react";
 import { FavoritesList } from "@/components/favorites/FavoritesList";
 import { Button, ButtonLink } from "@/components/ui/Button";
+import { WayIcon } from "@/components/ui/WayIcon";
 import form from "@/components/ui/Form.module.css";
 import { Icon } from "@/components/ui/Icon";
 import { RichText } from "@/components/ui/RichText";
@@ -560,6 +561,7 @@ function WaysPanel({ customer, onChange }: { customer: CustomerDTO; onChange: (c
           const last = !!id && count === 1;
           return (
             <li key={p} className={styles.way}>
+              <WayIcon way={p} size={20} />
               <span className={styles.rowMain}>
                 <span className={styles.rowTitle}>{a.wayTitles[p]}</span>
                 <span className={styles.rowSub} data-on={!!id}>

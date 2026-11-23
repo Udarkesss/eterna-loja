@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
+import { WayIcon } from "@/components/ui/WayIcon";
 import { Icon } from "@/components/ui/Icon";
 import form from "@/components/ui/Form.module.css";
 import { t } from "@/i18n";
@@ -200,9 +201,11 @@ export function AuthPanel({ next }: { next: string }) {
             {a.or}
           </div>
           <Button variant="outline" block onClick={() => social("Google")}>
+            <WayIcon way="google" />
             {a.google}
           </Button>
           <Button variant="outline" block onClick={() => social("Facebook")}>
+            <WayIcon way="facebook" />
             {a.facebook}
           </Button>
         </div>
@@ -213,6 +216,7 @@ export function AuthPanel({ next }: { next: string }) {
           <div role="radiogroup" aria-label={a.createAccount} className={form.choices}>
             {(["email", "whatsapp", "google", "facebook"] as const).map((id) => (
               <button key={id} type="button" role="radio" aria-checked={way === id} className={form.choice} onClick={() => reset({ way: id })}>
+                <WayIcon way={id} size={16} />
                 {a.ways[id]}
               </button>
             ))}
@@ -285,6 +289,7 @@ export function AuthPanel({ next }: { next: string }) {
 
           {(way === "google" || way === "facebook") && (
             <Button variant="outline" block onClick={() => social(way === "google" ? "Google" : "Facebook")}>
+              <WayIcon way={way} />
               {way === "google" ? a.google : a.facebook}
             </Button>
           )}
