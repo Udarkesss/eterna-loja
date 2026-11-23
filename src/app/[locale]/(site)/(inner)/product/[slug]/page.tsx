@@ -10,7 +10,7 @@ import { PaymentLogos } from "@/components/ui/PaymentLogos";
 import { RichText } from "@/components/ui/RichText";
 import { getDictionary, t } from "@/i18n";
 import { resolveLocale } from "@/i18n/params";
-import { categoryHref, resolveHref } from "@/lib/links";
+import { categoryHref } from "@/lib/links";
 import { findCategory, findProduct, relatedProducts } from "@/server/catalog";
 import { cardPriceVisible } from "@/server/content";
 import styles from "./product.module.css";
@@ -56,9 +56,14 @@ export default async function ProductPage({ params }: Props) {
   const panels = [
     { title: dict.product.panels.description, body: product.description },
     ...(product.composition ? [{ title: dict.product.panels.composition, body: product.composition }] : []),
-    { title: dict.product.panels.pickup, body: t(dict.product.panels.pickupBody, { store: storeCode }) },
-    { title: dict.product.panels.reservation, body: dict.product.panels.reservationBody },
-    { title: dict.product.panels.returns, body: dict.product.panels.returnsBody },
+    // EN: Collection and reservation in one panel, and the final-sale note in "Trocas e devoluções", so the whole column
+    //     fits beside the photo (owner 2026-11-23). PT: Levantamento e reserva num só painel, e a nota de vendas finais
+    //     em "Trocas e devoluções", para a coluna caber ao lado da foto (dona 23-11-2026).
+    {
+      title: dict.product.panels.pickup,
+      body: `${t(dict.product.panels.pickupBody, { store: storeCode })}\n\n${t(dict.product.panels.reservationBody, { pct: rules.depositPct, days: rules.days, bridalDays: rules.bridalDays })}`,
+    },
+    { title: dict.product.panels.returns, body: `${dict.product.panels.returnsBody}\n\n${dict.product.tryInStore}` },
   ];
 
   return (
@@ -72,23 +77,6 @@ export default async function ProductPage({ params }: Props) {
             </span>
             <span className={detail.grow}>{dict.product.securePayment}</span>
             <PaymentLogos label={dict.common.paymentLogos} small />
-          </li>
-          <li className={detail.trustItem}>
-            <span className={detail.trustIcon}>
-              <Icon name="store" size={18} />
-            </span>
-            {t(dict.product.pickupFree, { store: storeCode })}
-          </li>
-          <li className={detail.trustItem}>
-            <span className={detail.trustIcon}>
-              <Icon name="return" size={18} />
-            </span>
-            <span>
-              {dict.product.finalSale}{" "}
-              <Link href={resolveHref("#contactos", locale)} className={detail.trustLink}>
-                {dict.product.tryInStore}
-              </Link>
-            </span>
           </li>
         </ul>
         <ProductPanels panels={panels} />

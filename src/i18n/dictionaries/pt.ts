@@ -82,10 +82,13 @@ export const pt = {
     chooseSize: "Escolha o tamanho",
     bookFitting: "Marcar prova",
     securePayment: "Pagamento seguro",
-    pickupFree: "Levantamento grátis no Glória Mall, Loja {store}",
     finalSale: "Todas as vendas da ETERNA são finais, não sendo aceites trocas nem devoluções.",
     tryInStore: "Prefere ver ao vivo? Venha experimentar na nossa loja.",
     viewImage: "Ver imagem {n}",
+    openPhoto: "Ver a foto em ecrã inteiro",
+    photoCount: "{n} de {total}",
+    prevPhoto: "Foto anterior",
+    nextPhoto: "Foto seguinte",
     photosOf: "Fotos de {color} · {n}",
     photosHint: "Cada cor mostra as suas fotos.",
     colorBadge: "Cor: {color}",
@@ -93,12 +96,11 @@ export const pt = {
     panels: {
       description: "Descrição",
       composition: "Composição e cuidados",
-      pickup: "Levantamento",
+      pickup: "Levantamento grátis e reserva",
       pickupBody:
         "Levante gratuitamente no Glória Mall, Loja {store}. Avisamos por WhatsApp quando a encomenda estiver pronta.",
-      reservation: "Reserva",
       reservationBody:
-        "Reserve a peça com um sinal de 50%: fica separada em seu nome durante 30 dias (60 dias nos vestidos de noiva e peças da Bridal). No levantamento paga o restante. Após o prazo, a reserva é cancelada e o sinal não é reembolsável.",
+        "Pode reservar com um sinal de {pct}%: a peça fica separada em seu nome {days} dias ({bridalDays} nas peças da Bridal) e paga o restante no levantamento. Depois do prazo, a reserva é cancelada e o sinal não é devolvido.",
       returns: "Trocas e devoluções",
       returnsBody:
         "Na Eterna não aceitamos trocas nem devoluções. Antes do pagamento pode verificar a peça com calma, com a ajuda das nossas consultoras; todas as peças são entregues com qualidade garantida.",

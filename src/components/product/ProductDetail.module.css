@@ -75,6 +75,16 @@
   overflow: hidden;
 }
 
+.zoom {
+  position: absolute;
+  inset: 0;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+
 .gallery:not(:has(.thumbs)) .main {
   grid-column: 1 / -1;
 }
@@ -109,17 +119,19 @@
 }
 
 /* ── Information / Informação ── */
+/* EN: Tighter spacing so the whole column fits beside the 860px photo (owner 2026-11-23). PT: Espaços mais justos
+   para a coluna inteira caber ao lado da foto de 860px (dona 23-11-2026). */
 .info {
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: 16px;
 }
 
 .titles {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding-bottom: 24px;
+  gap: 6px;
+  padding-bottom: 18px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -175,7 +187,7 @@
 .sizeBlock {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .swatches {
@@ -338,7 +350,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 20px 0;
+  padding: 12px 0 0;
   border-top: 1px solid var(--line);
 }
 
@@ -356,12 +368,6 @@
   display: flex;
 }
 
-.trustLink {
-  color: var(--accent-ink);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-
 /* ── Panels / Painéis ── */
 .panels {
   border-top: 1px solid var(--line);
@@ -373,7 +379,7 @@
 
 .panelButton {
   width: 100%;
-  min-height: 56px;
+  min-height: 46px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -388,7 +394,7 @@
 }
 
 .panelBody {
-  padding-bottom: 20px;
+  padding-bottom: 16px;
   font-size: 14px;
   line-height: 22px;
   color: var(--muted);
@@ -437,6 +443,10 @@
 
   .slide {
     position: relative;
+    display: block;
+    padding: 0;
+    border: 0;
+    cursor: zoom-in;
     flex: 0 0 100%;
     aspect-ratio: 3 / 5;
     scroll-snap-align: start;

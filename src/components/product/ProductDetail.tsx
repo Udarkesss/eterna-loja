@@ -14,6 +14,7 @@ import { levelDiscount } from "@/lib/discounts";
 import { formatMZN } from "@/lib/format";
 import { sizeParts, sortSizes } from "@/lib/sizes";
 import type { ProductDTO } from "@/types";
+import { PhotoViewer } from "./PhotoViewer";
 import styles from "./ProductDetail.module.css";
 
 /**
@@ -62,6 +63,8 @@ export function ProductDetail({ product, eyebrow, badge, reserve, children }: { 
   const allSizes = sortSizes([...new Set(product.variants.map((v) => v.size))]);
   const [variantId, setVariantId] = useState<string | null>(inColor.find((v) => v.stock > 0)?.id ?? null);
   const [imageIndex, setImageIndex] = useState(0);
+  // EN: Photo open full screen (index), or null. PT: Foto aberta em ecrã inteiro (índice), ou null.
+  const [viewer, setViewer] = useState<number | null>(null);
 
   const images = useMemo(() => {
     const forColor = product.images.filter((i) => !color || i.color === color || i.color === null);
@@ -124,20 +127,35 @@ export function ProductDetail({ product, eyebrow, badge, reserve, children }: { 
           </div>
         )}
         <div className={styles.main}>
-          {main && <Image src={main.url} alt={main.alt} fill priority sizes="(min-width: 1024px) 50vw, 100vw" className={styles.coverTop} />}
+          {main && (
+            <button type="button" className={styles.zoom} aria-label={dict.product.openPhoto} onClick={() => setViewer(Math.min(imageIndex, images.length - 1))}>
+              <Image src={main.url} alt={main.alt} fill priority sizes="(min-width: 1024px) 50vw, 100vw" className={styles.coverTop} />
+            </button>
+          )}
           {badge && <span className={styles.badge}>{badge}</span>}
           {colorName && <span className={styles.colorBadge}>{t(dict.product.colorBadge, { color: colorName })}</span>}
         </div>
-        {/* EN: Phones: swipe through the colour's photos. PT: Telemóvel: deslizar pelas fotos da cor. */}
+        {/* EN: Phones: swipe through the colour's photos; a tap opens them full screen. PT: Telemóvel: deslizar pelas
+            fotos da cor; um toque abre-as em ecrã inteiro. */}
         <div className={styles.swipe}>
           {images.map((img, i) => (
-            <div key={img.url} className={styles.slide}>
+            <button key={img.url} type="button" className={styles.slide} aria-label={dict.product.openPhoto} onClick={() => setViewer(i)}>
               <Image src={img.url} alt={img.alt} fill priority={i === 0} sizes="100vw" className={styles.coverTop} />
-            </div>
+            </button>
           ))}
           {badge && <span className={styles.badge}>{badge}</span>}
         </div>
       </div>
+      {viewer !== null && (
+        <PhotoViewer
+          images={images.map((img) => ({ url: img.url, alt: img.alt }))}
+          start={viewer}
+          onClose={(i) => {
+            setImageIndex(i);
+            setViewer(null);
+          }}
+        />
+      )}
 
       <div className={styles.info}>
         <div className={styles.titles}>
@@ -260,18 +278,23 @@ export function ProductDetail({ product, eyebrow, badge, reserve, children }: { 
   );
 }
 
-/** EN: The accordion panels (Descrição open by default). PT: Os painéis (Descrição aberto por defeito). */
+/**
+ * EN: The accordion panels, Descrição open by default. One open at a time (owner 2026-11-23): opening one closes the
+ *     other, so the column stays beside the photo.
+ * PT: Os painéis, Descrição aberto por defeito. Um aberto de cada vez (dona 23-11-2026): abrir um fecha o outro, para a
+ *     coluna ficar ao lado da foto.
+ */
 export function ProductPanels({ panels }: { panels: { title: string; body: string }[] }) {
-  const [open, setOpen] = useState<Record<number, boolean>>({ 0: true });
+  const [open, setOpen] = useState<number | null>(0);
   return (
     <div className={styles.panels}>
       {panels.map((panel, i) => (
         <div key={panel.title} className={styles.panel}>
-          <button type="button" className={styles.panelButton} aria-expanded={!!open[i]} onClick={() => setOpen((o) => ({ ...o, [i]: !o[i] }))}>
+          <button type="button" className={styles.panelButton} aria-expanded={open === i} onClick={() => setOpen((o) => (o === i ? null : i))}>
             {panel.title}
-            <Icon name={open[i] ? "minus" : "plus"} size={16} />
+            <Icon name={open === i ? "minus" : "plus"} size={16} />
           </button>
-          {open[i] && <p className={styles.panelBody}>{panel.body}</p>}
+          {open === i && <p className={styles.panelBody}>{panel.body}</p>}
         </div>
       ))}
     </div>

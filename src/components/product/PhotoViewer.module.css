@@ -1,0 +1,179 @@
+/* EN: Full-screen photos of a piece (owner 2026-11-23). PT: Fotos da peça em ecrã inteiro (dona 23-11-2026). */
+
+.viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  background: color-mix(in srgb, var(--ivory) 88%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  animation: viewerIn 0.3s ease both;
+}
+
+.viewer:not(:has(.thumbs)) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@keyframes viewerIn {
+  from {
+    opacity: 0;
+  }
+}
+
+.thumbs {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px 0 24px 32px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.thumb {
+  position: relative;
+  flex: none;
+  width: 64px;
+  aspect-ratio: 3 / 5;
+  padding: 0;
+  border: 0;
+  background: var(--alt);
+  overflow: hidden;
+  opacity: 0.55;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.thumb:hover,
+.thumb[aria-pressed="true"] {
+  opacity: 1;
+}
+
+.thumb[aria-pressed="true"] {
+  outline: 1px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.cover {
+  object-fit: cover;
+}
+
+.track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
+
+.track::-webkit-scrollbar,
+.thumbs::-webkit-scrollbar {
+  display: none;
+}
+
+.slide {
+  flex: 0 0 100%;
+  display: grid;
+  place-items: center;
+  padding: 24px 88px;
+  scroll-snap-align: start;
+}
+
+.frame {
+  position: relative;
+  height: calc(100svh - 48px);
+  aspect-ratio: 3 / 5;
+  max-width: 100%;
+}
+
+.photo {
+  object-fit: contain;
+}
+
+.arrow,
+.close {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.arrow:hover,
+.close:hover {
+  border-color: var(--ink);
+}
+
+.arrow {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.prev {
+  left: 128px;
+}
+
+.viewer:not(:has(.thumbs)) .prev {
+  left: 24px;
+}
+
+.next {
+  right: 24px;
+}
+
+.close {
+  top: 24px;
+  right: 24px;
+}
+
+.count {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* EN: Phones: the photo takes the screen, swipe to change; no thumbnails. PT: Telemóvel: a foto ocupa o ecrã. */
+@media (max-width: 767px) {
+  .viewer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .thumbs,
+  .arrow {
+    display: none;
+  }
+
+  .slide {
+    padding: 64px 0 56px;
+  }
+
+  .frame {
+    height: auto;
+    width: 100%;
+    max-height: calc(100svh - 120px);
+  }
+
+  .close {
+    top: 12px;
+    right: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viewer {
+    animation: none;
+  }
+}

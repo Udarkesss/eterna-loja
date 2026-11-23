@@ -80,10 +80,13 @@ export const en: Dictionary = {
     chooseSize: "Choose your size",
     bookFitting: "Book a fitting",
     securePayment: "Secure payment",
-    pickupFree: "Free collection at Glória Mall, Store {store}",
     finalSale: "All ETERNA sales are final; exchanges and returns are not accepted.",
     tryInStore: "Prefer to see it in person? Come and try it on in our store.",
     viewImage: "View image {n}",
+    openPhoto: "View the photo full screen",
+    photoCount: "{n} of {total}",
+    prevPhoto: "Previous photo",
+    nextPhoto: "Next photo",
     photosOf: "{color} photos · {n}",
     photosHint: "Each colour shows its own photos.",
     colorBadge: "Colour: {color}",
@@ -91,11 +94,10 @@ export const en: Dictionary = {
     panels: {
       description: "Description",
       composition: "Composition and care",
-      pickup: "Collection",
+      pickup: "Free collection & reservation",
       pickupBody: "Collect free of charge at Glória Mall, Store {store}. We let you know on WhatsApp when your order is ready.",
-      reservation: "Reservation",
       reservationBody:
-        "Reserve the piece with a 50% deposit: it is set aside in your name for 30 days (60 days for wedding dresses and Bridal pieces). You pay the rest when you collect it. After that, the reservation is cancelled and the deposit is not refundable.",
+        "You can reserve with a {pct}% deposit: the piece is set aside in your name for {days} days ({bridalDays} for Bridal pieces) and you pay the rest when you collect it. After that, the reservation is cancelled and the deposit is not refunded.",
       returns: "Exchanges and returns",
       returnsBody:
         "At Eterna we do not accept exchanges or returns. Before paying you can check the piece calmly, with our consultants' help; every piece is delivered with guaranteed quality.",
