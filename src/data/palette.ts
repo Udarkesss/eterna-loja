@@ -45,7 +45,7 @@ export const PALETTE: [string, string, string, ColorFamily | null][] = [
 
 /** EN: Size systems of the design. PT: Sistemas de tamanhos do design. */
 export const SIZE_SYSTEMS: Record<string, { label: string; sizes: string[] }> = {
-  clothing: { label: "Vestuário · US · EU · letra", sizes: ["2US/34EUR/XS", "4US/36EUR/S", "6US/38EUR/S", "8US/40EUR/M", "10US/42EUR/M", "12US/44EUR/L", "16US/48EUR/XL", "18US/50EUR/XXL", "20US/52EUR/XXXL"] },
+  clothing: { label: "Vestuário · US · EU · letra", sizes: ["2US/34EUR/XS", "4US/36EUR/S", "6US/38EUR/S", "8US/40EUR/M", "10US/42EUR/M", "12US/44EUR/L", "14US/46EUR/L", "16US/48EUR/XL", "18US/50EUR/XL", "20US/52EUR/XXL", "22US/54EUR/XXL"] },
   letters: { label: "Só letra", sizes: ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] },
   shoes: { label: "Calçado · US → EU", sizes: ["5", "6", "7", "7.5", "8", "8.5", "9", "10", "11"] },
   bras: { label: "Soutiens", sizes: ["32A", "32B", "34A", "34B", "34C", "36B", "36C", "36D", "38B", "38C", "38D"] },
