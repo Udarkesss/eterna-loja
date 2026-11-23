@@ -2,15 +2,17 @@ import Link from "next/link";
 import c from "@/components/admin/AdminV3.module.css";
 import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
 import d3 from "@/components/admin/Dashboard.module.css";
+import { FixedPiecesForm } from "@/components/admin/FixedPiecesForm";
 import { ProductsTable } from "@/components/admin/ProductsTable";
 import { PageTop } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
 import { listCategoriesByKind, listProductsAdmin, PRODUCT_VIEWS, type ProductView } from "@/server/admin/products";
+import { getFixedPieces } from "@/server/admin/warehouse";
 import { accessOf, canEdit, requireStaffPage } from "@/server/staff/access";
 
 export const metadata = { title: "Produtos" };
 
-type Props = { searchParams: Promise<{ vista?: string; q?: string; tipo?: string; colecao?: string }> };
+type Props = { searchParams: Promise<{ vista?: string; q?: string; tipo?: string; colecao?: string; ocasiao?: string; grupo?: string }> };
 
 /**
  * EN: "Gestão · Produtos" of design V3-G-Produtos. PT: Produtos do V3.
@@ -19,9 +21,13 @@ export default async function ProductsPage({ searchParams }: Props) {
   const staff = await requireStaffPage("products.view");
   const p = await searchParams;
   const view: ProductView = p.vista && p.vista in PRODUCT_VIEWS ? (p.vista as ProductView) : "todos";
-  const [{ list, counts }, cats] = await Promise.all([listProductsAdmin(staff, { view, q: p.q, type: p.tipo, collection: p.colecao }), listCategoriesByKind()]);
+  const [{ list, counts }, cats, fixed] = await Promise.all([
+    listProductsAdmin(staff, { view, q: p.q, type: p.tipo, collection: p.colecao, occasion: p.ocasiao, group: p.grupo }),
+    listCategoriesByKind(),
+    getFixedPieces(),
+  ]);
   const link = (vista: ProductView) =>
-    `?${new URLSearchParams(Object.entries({ q: p.q, tipo: p.tipo, colecao: p.colecao, vista: vista === "todos" ? undefined : vista }).filter((e): e is [string, string] => !!e[1]))}`;
+    `?${new URLSearchParams(Object.entries({ q: p.q, tipo: p.tipo, colecao: p.colecao, ocasiao: p.ocasiao, grupo: p.grupo, vista: vista === "todos" ? undefined : vista }).filter((e): e is [string, string] => !!e[1]))}`;
   const edit = canEdit(staff, "products.edit");
   const publish = accessOf(staff, "products.publish") === "T";
 
@@ -82,15 +88,41 @@ export default async function ProductsPage({ searchParams }: Props) {
                 </option>
               ))}
             </AutoSubmitSelect>
+            <AutoSubmitSelect className={c.select} name="ocasiao" defaultValue={p.ocasiao ?? ""} aria-label="Ocasião" style={{ width: 180 }}>
+              <option value="">Todas as ocasiões</option>
+              {cats.occasions.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.name}
+                </option>
+              ))}
+            </AutoSubmitSelect>
+            <AutoSubmitSelect className={c.select} name="grupo" defaultValue={p.grupo ?? ""} aria-label="Grupo" style={{ width: 180 }}>
+              <option value="">Todos os grupos</option>
+              {cats.groups.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.note ? `${x.name} · ${x.note}` : x.name}
+                </option>
+              ))}
+            </AutoSubmitSelect>
           </form>
           {list.length === 0 ? (
             <p className={d3.empty}>{p.q ? "Nenhum produto encontrado." : `Nenhum produto em “${PRODUCT_VIEWS[view]}”.`}</p>
           ) : (
-            <ProductsTable items={list.slice(0, 200)} collections={cats.collections} canPublish={publish} canEdit={edit} />
+            <ProductsTable items={list.slice(0, 200)} allIds={list.map((i) => i.id)} collections={cats.collections} canPublish={publish} canEdit={edit} />
           )}
           {list.length > 200 && <span className={c.xsMuted}>A mostrar 200 de {list.length}. Use a pesquisa ou os filtros para encontrar o resto.</span>}
         </div>
       </section>
+      {publish && (
+        <section className={d3.panel}>
+          <div className={d3.panelHead}>
+            <h2>Fixas na loja</h2>
+          </div>
+          <div className={d3.panelBody}>
+            <FixedPiecesForm groups={cats.groups.map((g) => ({ slug: g.slug, name: g.name, note: g.note }))} chosen={fixed.categories} singles={fixed.products.length} />
+          </div>
+        </section>
+      )}
     </>
   );
 }

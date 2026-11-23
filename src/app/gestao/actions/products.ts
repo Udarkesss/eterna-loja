@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { bulkProducts, deleteProduct, saveProduct, type ProductInput } from "@/server/admin/products";
+import { saveFixedCategories } from "@/server/admin/warehouse";
 import { AppError } from "@/server/errors";
 import { requireStaffAction } from "@/server/staff/access";
 import { savePublicUpload } from "@/server/uploads";
@@ -48,10 +50,32 @@ export async function uploadProductImageAction(form: FormData): Promise<ProductA
 
 export async function bulkProductsAction(ids: string[], action: Parameters<typeof bulkProducts>[2]): Promise<ProductActionResult> {
   try {
-    const staff = await requireStaffAction(action.kind === "publish" || action.kind === "draft" ? "products.publish" : "products.edit");
+    const staff = await requireStaffAction(action.kind === "join" ? "products.edit" : "products.publish");
     await bulkProducts(staff, ids, action);
     revalidatePath("/gestao/produtos");
-    return { ok: true, message: "Alterações aplicadas." };
+    revalidatePath("/", "layout");
+    const n = `${ids.length} ${ids.length === 1 ? "peça" : "peças"}`;
+    const one = ids.length === 1;
+    const done = {
+      publish: `${n} na loja (${one ? "se tiver preço" : "as que têm preço"}).`,
+      draft: `${n} no armazém.`,
+      fix: `${n} ${one ? "fixa" : "fixas"} na loja.`,
+      unfix: `${n} ${one ? "deixou de ser fixa" : "deixaram de ser fixas"}.`,
+      join: "Alterações aplicadas.",
+    }[action.kind];
+    return { ok: true, message: done };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/** EN: Categories whose pieces always stay in the shop. PT: Categorias cujas peças ficam sempre na loja. */
+export async function saveFixedCategoriesAction(slugs: string[]): Promise<ProductActionResult> {
+  try {
+    const staff = await requireStaffAction("products.publish");
+    await saveFixedCategories(staff, z.array(z.string().max(80)).max(200).parse(slugs));
+    revalidatePath("/gestao/produtos");
+    return { ok: true, message: "Peças fixas guardadas." };
   } catch (e) {
     return fail(e);
   }

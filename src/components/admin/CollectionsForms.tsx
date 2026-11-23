@@ -15,7 +15,7 @@ import {
 import { Icon } from "@/components/ui/Icon";
 import c from "./AdminV3.module.css";
 import d3 from "./Dashboard.module.css";
-import k from "./Collections.module.css";
+import k from "./Collections.module.css";
 import mob from "./Mobile.module.css";
 import { FrameButton } from "./FrameDialog";
 
@@ -30,28 +30,6 @@ function Feedback({ result }: { result: CollectionActionResult | null }) {
     <span role={result.ok ? "status" : "alert"} className={result.ok ? c.ok : c.err}>
       {result.message}
     </span>
-  );
-}
-
-/** EN: "Activar" / "Desactivar" / "Reactivar" in the list. PT: Na lista. */
-export function StatusButton({ id, status, label, confirmText }: { id: string; status: "active" | "archived" | "draft"; label: string; confirmText?: string }) {
-  const [pending, start] = useTransition();
-  const [res, setRes] = useState<CollectionActionResult | null>(null);
-  return (
-    <>
-      <button
-        type="button"
-        className={c.textBtn}
-        disabled={pending}
-        onClick={() => {
-          if (confirmText && !window.confirm(confirmText)) return;
-          start(async () => setRes(await setCollectionStatusAction(id, status)));
-        }}
-      >
-        {label}
-      </button>
-      {res && !res.ok && <Feedback result={res} />}
-    </>
   );
 }
 
@@ -122,8 +100,11 @@ export function CollectionEditor(props: {
   lines: { slug: string; name: string; types: { id: string; name: string }[] }[];
   activeName: string | null;
   check: { total: number; available: number };
+  // EN: What a change would move between the shop and the warehouse. PT: O que a mudança moveria entre loja e armazém.
+  shop: { all: number; previous: number; fixed: number; toShop: number; own: number; fixedNames: string[] };
   special: { id: string; name: string; dates: string; imageUrl: string | null }[];
   openConfirm?: boolean;
+  openDeactivate?: boolean;
 }) {
   const router = useRouter();
   const [d, setD] = useState(props.data);
@@ -135,6 +116,11 @@ export function CollectionEditor(props: {
   const [adding, setAdding] = useState(false);
   const [query, setQuery] = useState("");
   const [confirm, setConfirm] = useState(!!props.openConfirm && !!props.data.id && props.data.status !== "active");
+  // EN: Shop / warehouse choices (owner 2026-11-23). PT: Escolhas loja / armazém (dona 23-11-2026).
+  const [send, setSend] = useState<"all" | "previous" | "keep">(props.activeName && props.data.collectionType !== "special" ? "all" : "keep");
+  const [publishNew, setPublishNew] = useState(props.shop.toShop > 0);
+  const [deactivating, setDeactivating] = useState(!!props.openDeactivate && !!props.data.id && props.data.status === "active");
+  const [sendOwn, setSendOwn] = useState(true);
   const cover = useRef<HTMLInputElement>(null);
   const set = (patch: Partial<CollectionFormData>) => setD((x) => ({ ...x, ...patch }));
   const original = useMemo(() => new Set(props.pieces.filter((p) => p.inCollection).map((p) => p.id)), [props.pieces]);
@@ -449,18 +435,7 @@ export function CollectionEditor(props: {
                 </button>
               )}
               {d.id && !d.history && d.status === "active" && (
-                <button
-                  type="button"
-                  className={`${c.btn} ${c.sm} ${c.full}`}
-                  disabled={pending}
-                  onClick={() =>
-                    start(async () => {
-                      const r = await setCollectionStatusAction(d.id!, "archived");
-                      setRes(r);
-                      if (r.ok) set({ status: "archived" });
-                    })
-                  }
-                >
+                <button type="button" className={`${c.btn} ${c.sm} ${c.full}`} disabled={pending} onClick={() => setDeactivating(true)}>
                   Desactivar
                 </button>
               )}
@@ -537,6 +512,45 @@ export function CollectionEditor(props: {
                 </b>
               </div>
               {props.activeName && !special && <span className={c.xsMuted}>A {props.activeName} fica arquivada, com as ligações às peças guardadas.</span>}
+
+              {/* EN: The shop follows the collection change (owner 2026-11-23). PT: A loja acompanha a mudança de colecção. */}
+              <fieldset style={{ border: 0, padding: 0, margin: "8px 0 0", display: "flex", flexDirection: "column", gap: 8 }}>
+                <legend className={c.small} style={{ fontWeight: 500, marginBottom: 6 }}>
+                  Loja e armazém
+                </legend>
+                {!special && (
+                  <>
+                    <label className={c.small} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                      <input type="radio" name="send" checked={send === "all"} onChange={() => setSend("all")} />
+                      <span>
+                        Tirar da loja todas as peças que não são da {d.name} <b className={c.num}>({props.shop.all})</b> e enviá-las para o armazém
+                      </span>
+                    </label>
+                    {props.activeName && (
+                      <label className={c.small} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                        <input type="radio" name="send" checked={send === "previous"} onChange={() => setSend("previous")} />
+                        <span>
+                          Enviar para o armazém só as peças da {props.activeName} <b className={c.num}>({props.shop.previous})</b>
+                        </span>
+                      </label>
+                    )}
+                  </>
+                )}
+                <label className={c.small} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                  <input type="radio" name="send" checked={send === "keep"} onChange={() => setSend("keep")} />
+                  <span>Não tirar nada da loja</span>
+                </label>
+                <label className={c.small} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 4 }}>
+                  <input type="checkbox" checked={publishNew} onChange={(e) => setPublishNew(e.target.checked)} />
+                  <span>
+                    Pôr na loja as peças da {d.name} que estão no armazém <b className={c.num}>({props.shop.toShop})</b>
+                  </span>
+                </label>
+                <span className={c.xsMuted}>
+                  {props.shop.fixedNames.length ? `Ficam sempre na loja: ${props.shop.fixedNames.join(", ")}` : "Nenhum grupo fixo na loja"}
+                  {props.shop.fixed ? ` · ${props.shop.fixed} peças fixas` : ""}. Muda-se em Produtos → Fixas na loja.
+                </span>
+              </fieldset>
               <div className={c.end}>
                 <button type="button" className={`${c.btn} ${c.sm}`} onClick={() => setConfirm(false)}>
                   Cancelar
@@ -547,7 +561,7 @@ export function CollectionEditor(props: {
                   disabled={pending}
                   onClick={() =>
                     start(async () => {
-                      const r = await setCollectionStatusAction(d.id!, "active");
+                      const r = await setCollectionStatusAction(d.id!, "active", { send, publishNew });
                       setRes(r);
                       if (r.ok) {
                         set({ status: "active" });
@@ -558,6 +572,49 @@ export function CollectionEditor(props: {
                   }
                 >
                   Activar {d.name}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deactivating && d.id && (
+        <div className={c.modalBack} onClick={(e) => e.target === e.currentTarget && setDeactivating(false)}>
+          <div className={c.modal} role="dialog" aria-modal="true" aria-label={`Desactivar ${d.name}`} style={{ width: 520 }}>
+            <div className={c.panelH}>
+              <h3>Desactivar a {d.name}?</h3>
+            </div>
+            <div className={c.panelB}>
+              <p className={c.small}>A colecção sai do site e do menu e fica arquivada, com as peças ligadas.</p>
+              <label className={c.small} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                <input type="checkbox" checked={sendOwn} onChange={(e) => setSendOwn(e.target.checked)} />
+                <span>
+                  Enviar as peças desta colecção para o armazém <b className={c.num}>({props.shop.own})</b>
+                </span>
+              </label>
+              {props.shop.fixedNames.length > 0 && <span className={c.xsMuted}>As peças fixas ({props.shop.fixedNames.join(", ")}) ficam na loja.</span>}
+              <div className={c.end}>
+                <button type="button" className={`${c.btn} ${c.sm}`} onClick={() => setDeactivating(false)}>
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className={`${c.btnPrimary} ${c.sm}`}
+                  disabled={pending}
+                  onClick={() =>
+                    start(async () => {
+                      const r = await setCollectionStatusAction(d.id!, "archived", { send: sendOwn ? "this" : "keep" });
+                      setRes(r);
+                      if (r.ok) {
+                        set({ status: "archived" });
+                        setDeactivating(false);
+                        router.refresh();
+                      }
+                    })
+                  }
+                >
+                  Desactivar
                 </button>
               </div>
             </div>

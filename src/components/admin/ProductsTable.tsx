@@ -10,9 +10,11 @@ import m from "./Mobile.module.css";
 import d3 from "./Dashboard.module.css";
 
 /**
- * EN: Product table of design V3-G-Produtos with selection and the bulk bar ("Juntar a uma colecção", "Publicar",
- *     "Passar a rascunho").
- * PT: Tabela de produtos do V3 com selecção e a barra de acções em massa.
+ * EN: Product table of design V3-G-Produtos with selection and the bulk bar ("Juntar a uma colecção", "Pôr na loja",
+ *     "Enviar para o armazém", "Fixar na loja"). The filters choose what to move (all, collection, occasion, group,
+ *     type…) and "Seleccionar as N" takes every filtered piece, not only the ones on screen (owner 2026-11-23).
+ * PT: Tabela de produtos do V3 com selecção e a barra de acções em massa. Os filtros escolhem o que mover (tudo,
+ *     colecção, ocasião, grupo, tipo…) e "Seleccionar as N" leva todas as filtradas, não só as do ecrã (dona 23-11-2026).
  */
 
 export interface ProductRowItem {
@@ -26,19 +28,32 @@ export interface ProductRowItem {
   stock: number;
   state: "published" | "bridal" | "reserved" | "soldout" | "draft" | "scheduled" | "archived";
   image: string | null;
+  fixed: boolean;
 }
 
 const STATE: Record<ProductRowItem["state"], { label: string; tone?: "ok" | "warn" | "bad"; icon?: "hourglass" | "dress" }> = {
-  published: { label: "Publicado", tone: "ok" },
-  bridal: { label: "Publicado · prova", tone: "ok", icon: "dress" },
+  published: { label: "Na loja", tone: "ok" },
+  bridal: { label: "Na loja · prova", tone: "ok", icon: "dress" },
   reserved: { label: "Reservada", tone: "warn", icon: "hourglass" },
   soldout: { label: "Sem stock", tone: "bad" },
-  draft: { label: "Rascunho · armazém" },
+  draft: { label: "No armazém" },
   scheduled: { label: "Agendado", tone: "warn" },
   archived: { label: "Arquivado" },
 };
 
-export function ProductsTable({ items, collections, canPublish, canEdit }: { items: ProductRowItem[]; collections: { id: string; name: string }[]; canPublish: boolean; canEdit: boolean }) {
+export function ProductsTable({
+  items,
+  allIds,
+  collections,
+  canPublish,
+  canEdit,
+}: {
+  items: ProductRowItem[];
+  allIds: string[];
+  collections: { id: string; name: string }[];
+  canPublish: boolean;
+  canEdit: boolean;
+}) {
   const [sel, setSel] = useState<string[]>([]);
   const [pending, start] = useTransition();
   const [result, setResult] = useState<ProductActionResult | null>(null);
@@ -92,15 +107,31 @@ export function ProductsTable({ items, collections, canPublish, canEdit }: { ite
           {canPublish && (
             <>
               <button type="button" className={`${c.btn} ${c.xs}`} disabled={!sel.length || pending} onClick={() => run({ kind: "publish" })}>
-                Publicar
+                <Icon name="store" size={14} />
+                Pôr na loja
               </button>
-              <button type="button" className={`${c.btn} ${c.xs}`} disabled={!sel.length || pending} onClick={() => run({ kind: "draft" })}>
-                Passar a rascunho
+              <button
+                type="button"
+                className={`${c.btn} ${c.xs}`}
+                disabled={!sel.length || pending}
+                onClick={() => window.confirm(`Enviar ${sel.length} ${sel.length === 1 ? "peça" : "peças"} para o armazém? Saem do site até as voltar a pôr na loja.`) && run({ kind: "draft" })}
+              >
+                <Icon name="layers" size={14} />
+                Enviar para o armazém
+              </button>
+              <button type="button" className={`${c.btn} ${c.xs}`} disabled={!sel.length || pending} onClick={() => run({ kind: sel.every((id) => items.find((i) => i.id === id)?.fixed) ? "unfix" : "fix" })}>
+                <Icon name="lock" size={14} />
+                {sel.length && sel.every((id) => items.find((i) => i.id === id)?.fixed) ? "Deixar de ser fixa" : "Fixar na loja"}
               </button>
             </>
           )}
+          {allIds.length > items.length || (sel.length > 0 && sel.length < allIds.length) ? (
+            <button type="button" className={c.textBtn} onClick={() => setSel(sel.length === allIds.length ? [] : allIds)}>
+              {sel.length === allIds.length ? "Limpar a selecção" : `Seleccionar as ${allIds.length} filtradas`}
+            </button>
+          ) : null}
           <span className={c.xsMuted} style={{ marginLeft: "auto" }}>
-            Publicado = está na loja ou na montra · Rascunho = armazém ou a chegar
+            Na loja = está no site · No armazém = fora do site · Fixa = não sai ao mudar de colecção
           </span>
         </div>
       )}
@@ -175,6 +206,12 @@ export function ProductsTable({ items, collections, canPublish, canEdit }: { ite
                     {st.icon && <Icon name={st.icon} size={13} />}
                     {st.label}
                   </span>
+                  {p.fixed && (
+                    <span className={c.xsMuted} style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 4 }}>
+                      <Icon name="lock" size={12} />
+                      Fixa
+                    </span>
+                  )}
                 </td>
                 <td>
                   <Link href={`/gestao/produtos/${p.id}`} className={c.textBtn}>

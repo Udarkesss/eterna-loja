@@ -3,13 +3,14 @@ import { notFound } from "next/navigation";
 import { CollectionEditor, type CollectionFormData } from "@/components/admin/CollectionsForms";
 import { PageTop } from "@/components/admin/ui";
 import { activationCheck, collectionPieces, getCollectionForEdit, isSeasonalTree } from "@/server/admin/collections";
+import { changePreview } from "@/server/admin/warehouse";
 import { getDb } from "@/server/db";
 import { categories } from "@/server/db/schema";
 import { requireStaffPage } from "@/server/staff/access";
 
 export const metadata = { title: "Editar colecção" };
 
-type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ antiga?: string; activar?: string }> };
+type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ antiga?: string; activar?: string; desactivar?: string }> };
 
 /**
  * EN: "Gestão · Editar colecção" of design V3-G-Colecao-Editar (also "Nova colecção" at /gestao/coleccoes/nova and an
@@ -19,7 +20,7 @@ type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ antiga?:
 export default async function CollectionEditPage({ params, searchParams }: Props) {
   await requireStaffPage("products.publish");
   const { id } = await params;
-  const { antiga, activar } = await searchParams;
+  const { antiga, activar, desactivar } = await searchParams;
   const isNew = id === "nova";
   if (!isNew && !/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const db = await getDb();
@@ -35,6 +36,7 @@ export default async function CollectionEditPage({ params, searchParams }: Props
   let activeName: string | null = rows.find((r) => r.kind === "collection" && !r.parentId && r.details?.active)?.name.pt ?? null;
   let special: { id: string; name: string; dates: string; imageUrl: string | null }[] = [];
   let check = { total: 0, available: 0 };
+  let shop = { all: 0, previous: 0, fixed: 0, toShop: 0, own: 0, fixedNames: [] as string[] };
   if (isNew) {
     data = {
       collectionType: "seasonal",
@@ -59,6 +61,8 @@ export default async function CollectionEditPage({ params, searchParams }: Props
     activeName = e.activeName;
     special = e.special;
     check = await activationCheck(id);
+    const activeId = rows.find((r) => r.kind === "collection" && !r.parentId && r.details?.active && r.id !== id)?.id ?? null;
+    shop = await changePreview(id, activeId);
     data = {
       id: e.row.id,
       slug: e.row.slug,
@@ -90,7 +94,7 @@ export default async function CollectionEditPage({ params, searchParams }: Props
           </>
         }
       />
-      <CollectionEditor data={data} parents={parents} pieces={pieces} lines={lines} activeName={activeName} check={check} special={special} openConfirm={activar === "1"} />
+      <CollectionEditor data={data} parents={parents} pieces={pieces} lines={lines} activeName={activeName} check={check} shop={shop} special={special} openConfirm={activar === "1"} openDeactivate={desactivar === "1"} />
     </>
   );
 }

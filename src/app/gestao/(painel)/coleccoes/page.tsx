@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import c from "@/components/admin/AdminV3.module.css";
 import k from "@/components/admin/Collections.module.css";
-import { ImportHistory, StatusButton } from "@/components/admin/CollectionsForms";
+import { ImportHistory } from "@/components/admin/CollectionsForms";
 import d3 from "@/components/admin/Dashboard.module.css";
 import { PageTop } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
@@ -133,10 +133,16 @@ export default async function CollectionsPage({ searchParams }: Props) {
                       <Link href={`/gestao/coleccoes/${x.id}`} className={`${c.btn} ${c.xs}`}>
                         Editar
                       </Link>
+                      {/* EN: Both open the dialog with the shop / warehouse choices. PT: Os dois abrem a janela com as escolhas
+                          loja / armazém. */}
                       {x.status === "active" ? (
-                        <StatusButton id={x.id} status="archived" label="Desactivar" confirmText={`Desactivar a ${x.name}? Deixa de aparecer no site.`} />
+                        <Link href={`/gestao/coleccoes/${x.id}?desactivar=1`} className={c.textBtn}>
+                          Desactivar
+                        </Link>
                       ) : x.status === "archived" ? (
-                        <StatusButton id={x.id} status="active" label="Reactivar" confirmText={`Reactivar a ${x.name}?`} />
+                        <Link href={`/gestao/coleccoes/${x.id}?activar=1`} className={c.textBtn}>
+                          Reactivar
+                        </Link>
                       ) : (
                         <Link href={`/gestao/coleccoes/${x.id}?activar=1`} className={c.textBtn}>
                           Activar

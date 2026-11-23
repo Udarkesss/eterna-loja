@@ -9,6 +9,7 @@ import { AppError } from "../errors";
 import type { StaffContext } from "../staff/access";
 import { readXlsx, readZip } from "../xlsx";
 import { savePublicUpload } from "../uploads";
+import { collectionPieceIds, fixedProductIds, putInStore, sendToWarehouse } from "./warehouse";
 
 /**
  * EN: "Gestão · Colecções" of design V3: seasonal collections (one active at a time), special editions (inside a
@@ -248,13 +249,27 @@ export async function activationCheck(id: string) {
  * PT: "Activar colecção": a sazonal anterior passa ao arquivo (as peças ficam ligadas); as edições especiais activam-se
  *     sozinhas e não substituem a sazonal.
  */
-export async function setCollectionStatus(staff: StaffContext, id: string, status: "active" | "archived" | "draft") {
+/**
+ * EN: What happens to the shop on a collection change (owner 2026-11-23): "all" = every piece leaves the shop for the
+ *     warehouse, "previous" = only the old collection's pieces, "this" = only this collection's (when deactivating),
+ *     "keep" = nothing moves. Fixed pieces never leave; `publishNew` puts the new collection's warehouse pieces in the shop.
+ * PT: O que acontece à loja ao mudar de colecção (dona 23-11-2026): "all" = todas as peças saem para o armazém,
+ *     "previous" = só as da colecção anterior, "this" = só as desta (ao desactivar), "keep" = nada se mexe. As fixas
+ *     nunca saem; `publishNew` põe na loja as peças da colecção nova que estão no armazém.
+ */
+export interface ShopChange {
+  send: "all" | "previous" | "this" | "keep";
+  publishNew?: boolean;
+}
+
+export async function setCollectionStatus(staff: StaffContext, id: string, status: "active" | "archived" | "draft", shop: ShopChange = { send: "keep" }) {
   const db = await getDb();
   const rows = await db.select().from(categories);
   const row = rows.find((r) => r.id === id);
   if (!row || !isSeasonalTree(row, rows)) throw new AppError("NOT_FOUND", "Colecção não encontrada.", 404);
   const special = !!row.parentId || row.details?.collectionType === "special";
   let replaced: string | null = null;
+  const replacedIds: string[] = [];
   if (status === "active" && !special) {
     for (const other of rows.filter((r) => r.id !== id && isSeasonalTree(r, rows) && !r.parentId && r.details?.active)) {
       await db
@@ -262,17 +277,34 @@ export async function setCollectionStatus(staff: StaffContext, id: string, statu
         .set({ details: { ...(other.details ?? {}), active: false, status: "archived" }, updatedAt: new Date() })
         .where(eq(categories.id, other.id));
       replaced = other.name.pt;
+      replacedIds.push(other.id);
     }
   }
   await db
     .update(categories)
     .set({ details: { ...(row.details ?? {}), active: status === "active", status }, updatedAt: new Date() })
     .where(eq(categories.id, id));
+
+  // EN: The shop follows the collection change. PT: A loja acompanha a mudança de colecção.
+  let sent = 0;
+  let published = 0;
+  if (shop.send !== "keep" || shop.publishNew) {
+    const own = await collectionPieceIds(db, id);
+    const keep = await fixedProductIds(db);
+    if (status === "active") for (const p of own) keep.add(p);
+    if (shop.send === "all" && status === "active") sent = await sendToWarehouse(db, "all", keep);
+    else if (shop.send === "previous" && status === "active") {
+      const old = (await Promise.all(replacedIds.map((r) => collectionPieceIds(db, r)))).flat();
+      sent = await sendToWarehouse(db, old, keep);
+    } else if (shop.send === "this" && status !== "active") sent = await sendToWarehouse(db, own, await fixedProductIds(db));
+    if (shop.publishNew && status === "active") published = await putInStore(db, own);
+  }
   await audit({
     actor: actor(staff),
     action: status === "active" ? "Colecção activada" : status === "archived" ? "Colecção arquivada" : "Colecção passada a rascunho",
-    detail: `${row.name.pt}${replaced ? ` · substitui ${replaced}` : ""}`,
+    detail: `${row.name.pt}${replaced ? ` · substitui ${replaced}` : ""}${sent ? ` · ${sent} peças para o armazém` : ""}${published ? ` · ${published} peças na loja` : ""}`,
   });
+  return { sent, published };
 }
 
 /** EN: "Importar Excel + capas" of old collections. PT: Importar colecções antigas (Excel + ZIP de capas). */

@@ -7,6 +7,7 @@ import { getDb } from "../db";
 import { categories, productCategories, productImages, products, productVariants, reservations, stores } from "../db/schema";
 import { AppError } from "../errors";
 import { accessOf, storeScope, type StaffContext } from "../staff/access";
+import { fixedProductIds, setFixedProducts } from "./warehouse";
 
 /**
  * EN: Products in the back-office (design "Gestão · 6 Produtos" and "7 Editar produto").
@@ -23,11 +24,16 @@ export async function listCategoriesByKind() {
   // EN: Types carry their group ("Fatos executivos · Roupa Executiva"). PT: Os tipos levam o grupo.
   const pick = (kind: string) =>
     rows.filter((r) => r.kind === kind).map((r) => ({ id: r.id, slug: r.slug, name: r.name.pt, note: kind === "type" && r.parentId ? rows.find((x) => x.id === r.parentId)?.name.pt : undefined }));
-  return { collections: pick("collection"), occasions: pick("occasion"), types: pick("type") };
+  // EN: Groups = departments, except "Ocasiões" (its children are occasions). PT: Grupos = departamentos, menos "Ocasiões".
+  const groups = rows
+    .filter((r) => r.kind === "department" && r.slug !== "ocasioes")
+    .map((r) => ({ id: r.id, slug: r.slug, name: r.name.pt, note: r.parentId ? rows.find((x) => x.id === r.parentId)?.name.pt : undefined }));
+  return { collections: pick("collection"), occasions: pick("occasion"), types: pick("type"), groups };
 }
 
 /** EN: Tabs of design V3-G-Produtos. PT: Separadores do V3. */
-export const PRODUCT_VIEWS = { todos: "Todos", publicados: "Publicados", rascunhos: "Rascunhos (armazém)", reservados: "Reservados", "sem-stock": "Sem stock", "sem-foto": "Sem fotografia" } as const;
+// EN: "Na loja" = published, "No armazém" = draft (owner 2026-11-23). PT: "Na loja" = publicado, "No armazém" = rascunho.
+export const PRODUCT_VIEWS = { todos: "Todos", publicados: "Na loja", rascunhos: "No armazém", fixas: "Fixas na loja", reservados: "Reservados", "sem-stock": "Sem stock", "sem-foto": "Sem fotografia" } as const;
 export type ProductView = keyof typeof PRODUCT_VIEWS;
 
 /**
@@ -36,21 +42,28 @@ export type ProductView = keyof typeof PRODUCT_VIEWS;
  *     stock of their stores.
  * PT: Produtos do V3: peça, grupo, colecções, cores, tamanhos, stock e estado. As gestoras vêem o stock das suas lojas.
  */
-export async function listProductsAdmin(staff: StaffContext, filter: { view?: ProductView; q?: string; type?: string; collection?: string }) {
+export async function listProductsAdmin(staff: StaffContext, filter: { view?: ProductView; q?: string; type?: string; collection?: string; occasion?: string; group?: string }) {
   const db = await getDb();
   const rows = await db.select().from(products).orderBy(desc(products.updatedAt));
   const ids = rows.map((r) => r.id);
-  const [variants, images, links, cats, storeRows, held] = await Promise.all([
+  const [variants, images, links, cats, storeRows, held, fixed] = await Promise.all([
     ids.length ? db.select().from(productVariants).where(inArray(productVariants.productId, ids)) : [],
     ids.length ? db.select({ productId: productImages.productId, url: productImages.url }).from(productImages).where(inArray(productImages.productId, ids)).orderBy(asc(productImages.position)) : [],
     ids.length ? db.select().from(productCategories).where(inArray(productCategories.productId, ids)) : [],
     db.select().from(categories),
     db.select({ id: stores.id, code: stores.code }).from(stores),
     db.select({ productId: reservations.productId }).from(reservations).where(eq(reservations.status, "active")),
+    fixedProductIds(db),
   ]);
   const scope = storeScope(staff, "products.view");
   const reservedIds = new Set(held.map((h) => h.productId));
   const catById = new Map(cats.map((c) => [c.id, c]));
+  // EN: A product is in a group when its type (or a category of it) sits inside that department. PT: Grupo pelo tipo.
+  const ancestors = (id: string | null | undefined) => {
+    const out: string[] = [];
+    for (let c = id ? catById.get(id) : undefined; c; c = c.parentId ? catById.get(c.parentId) : undefined) out.push(c.id);
+    return out;
+  };
 
   const items = rows
     .filter((p) => p.status !== "archived")
@@ -93,6 +106,9 @@ export async function listProductsAdmin(staff: StaffContext, filter: { view?: Pr
         state,
         reserved: reservedIds.has(p.id),
         image,
+        fixed: fixed.has(p.id),
+        occasionIds: links.filter((l) => l.productId === p.id && catById.get(l.categoryId)?.kind === "occasion").map((l) => l.categoryId),
+        groupIds: [...new Set([...ancestors(p.typeId), ...links.filter((l) => l.productId === p.id).flatMap((l) => ancestors(l.categoryId))])],
         hasVariantsHere: vs.length > 0,
         search: `${p.code} ${p.name.pt} ${p.colors.map((c) => c.name.pt).join(" ")}`.toLowerCase(),
       };
@@ -106,7 +122,9 @@ export async function listProductsAdmin(staff: StaffContext, filter: { view?: Pr
         ? i.state === "published" || i.state === "bridal"
         : v === "rascunhos"
           ? i.state === "draft" || i.state === "scheduled"
-          : v === "reservados"
+          : v === "fixas"
+            ? i.fixed
+            : v === "reservados"
             ? i.reserved
             : v === "sem-stock"
               ? i.stock === 0 && !i.reserved
@@ -117,7 +135,9 @@ export async function listProductsAdmin(staff: StaffContext, filter: { view?: Pr
     .filter((i) => inView(i, filter.view ?? "todos"))
     .filter((i) => !q || i.search.includes(q))
     .filter((i) => !filter.type || i.typeId === filter.type)
-    .filter((i) => !filter.collection || i.collectionIds.includes(filter.collection));
+    .filter((i) => !filter.collection || i.collectionIds.includes(filter.collection))
+    .filter((i) => !filter.occasion || i.occasionIds.includes(filter.occasion))
+    .filter((i) => !filter.group || i.groupIds.includes(filter.group));
   return { list, counts };
 }
 
@@ -245,9 +265,13 @@ export async function saveProduct(staff: StaffContext, input: ProductInput): Pro
  * EN: Bulk bar of design V3: "Juntar a uma colecção" (adds it, keeps the others), "Publicar", "Passar a rascunho".
  * PT: Barra de acções em massa do V3: "Juntar a uma colecção" (junta, mantém as outras), "Publicar", "Passar a rascunho".
  */
-export async function bulkProducts(staff: StaffContext, ids: string[], action: { kind: "publish" | "draft" } | { kind: "join"; collectionId: string }) {
+export async function bulkProducts(staff: StaffContext, ids: string[], action: { kind: "publish" | "draft" | "fix" | "unfix" } | { kind: "join"; collectionId: string }) {
   if (!ids.length) return;
   const db = await getDb();
+  if (action.kind === "fix" || action.kind === "unfix") {
+    if (accessOf(staff, "products.publish") !== "T") throw new AppError("FORBIDDEN", "NO_ACCESS", 403);
+    return setFixedProducts(staff, ids, action.kind === "fix");
+  }
   if (action.kind !== "join") {
     if (accessOf(staff, "products.publish") !== "T") throw new AppError("FORBIDDEN", "NO_ACCESS", 403);
     // EN: Products without a price (e.g. created by the photo import, "no armazém") are never published.
@@ -265,7 +289,7 @@ export async function bulkProducts(staff: StaffContext, ids: string[], action: {
       if (!p.collectionId) await db.update(products).set({ collectionId: collection.id }).where(eq(products.id, p.id));
     }
   }
-  const label = action.kind === "join" ? "juntados a uma colecção" : action.kind === "publish" ? "publicados" : "passados a rascunho";
+  const label = action.kind === "join" ? "juntados a uma colecção" : action.kind === "publish" ? "postos na loja" : "enviados para o armazém";
   await audit({ actor: actor(staff), action: "Produtos alterados em massa", detail: `${ids.length} ${label}` });
 }
 

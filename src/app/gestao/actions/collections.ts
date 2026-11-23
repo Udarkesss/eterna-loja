@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { importHistory, saveCollection, setCollectionPieces, setCollectionStatus } from "@/server/admin/collections";
+import { importHistory, saveCollection, setCollectionPieces, setCollectionStatus, type ShopChange } from "@/server/admin/collections";
 import { AppError } from "@/server/errors";
 import { requireStaffAction } from "@/server/staff/access";
 import { savePublicUpload } from "@/server/uploads";
@@ -53,12 +53,16 @@ export async function saveCollectionAction(data: z.input<typeof input>): Promise
   }
 }
 
-export async function setCollectionStatusAction(id: string, status: "active" | "archived" | "draft"): Promise<CollectionActionResult> {
+export async function setCollectionStatusAction(id: string, status: "active" | "archived" | "draft", shop?: ShopChange): Promise<CollectionActionResult> {
   try {
     const staff = await requireStaffAction("products.publish");
-    await setCollectionStatus(staff, z.string().uuid().parse(id), z.enum(["active", "archived", "draft"]).parse(status));
+    const change = z.object({ send: z.enum(["all", "previous", "this", "keep"]), publishNew: z.boolean().optional() }).optional().parse(shop);
+    const r = await setCollectionStatus(staff, z.string().uuid().parse(id), z.enum(["active", "archived", "draft"]).parse(status), change);
     refresh();
-    return { ok: true, message: status === "active" ? "Colecção activada." : status === "archived" ? "Colecção arquivada." : "Colecção passada a rascunho." };
+    revalidatePath("/gestao/produtos");
+    const moved = [r.sent ? `${r.sent} ${r.sent === 1 ? "peça foi" : "peças foram"} para o armazém` : "", r.published ? `${r.published} ${r.published === 1 ? "peça entrou" : "peças entraram"} na loja` : ""].filter(Boolean).join(" · ");
+    const base = status === "active" ? "Colecção activada." : status === "archived" ? "Colecção arquivada." : "Colecção passada a rascunho.";
+    return { ok: true, message: moved ? `${base} ${moved}.` : base };
   } catch (e) {
     return fail(e, "Não foi possível mudar o estado.");
   }
