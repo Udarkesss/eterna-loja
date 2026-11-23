@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 import { getDictionary } from "@/i18n";
@@ -6,6 +5,7 @@ import { formatMZN } from "@/lib/format";
 import { productHref } from "@/lib/links";
 import { sizeParts, sortSizes } from "@/lib/sizes";
 import type { CardPrice, Locale, ProductDTO } from "@/types";
+import { CardMedia } from "./CardMedia";
 import styles from "./ProductCard.module.css";
 
 /**
@@ -22,15 +22,19 @@ export function ProductCard({
   showPrice = "sale",
   sizes = "(min-width: 1024px) 25vw, 50vw",
   priority = false,
+  swipe = true,
 }: {
   product: ProductDTO;
   locale: Locale;
   showPrice?: CardPrice;
   sizes?: string;
   priority?: boolean;
+  swipe?: boolean;
 }) {
   const dict = getDictionary(locale);
-  const image = product.images[0];
+  const href = productHref(product.slug, locale);
+  // EN: Up to 5 photos to change in the list. PT: Até 5 fotos para trocar na lista.
+  const images = [...new Set(product.images.map((i) => i.url))].slice(0, 5);
   const sale = product.salePrice != null && product.salePrice < product.price;
   const off = sale ? Math.round(100 - (100 * product.salePrice!) / product.price) : 0;
   const inStock = sortSizes([...new Set(product.variants.filter((v) => v.stock > 0).map((v) => v.size))]);
@@ -38,17 +42,16 @@ export function ProductCard({
 
   return (
     <div className={styles.card}>
-      <Link href={productHref(product.slug, locale)} className={styles.link}>
-        <span className={styles.media}>
-          {image && <Image src={image.url} alt={image.alt || product.code} fill sizes={sizes} priority={priority} className={styles.image} />}
-          <span className={styles.tags}>
-            {sale ? (
-              <span className={`${styles.badge} ${styles.sale}`}>−{off}%</span>
-            ) : (
-              product.isNew && <span className={styles.badge}>{dict.product.new}</span>
-            )}
-          </span>
+      <CardMedia href={href} images={images} alt={product.images[0]?.alt || product.code} sizes={sizes} priority={priority} swipe={swipe}>
+        <span className={styles.tags}>
+          {sale ? (
+            <span className={`${styles.badge} ${styles.sale}`}>−{off}%</span>
+          ) : (
+            product.isNew && <span className={styles.badge}>{dict.product.new}</span>
+          )}
         </span>
+      </CardMedia>
+      <Link href={href} className={styles.link}>
         <span className={styles.body}>
           <span className={styles.code}>{product.code}</span>
           {(showPrice === true || (sale && showPrice === "sale")) && (

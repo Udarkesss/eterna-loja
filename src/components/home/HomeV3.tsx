@@ -178,7 +178,7 @@ export function Novidades({
       >
         {products.map((p) => (
           <div key={p.id} className={styles.slideCard}>
-            <ProductCard product={p} locale={locale} showPrice={showPrice} sizes="232px" />
+            <ProductCard product={p} locale={locale} showPrice={showPrice} sizes="232px" swipe={false} />
           </div>
         ))}
       </Carousel>
