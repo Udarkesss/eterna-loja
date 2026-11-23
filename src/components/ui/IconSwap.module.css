@@ -1,0 +1,41 @@
+/* EN: Icon swap motion tokens. PT: Tempos e valores do Icon swap. */
+.swap {
+  --t-icon-swap-duration: 260ms;
+  --t-icon-swap-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --t-icon-swap-scale: 0.55;
+  --t-icon-swap-blur: 4px;
+  position: relative;
+  display: inline-grid;
+  flex: none;
+}
+
+.off,
+.on {
+  grid-area: 1 / 1;
+  transition:
+    opacity var(--t-icon-swap-duration) var(--t-icon-swap-ease),
+    transform var(--t-icon-swap-duration) var(--t-icon-swap-ease),
+    filter var(--t-icon-swap-duration) var(--t-icon-swap-ease);
+}
+
+.on,
+.swap[data-on] .off {
+  opacity: 0;
+  transform: scale(var(--t-icon-swap-scale));
+  filter: blur(var(--t-icon-swap-blur));
+}
+
+.swap[data-on] .on {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .off,
+  .on {
+    transition: opacity 120ms linear;
+    transform: none !important;
+    filter: none !important;
+  }
+}

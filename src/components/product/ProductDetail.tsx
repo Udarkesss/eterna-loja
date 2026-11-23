@@ -7,6 +7,7 @@ import { useCustomer } from "@/components/account/CustomerProvider";
 import { useCart } from "@/components/cart/CartProvider";
 import { FavoriteButton } from "@/components/favorites/FavoriteButton";
 import { Icon } from "@/components/ui/Icon";
+import { IconSwap } from "@/components/ui/IconSwap";
 import { t } from "@/i18n";
 import { useI18n } from "@/i18n/I18nProvider";
 import { api } from "@/lib/api-client";
@@ -292,7 +293,7 @@ export function ProductPanels({ panels }: { panels: { title: string; body: strin
         <div key={panel.title} className={styles.panel}>
           <button type="button" className={styles.panelButton} aria-expanded={open === i} onClick={() => setOpen((o) => (o === i ? null : i))}>
             {panel.title}
-            <Icon name={open === i ? "minus" : "plus"} size={16} />
+            <IconSwap on={open === i} off="plus" onIcon="minus" size={16} />
           </button>
           {open === i && <p className={styles.panelBody}>{panel.body}</p>}
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@/components/ui/Icon";
+import { IconSwap } from "@/components/ui/IconSwap";
 import { t } from "@/i18n";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useFavorites } from "./FavoritesProvider";
@@ -23,7 +23,7 @@ export function FavoriteButton({ slug, code, variant = "round" }: { slug: string
 
   return (
     <button type="button" className={styles[variant]} aria-label={label} aria-pressed={on} onClick={() => toggle(slug)}>
-      <Icon name="heart" size={20} filled={on} />
+      <IconSwap on={on} off="heart" onIcon="heart" filledOn size={20} />
     </button>
   );
 }
