@@ -46,15 +46,12 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   //     (owner 2026-11-23). PT: A página Ocasiões mostra as mesmas ocasiões do Início, não os tipos de peça (dona 23-11-2026).
   const occasions = category.children.some((c) => c.kind === "occasion") ? await getOccasionTiles(locale) : [];
   const tiles = occasions.length
-    ? [
-        listing.tiles[0],
-        ...occasions.map((t) => ({
-          href: t.href ? resolveHref(`category:${t.href}`, locale) : categoryHref(slug, locale),
-          label: t.name,
-          images: [t.imageUrl],
-          current: false,
-        })),
-      ]
+    ? occasions.map((t) => ({
+        href: t.href ? resolveHref(`category:${t.href}`, locale) : categoryHref(slug, locale),
+        label: t.name,
+        images: [t.imageUrl],
+        current: false,
+      }))
     : listing.tiles;
 
   return (

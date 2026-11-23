@@ -41,7 +41,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
         ) : (
           <h1 className="visually-hidden">{dict.search.title}</h1>
         )}
-        {listing && <TypeBar tiles={listing.tiles} label={dict.catalog.types} min={2} />}
+        {listing && <TypeBar tiles={listing.tiles} label={dict.catalog.types} min={1} />}
       </section>
 
       {/* EN: Same presentation as every piece list (owner 2026-11-22): side filters and 3 columns once there are results.

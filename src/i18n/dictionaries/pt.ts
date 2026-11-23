@@ -144,7 +144,6 @@ export const pt = {
     clearFilters: "Limpar filtros",
     showing: "A ver {shown} de {total} peças",
     showMore: "Mostrar mais peças",
-    all: "Todos",
     types: "Tipos de peça",
     noProducts: "Ainda não há peças nesta secção.",
   },

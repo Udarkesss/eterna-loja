@@ -61,7 +61,6 @@ function inPriceRanges(product: ProductDTO, ranges: PriceRange[]): boolean {
  *     com peças aqui). Usado nas páginas de categoria, colecção e pesquisa.
  */
 export async function loadListing(source: ListingSource, query: Query, locale: Locale) {
-  const dict = getDictionary(locale);
   const allowedTypes = source.types;
   const sizeLetters = list(query.size).filter((s) => (SIZE_LETTERS as readonly string[]).includes(s));
   const colors = list(query.color).filter((c): c is ColorFamily => (COLOR_FAMILIES as readonly string[]).includes(c));
@@ -100,14 +99,13 @@ export async function loadListing(source: ListingSource, query: Query, locale: L
   const byType = new Map<string, string | undefined>();
   for (const p of all) if (p.type && !byType.has(p.type.slug)) byType.set(p.type.slug, p.images[0]?.url);
   const typeCats = await Promise.all([...byType.keys()].map((s) => findCategory(s, locale)));
-  const tiles: TypeTile[] = [
-    { href: typeLink(), label: dict.catalog.all, images: all.slice(0, 4).flatMap((p) => (p.images[0] ? [p.images[0].url] : [])), current: !type },
-    ...[...byType.entries()].map(([s, image], i) => {
-      const c = typeCats[i];
-      const photo = c?.imageUrl ?? image;
-      return { href: typeLink(s), label: c?.name ?? s, images: photo ? [photo] : [], current: type === s };
-    }),
-  ];
+  // EN: No "Todos" (owner 2026-11-23): the chosen type links back to the list without it. PT: Sem "Todos": o tipo
+  //     escolhido liga de volta à lista sem ele.
+  const tiles: TypeTile[] = [...byType.entries()].map(([s, image], i) => {
+    const c = typeCats[i];
+    const photo = c?.imageUrl ?? image;
+    return { href: typeLink(type === s ? undefined : s), label: c?.name ?? s, images: photo ? [photo] : [], current: type === s };
+  });
   // EN: The types with pieces here, for the side filter "Tipo de peça". PT: Os tipos com peças aqui, para o filtro lateral.
   const typeOptions = [...byType.keys()].map((s, i) => ({ slug: s, label: typeCats[i]?.name ?? s }));
   const moreLink = () => {

@@ -141,7 +141,6 @@ export const en: Dictionary = {
     clearFilters: "Clear filters",
     showing: "Showing {shown} of {total} pieces",
     showMore: "Show more pieces",
-    all: "All",
     types: "Garment types",
     noProducts: "There are no pieces here yet.",
   },
