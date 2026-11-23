@@ -238,9 +238,16 @@ const US_SCALE: Record<string, string> = {
   "22": "22US/54EUR/XXL",
 };
 
-export function toSize(raw: string): string {
+/**
+ * EN: Shopify size → site size. Shoes keep their US number ("6", "7.5"): the clothing scale ("6" → 6US/38EUR/S) is
+ *     only for clothes (owner 2026-11-23).
+ * PT: Tamanho do Shopify → tamanho do site. Os sapatos ficam com o número US ("6", "7.5"): a escala da roupa só se
+ *     aplica à roupa (dona 23-11-2026).
+ */
+export function toSize(raw: string, shoe = false): string {
   const v = raw.trim().toUpperCase();
   if (!v || v === "OS" || v === "DEFAULT TITLE" || v === "ÚNICO") return "Único";
+  if (shoe) return v.replace(",", ".");
   if (US_SCALE[v]) return US_SCALE[v];
   if (v === "MEDIO" || v === "MÉDIO") return "M";
   return v;
@@ -488,7 +495,7 @@ export function readShopify(csvText: string | null, old: OldSite | null = null):
         size = m ? m[1] : "";
       }
       if (color) colorsByKey.set(color.key, color);
-      const sizeLabel = toSize(size);
+      const sizeLabel = toSize(size, !!type?.startsWith("sapatos"));
       let sku = (r["Variant SKU"] || `${code}-${color?.key ?? "u"}-${sizeLabel}`).trim().toUpperCase().replace(/[^A-Z0-9-]/g, "-");
       while (usedSkus.has(sku)) sku += "-2";
       usedSkus.add(sku);

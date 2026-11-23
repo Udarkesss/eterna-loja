@@ -1,4 +1,4 @@
-import { and, count, eq, inArray, isNull, notInArray } from "drizzle-orm";
+import { and, count, eq, inArray, isNull, like, notInArray } from "drizzle-orm";
 import { GUIDE_TOPICS, TOPICS_BEFORE_GUIDE, type Topic } from "@/data/assistant";
 import { CATEGORY_IMAGES, COLLECTION_DETAILS, categoryTree, type CategorySeed } from "@/data/catalog";
 import { HOME_KEYS, heroSlides, homeSections, occasionTiles as tileSeeds } from "@/data/content";
@@ -11,6 +11,8 @@ import {
   deliveryZones,
   occasionTiles,
   paymentMethodSettings,
+  productVariants,
+  products,
   rolePermissions,
   roles,
   settings,
@@ -328,6 +330,24 @@ const DATA_MIGRATIONS: { name: string; run: (db: Database) => Promise<void> }[] 
       });
       for (const g of GUIDE_TOPICS) if (!topics.some((t) => t.id === g.id)) topics.push(g);
       await db.update(settings).set({ value: { ...saved, topics }, updatedAt: new Date() }).where(eq(settings.key, "assistant"));
+    },
+  },
+  {
+    // EN: Shoes imported with the clothing scale ("6" became "6US/38EUR/S"): back to the US shoe number (owner 2026-11-23).
+    // PT: Sapatos importados com a escala da roupa ("6" ficou "6US/38EUR/S"): voltam ao número US (dona 23-11-2026).
+    name: "sapatos-tamanhos",
+    run: async (db) => {
+      const shoeTypes = await db.select({ id: categories.id }).from(categories).where(like(categories.slug, "sapatos%"));
+      if (!shoeTypes.length) return;
+      const rows = await db
+        .select({ id: productVariants.id, size: productVariants.size })
+        .from(productVariants)
+        .innerJoin(products, eq(products.id, productVariants.productId))
+        .where(inArray(products.typeId, shoeTypes.map((t) => t.id)));
+      for (const r of rows) {
+        const m = r.size.match(/^(\d+(?:\.5)?)US\/\d+EUR\/[A-Z]+$/);
+        if (m) await db.update(productVariants).set({ size: m[1] }).where(eq(productVariants.id, r.id));
+      }
     },
   },
 ];

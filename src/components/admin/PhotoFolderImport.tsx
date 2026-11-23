@@ -18,7 +18,7 @@ import s from "./admin.module.css";
  */
 
 const CODE = /^[A-Z0-9][A-Z0-9-]{0,39}$/;
-const SIZE = /^(\d{1,2}W?|XXS|XS|S|M|L|XL|XXL|XXXL)$/i;
+const SIZE = /^(\d{1,2}(?:[.,]5)?W?|XXS|XS|S|M|L|XL|XXL|XXXL)$/i;
 const IMAGE = /\.(jpe?g|png|webp|avif)$/i;
 const MAX_PHOTOS = 12;
 const PARALLEL = 3;
@@ -234,7 +234,9 @@ function buildTasks(entries: Entry[], plan: PhotoPlan, info: Map<string, Info>) 
     //     Nada mais se inventa: sem pastas de tamanho o produto fica sem variantes (a equipa acrescenta).
     const norm = (c: string) => c.toUpperCase().replace(/[\s/]+/g, "");
     const rows = [...(i?.stock.values() ?? [])];
-    const sizes = sizesOf(list).map(toSize);
+    // EN: Shoes keep their US number; the tables are matched on the usual scale. PT: Os sapatos ficam com o número US.
+    const shoe = !!folder?.typeSlug?.startsWith("sapatos");
+    const sizes = sizesOf(list);
     const fileColors = [...new Set(list.map((e) => e.color).filter((c): c is string => !!c))];
     const colorNames = fileColors;
     const colors = [...new Map(colorNames.map((c) => toColor(c, new Set())).map((c) => [c.key, c])).values()];
@@ -242,7 +244,7 @@ function buildTasks(entries: Entry[], plan: PhotoPlan, info: Map<string, Info>) 
       rows.filter((r) => r.size === size && (!color || colors.length < 2 || norm(r.color) === norm(color))).reduce((n, r) => n + r.n, 0);
     const price = i?.price ?? 0;
     const variants = (colors.length > 1 ? colorNames : [colorNames[0] ?? null]).flatMap((c) =>
-      sizes.map((size) => ({ size, stock: stockOf(size, c), color: c ? toColor(c, new Set()).key : null })),
+      sizes.map((raw) => ({ size: toSize(raw, shoe), stock: stockOf(toSize(raw), c), color: c ? toColor(c, new Set()).key : null })),
     );
     // EN: Without a piece type, the folder gives the name ("Modeladores" → "Modelador"). PT: Sem tipo, o nome vem da pasta.
     const one = list[0].folder.replace(/(õ)es$/i, "ão").replace(/([rlz])es$/i, "$1").replace(/s$/i, "");
