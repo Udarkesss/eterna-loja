@@ -60,12 +60,14 @@ export async function saveCampaignAction(data: z.input<typeof input>): Promise<C
   }
 }
 
-export async function setCampaignStateAction(id: string, action: "schedule" | "start" | "end" | "draft"): Promise<CampaignActionResult> {
+export async function setCampaignStateAction(id: string, action: "schedule" | "start" | "end" | "draft", toWarehouse = false): Promise<CampaignActionResult> {
   try {
     const staff = await requireStaffAction("products.publish");
-    await setCampaignState(staff, z.string().uuid().parse(id), action);
+    const { sent } = await setCampaignState(staff, z.string().uuid().parse(id), action, z.boolean().parse(toWarehouse));
     refresh();
-    return { ok: true, message: { schedule: "Campanha agendada.", start: "A campanha começou.", end: "Campanha terminada: as peças voltaram ao preço normal.", draft: "Campanha passada a rascunho." }[action] };
+    revalidatePath("/gestao/produtos");
+    const ended = sent ? `Campanha terminada: ${sent} ${sent === 1 ? "peça foi" : "peças foram"} para o armazém.` : "Campanha terminada: as peças voltaram ao preço normal.";
+    return { ok: true, message: { schedule: "Campanha agendada.", start: "A campanha começou.", end: ended, draft: "Campanha passada a rascunho." }[action] };
   } catch (e) {
     return fail(e, "Não foi possível mudar o estado.");
   }

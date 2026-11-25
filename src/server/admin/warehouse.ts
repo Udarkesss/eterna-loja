@@ -24,8 +24,9 @@ export interface FixedPieces {
 }
 
 const KEY = "store.fixed";
-// EN: Accessories, and the Bridal showroom (its own shop, not part of the seasonal change). PT: Acessórios e a Bridal.
-const DEFAULT_FIXED: FixedPieces = { categories: ["acessorios", "noivas"], products: [] };
+// EN: Accessories and shapewear (owner 2026-11-25), and the Bridal showroom (its own shop, not part of the seasonal
+//     change). PT: Acessórios e modeladores (dona 25-11-2026), e a Bridal (loja própria, fora da mudança de estação).
+export const DEFAULT_FIXED: FixedPieces = { categories: ["acessorios", "modeladores", "noivas"], products: [] };
 const actor = (s: StaffContext) => ({ type: "staff" as const, id: s.id, name: s.name, role: s.roleName });
 
 export async function getFixedPieces(): Promise<FixedPieces> {

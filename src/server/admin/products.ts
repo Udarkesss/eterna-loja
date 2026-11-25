@@ -4,7 +4,7 @@ import { sizeParts } from "@/lib/sizes";
 import type { ColorFamily, Localized, ProductColor, ProductStatus } from "@/types";
 import { audit } from "../audit";
 import { getDb } from "../db";
-import { categories, productCategories, productImages, products, productVariants, reservations, stores } from "../db/schema";
+import { campaignItems, categories, productCategories, productImages, products, productVariants, reservations, stores } from "../db/schema";
 import { AppError } from "../errors";
 import { accessOf, storeScope, type StaffContext } from "../staff/access";
 import { fixedProductIds, setFixedProducts } from "./warehouse";
@@ -42,9 +42,18 @@ export type ProductView = keyof typeof PRODUCT_VIEWS;
  *     stock of their stores.
  * PT: Produtos do V3: peça, grupo, colecções, cores, tamanhos, stock e estado. As gestoras vêem o stock das suas lojas.
  */
-export async function listProductsAdmin(staff: StaffContext, filter: { view?: ProductView; q?: string; type?: string; collection?: string; occasion?: string; group?: string }) {
+export async function listProductsAdmin(
+  staff: StaffContext,
+  filter: { view?: ProductView; q?: string; type?: string; collection?: string; occasion?: string; group?: string; campaign?: string; order?: "recentes" | "antigas" },
+) {
   const db = await getDb();
-  const rows = await db.select().from(products).orderBy(desc(products.updatedAt));
+  // EN: Newest or oldest pieces first, by the day they entered the catalogue (owner 2026-11-25: choose new or old
+  //     pieces for the warehouse). PT: Peças mais recentes ou mais antigas primeiro, pela data em que entraram.
+  const rows = await db
+    .select()
+    .from(products)
+    .orderBy(filter.order === "antigas" ? asc(products.createdAt) : desc(products.createdAt));
+  const inCampaign = filter.campaign ? new Set((await db.select({ id: campaignItems.productId }).from(campaignItems).where(eq(campaignItems.campaignId, filter.campaign))).map((r) => r.id)) : null;
   const ids = rows.map((r) => r.id);
   const [variants, images, links, cats, storeRows, held, fixed] = await Promise.all([
     ids.length ? db.select().from(productVariants).where(inArray(productVariants.productId, ids)) : [],
@@ -137,7 +146,8 @@ export async function listProductsAdmin(staff: StaffContext, filter: { view?: Pr
     .filter((i) => !filter.type || i.typeId === filter.type)
     .filter((i) => !filter.collection || i.collectionIds.includes(filter.collection))
     .filter((i) => !filter.occasion || i.occasionIds.includes(filter.occasion))
-    .filter((i) => !filter.group || i.groupIds.includes(filter.group));
+    .filter((i) => !filter.group || i.groupIds.includes(filter.group))
+    .filter((i) => !inCampaign || inCampaign.has(i.id));
   return { list, counts };
 }
 

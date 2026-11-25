@@ -8,11 +8,13 @@ import { PageTop } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
 import { listCategoriesByKind, listProductsAdmin, PRODUCT_VIEWS, type ProductView } from "@/server/admin/products";
 import { getFixedPieces } from "@/server/admin/warehouse";
+import { getDb } from "@/server/db";
+import { campaigns } from "@/server/db/schema";
 import { accessOf, canEdit, requireStaffPage } from "@/server/staff/access";
 
 export const metadata = { title: "Produtos" };
 
-type Props = { searchParams: Promise<{ vista?: string; q?: string; tipo?: string; colecao?: string; ocasiao?: string; grupo?: string }> };
+type Props = { searchParams: Promise<{ vista?: string; q?: string; tipo?: string; colecao?: string; ocasiao?: string; grupo?: string; campanha?: string; ordem?: string }> };
 
 /**
  * EN: "Gestão · Produtos" of design V3-G-Produtos. PT: Produtos do V3.
@@ -21,13 +23,19 @@ export default async function ProductsPage({ searchParams }: Props) {
   const staff = await requireStaffPage("products.view");
   const p = await searchParams;
   const view: ProductView = p.vista && p.vista in PRODUCT_VIEWS ? (p.vista as ProductView) : "todos";
-  const [{ list, counts }, cats, fixed] = await Promise.all([
-    listProductsAdmin(staff, { view, q: p.q, type: p.tipo, collection: p.colecao, occasion: p.ocasiao, group: p.grupo }),
+  const order = p.ordem === "antigas" ? "antigas" : "recentes";
+  const [{ list, counts }, cats, fixed, sales] = await Promise.all([
+    listProductsAdmin(staff, { view, q: p.q, type: p.tipo, collection: p.colecao, occasion: p.ocasiao, group: p.grupo, campaign: p.campanha, order }),
     listCategoriesByKind(),
     getFixedPieces(),
+    getDb().then((db) => db.select({ id: campaigns.id, name: campaigns.name }).from(campaigns)),
   ]);
   const link = (vista: ProductView) =>
-    `?${new URLSearchParams(Object.entries({ q: p.q, tipo: p.tipo, colecao: p.colecao, ocasiao: p.ocasiao, grupo: p.grupo, vista: vista === "todos" ? undefined : vista }).filter((e): e is [string, string] => !!e[1]))}`;
+    `?${new URLSearchParams(
+      Object.entries({ q: p.q, tipo: p.tipo, colecao: p.colecao, ocasiao: p.ocasiao, grupo: p.grupo, campanha: p.campanha, ordem: p.ordem, vista: vista === "todos" ? undefined : vista }).filter(
+        (e): e is [string, string] => !!e[1],
+      ),
+    )}`;
   const edit = canEdit(staff, "products.edit");
   const publish = accessOf(staff, "products.publish") === "T";
 
@@ -95,6 +103,20 @@ export default async function ProductsPage({ searchParams }: Props) {
                   {x.name}
                 </option>
               ))}
+            </AutoSubmitSelect>
+            {sales.length > 0 && (
+              <AutoSubmitSelect className={c.select} name="campanha" defaultValue={p.campanha ?? ""} aria-label="Campanha" style={{ width: 180 }}>
+                <option value="">Todas as campanhas</option>
+                {sales.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.name.pt}
+                  </option>
+                ))}
+              </AutoSubmitSelect>
+            )}
+            <AutoSubmitSelect className={c.select} name="ordem" defaultValue={order} aria-label="Ordem" style={{ width: 170 }}>
+              <option value="recentes">Mais recentes primeiro</option>
+              <option value="antigas">Mais antigas primeiro</option>
             </AutoSubmitSelect>
             <AutoSubmitSelect className={c.select} name="grupo" defaultValue={p.grupo ?? ""} aria-label="Grupo" style={{ width: 180 }}>
               <option value="">Todos os grupos</option>

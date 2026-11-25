@@ -8,6 +8,7 @@ import { getDb } from "../db";
 import { campaignItems, campaigns, categories, productCategories, productImages, products, productVariants, type CampaignColors } from "../db/schema";
 import { AppError } from "../errors";
 import type { StaffContext } from "../staff/access";
+import { fixedProductIds, sendToWarehouse } from "./warehouse";
 import { readXlsx } from "../xlsx";
 
 /**
@@ -210,7 +211,7 @@ export async function saveCampaign(staff: StaffContext, input: CampaignInput): P
 /**
  * EN: "Agendar campanha" / "Começar agora" / "Terminar agora" / back to draft. PT: Agendar, começar, terminar ou rascunho.
  */
-export async function setCampaignState(staff: StaffContext, id: string, action: "schedule" | "start" | "end" | "draft") {
+export async function setCampaignState(staff: StaffContext, id: string, action: "schedule" | "start" | "end" | "draft", toWarehouse = false) {
   const db = await getDb();
   const [row] = await db.select().from(campaigns).where(eq(campaigns.id, id));
   if (!row) throw new AppError("NOT_FOUND", "Campanha não encontrada.", 404);
@@ -226,8 +227,12 @@ export async function setCampaignState(staff: StaffContext, id: string, action: 
           ? { endsAt: now }
           : { status: "draft" as const };
   await db.update(campaigns).set({ ...patch, updatedAt: now }).where(eq(campaigns.id, id));
+  // EN: Ending a sale can also take its pieces out of the shop, except the fixed ones (owner 2026-11-25).
+  // PT: Terminar uns saldos pode também tirar as peças da loja, menos as fixas (dona 25-11-2026).
+  const sent = action === "end" && toWarehouse ? await sendToWarehouse(db, items.map((i) => i.id), await fixedProductIds(db)) : 0;
   const label = { schedule: "Campanha agendada", start: "Campanha começada agora", end: "Campanha terminada", draft: "Campanha passada a rascunho" }[action];
-  await audit({ actor: actor(staff), action: label, detail: row.name.pt });
+  await audit({ actor: actor(staff), action: label, detail: `${row.name.pt}${sent ? ` · ${sent} peças para o armazém` : ""}` });
+  return { sent };
 }
 
 /** EN: Old and campaign price for the grid. PT: Preço antigo e de campanha para a grelha. */

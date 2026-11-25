@@ -121,9 +121,13 @@ export function CampaignEditor(props: { data: CampaignFormData; pieces: Piece[];
       if (!d.id && r.id) router.replace(`/gestao/campanhas/${r.id}`);
       else router.refresh();
     });
+  // EN: "Terminar agora" asks whether the pieces leave the shop too (owner 2026-11-25). PT: Pergunta se as peças saem da loja.
+  const [ending, setEnding] = useState(false);
+  const [toWarehouse, setToWarehouse] = useState(true);
   const state = (action: "end" | "draft") =>
     start(async () => {
-      const r = await setCampaignStateAction(d.id!, action);
+      const r = await setCampaignStateAction(d.id!, action, action === "end" && toWarehouse);
+      setEnding(false);
       setRes(r);
       if (r.ok) set({ state: action === "end" ? "ended" : "draft" });
       router.refresh();
@@ -441,9 +445,35 @@ export function CampaignEditor(props: { data: CampaignFormData; pieces: Piece[];
                 </button>
               )}
               {d.state === "running" && (
-                <button type="button" className={`${c.btn} ${c.sm} ${c.full}`} disabled={pending} onClick={() => window.confirm("Terminar a campanha agora? As peças voltam ao preço normal.") && state("end")}>
+                <button type="button" className={`${c.btn} ${c.sm} ${c.full}`} disabled={pending} onClick={() => setEnding(true)}>
                   Terminar agora
                 </button>
+              )}
+              {ending && (
+                <div className={c.modalBack} onClick={(e) => e.target === e.currentTarget && setEnding(false)}>
+                  <div className={c.modal} role="dialog" aria-modal="true" aria-label="Terminar a campanha" style={{ width: 480 }}>
+                    <div className={c.panelH}>
+                      <h3>Terminar a campanha agora?</h3>
+                    </div>
+                    <div className={c.panelB}>
+                      <p className={c.small}>As peças voltam ao preço normal.</p>
+                      <label className={c.small} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                        <input type="checkbox" checked={toWarehouse} onChange={(e) => setToWarehouse(e.target.checked)} />
+                        <span>
+                          Tirar da loja as {pieces.length} peças da campanha e enviá-las para o armazém (as peças fixas ficam)
+                        </span>
+                      </label>
+                      <div className={c.end}>
+                        <button type="button" className={`${c.btn} ${c.sm}`} onClick={() => setEnding(false)}>
+                          Cancelar
+                        </button>
+                        <button type="button" className={`${c.btnPrimary} ${c.sm}`} disabled={pending} onClick={() => state("end")}>
+                          Terminar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               )}
               {d.state === "scheduled" && (
                 <button type="button" className={c.textBtn} style={{ alignSelf: "flex-start", paddingLeft: 0 }} disabled={pending} onClick={() => state("draft")}>

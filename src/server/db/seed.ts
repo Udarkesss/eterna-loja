@@ -350,6 +350,19 @@ const DATA_MIGRATIONS: { name: string; run: (db: Database) => Promise<void> }[] 
       }
     },
   },
+  {
+    // EN: Shapewear is fixed in the shop too (owner 2026-11-25). PT: Os modeladores também ficam fixos na loja.
+    name: "fixos-modeladores",
+    run: async (db) => {
+      const [row] = await db.select().from(settings).where(eq(settings.key, "store.fixed"));
+      const saved = row?.value as { categories?: string[]; products?: string[] } | undefined;
+      if (!saved?.categories || saved.categories.includes("modeladores")) return;
+      await db
+        .update(settings)
+        .set({ value: { ...saved, categories: [...saved.categories, "modeladores"] }, updatedAt: new Date() })
+        .where(eq(settings.key, "store.fixed"));
+    },
+  },
 ];
 
 /** EN: How many data versions exist (development re-checks it on each request). PT: Quantas versões de dados existem. */
