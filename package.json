@@ -13,6 +13,7 @@
     "db:migrate": "tsx scripts/db-migrate.ts",
     "db:seed": "tsx scripts/db-seed.ts",
     "db:demo": "node --conditions=react-server --import tsx scripts/db-demo.ts",
+    "transfer:export": "node --conditions=react-server --import tsx scripts/transfer-export.ts",
     "db:studio": "drizzle-kit studio",
     "test:mpesa": "node --env-file=.env.local scripts/test-mpesa.mjs"
   },

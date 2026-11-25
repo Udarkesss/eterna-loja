@@ -1,3 +1,5 @@
+import Link from "next/link";
+import c from "@/components/admin/AdminV3.module.css";
 import { SystemEditor } from "@/components/admin/SystemEditor";
 import { PageTop } from "@/components/admin/ui";
 import { loadSystemSettings } from "@/server/admin/system";
@@ -11,7 +13,17 @@ export default async function SystemPage() {
   const settings = await loadSystemSettings();
   return (
     <>
-      <PageTop eyebrow="Só o Superadministrador altera" title="Definições" />
+      <PageTop
+        eyebrow="Só o Superadministrador altera"
+        title="Definições"
+        actions={
+          staff.roleKey === "super" && (
+            <Link href="/gestao/definicoes/trazer" className={`${c.btn} ${c.sm}`}>
+              Trazer os dados do computador
+            </Link>
+          )
+        }
+      />
       <SystemEditor settings={settings} editable={canEdit(staff, "system")} />
     </>
   );
